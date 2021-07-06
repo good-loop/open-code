@@ -23,7 +23,7 @@ public class GitBobProjectTask extends BuildTask {
 	}
 
 	/**
-	 * As per .git/config -- e.g. git@github.com:sodash/open-code
+	 * As per .git/config -- e.g. git@github.com:good-loop/open-code
 	 */
 	String gitUrl;
 	
@@ -34,7 +34,7 @@ public class GitBobProjectTask extends BuildTask {
 	File dir;
 	
 	/**
-	 * As per .git/config -- e.g. git@github.com:sodash/open-code
+	 * As per .git/config -- e.g. git@github.com:good-loop/open-code
 	 * target (local) directory
 	 */
 	public GitBobProjectTask(String gitUrl, File dir) {
