@@ -15,12 +15,16 @@ import com.winterwell.es.client.TransformRequest;
 import com.winterwell.es.client.admin.CreateIndexRequest;
 import com.winterwell.es.client.admin.IndicesAliasesRequest;
 import com.winterwell.es.client.admin.PutMappingRequest;
+import com.winterwell.es.client.query.BoolQueryBuilder;
+import com.winterwell.es.client.query.ESQueryBuilder;
+import com.winterwell.es.client.query.ESQueryBuilders;
 import com.winterwell.es.fail.ESDocNotFoundException;
 import com.winterwell.es.fail.ESIndexAlreadyExistsException;
 import com.winterwell.gson.JsonArray;
 import com.winterwell.gson.JsonElement;
 import com.winterwell.gson.JsonObject;
 import com.winterwell.gson.JsonParser;
+import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.Dep;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.VersionString;
@@ -34,6 +38,7 @@ import com.winterwell.utils.time.Time;
 import com.winterwell.utils.time.TimeUtils;
 import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.app.AMain;
+import com.winterwell.web.app.AppUtils;
 
 /**
  * Use Transforms to compress datalog month data
@@ -48,7 +53,7 @@ import com.winterwell.web.app.AMain;
  * @author Kai, Daniel
  *
  */
-public class CompressDataLogIndexMain extends AMain<DataLogConfig> {
+public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> {
 	
 //	public final static String ALIAS = "datalog.transformed.all";
 	
@@ -63,7 +68,7 @@ public class CompressDataLogIndexMain extends AMain<DataLogConfig> {
 	}
 
 	@Override
-	protected void init2(DataLogConfig config) {
+	protected void init2(CompressDataLogIndexConfig config) {
 		logFile = new LogFile(FileUtils.changeType(config.logFile, "compressor.txt"))
 				// keep 1 week of log files
 				.setLogRotation(TUnit.DAY.dt, 7);
@@ -84,7 +89,7 @@ public class CompressDataLogIndexMain extends AMain<DataLogConfig> {
 	private String dataspace = "gl";
 	
 	public CompressDataLogIndexMain() {
-		super("CompressDataLogIndex", DataLogConfig.class);
+		super("CompressDataLogIndex", CompressDataLogIndexConfig.class);
 	}
 	
 
@@ -93,21 +98,22 @@ public class CompressDataLogIndexMain extends AMain<DataLogConfig> {
 		System.out.println(appName+" v"+version);
 		System.out.println("----------------------------------------");
 		System.out.println("");
-		ConfigBuilder cb = new ConfigBuilder(configType);
-		System.out.println(cb.getOptionsMessage("source index, e.g. scrubbed.datalog.gl_jan21"));
+		ConfigBuilder cb = new ConfigBuilder(new CompressDataLogIndexConfig());
+		System.out.println(cb.getOptionsMessage("source index (full name), e.g. `scrubbed.datalog.gl_jan21`"));
 	}	
 	
-	static String version = "0.1.0"; 
+	static String version = "0.1.1"; 
 	
 	@Override
 	protected void doMain2() {		
 		// e.g. "scrubbed.datalog."+dataspace+"_" + MMMyy;
 		String sourceIndex = Containers.get(configRemainderArgs, 0);
 		if (Utils.isBlank(sourceIndex)) {
-			throw new IllegalArgumentException("Pass in a source index");
+			showHelp();
+			throw new IllegalArgumentException("Pass in a source index.");
 		}
 		ESHttpClient esc = Dep.get(ESHttpClient.class);
-		String destIndex = sourceIndex+"_compressed";
+		String destIndex = Utils.or(getConfig().destIndex, sourceIndex+"_compressed");
 		Log.i(LOGTAG, "Compress "+sourceIndex+" --> "+destIndex);
 
 		// specify some terms that we want to keep
@@ -144,6 +150,13 @@ public class CompressDataLogIndexMain extends AMain<DataLogConfig> {
 		} else {
 			Log.w("Not using latest version of ES: painless script for transform...");
 			trb.setBodyWithPainless(sourceIndex, destIndex, aggs, terms, "24h");
+		}
+		// filter?
+		if ( ! Utils.isBlank(getConfig().filter)) {
+			SearchQuery sq = new SearchQuery(getConfig().filter);
+			BoolQueryBuilder fq = AppUtils.makeESFilterFromSearchQuery(sq, null, null);
+			trb.setQuery(fq);
+			Log.d("Added filter", getConfig().filter+" -> "+fq);
 		}
 		trb.setDebug(true);
 		IESResponse response = trb.get(); //might take a long time for complex body
@@ -184,10 +197,16 @@ public class CompressDataLogIndexMain extends AMain<DataLogConfig> {
 		Log.d("compress", response3);
 		
 		//add datalog.gl.all alias into the newly created index and remove it from original index
-		IndicesAliasesRequest iar = esc.admin().indices().prepareAliases();
-		iar.addAlias(destIndex, "datalog."+dataspace+".all");
-		iar.removeAlias(sourceIndex, "datalog."+dataspace+".all");
-		iar.get().check();
+		if (getConfig().noAliasSwap) {
+			Log.i("NO alias swap - the new index is not yet in use.");
+		} else {
+			IndicesAliasesRequest iar = esc.admin().indices().prepareAliases();
+			iar.addAlias(destIndex, "datalog."+dataspace+".all");
+			iar.removeAlias(sourceIndex, "datalog."+dataspace+".all");
+			iar.get().check();
+			Log.i("Alias swap done! "+sourceIndex+" -> "+destIndex);
+		}
+		Log.i("All done :) Enjoy your data");
 	}
 	
 	

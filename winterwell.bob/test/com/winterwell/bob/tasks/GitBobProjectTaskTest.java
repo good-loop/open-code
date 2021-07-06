@@ -13,7 +13,7 @@ public class GitBobProjectTaskTest {
 	public void testClone() throws IOException {
 		File tempDir = File.createTempFile("bob", "test");
 		FileUtils.delete(tempDir);
-		GitBobProjectTask gb = new GitBobProjectTask("git@github.com:sodash/open-code", tempDir);
+		GitBobProjectTask gb = new GitBobProjectTask("git@github.com:good-loop/open-code", tempDir);
 		gb.setSubDir("winterwell.utils");
 		gb.run();
 	}
