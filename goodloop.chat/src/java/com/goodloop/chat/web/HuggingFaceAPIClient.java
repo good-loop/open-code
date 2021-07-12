@@ -1,6 +1,8 @@
 package com.goodloop.chat.web;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
@@ -13,8 +15,11 @@ import com.winterwell.web.WebEx;
 
 /**
  * Call the Hugging Face Inference API
+ * 
+ * TODO using local python would let us get embeddings
+ * 
  * @author daniel
- *
+ * @testedby {@link HuggingFaceAPIClientTest}
  */
 public class HuggingFaceAPIClient {
 
@@ -41,18 +46,22 @@ public class HuggingFaceAPIClient {
 		return this;
 	}
 	
+	public Map inputsForSentenceSimilarity(String src, List<String> options) {
+		return new ArrayMap("source_sentence", src, "sentences", options);
+	}
+	
 	/**
 	 * 
 	 * @param input
 	 * @return
 	 * @throws WebEx.E50X "please wait while we load your model"
 	 */
-	public Object run(String input) throws WebEx.E50X {		
+	public Object run(Object inputs) throws WebEx.E50X {		
 		String API_URL = "https://api-inference.huggingface.co/models/"+repo+"/"+modelName;
 		FakeBrowser fb = new FakeBrowser();
 		fb.setRequestHeader("Authorization", "Bearer "+apiToken);
 		ArrayMap req = new ArrayMap(
-			"inputs", input 
+			"inputs", inputs
 		);
 		String json = WebUtils2.generateJSON(req);
 		

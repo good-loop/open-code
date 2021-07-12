@@ -26,6 +26,7 @@ import com.winterwell.gson.JsonObject;
 import com.winterwell.gson.JsonParser;
 import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.Dep;
+import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.VersionString;
 import com.winterwell.utils.containers.Containers;
@@ -129,7 +130,10 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 		ESConfig esConfig = esc.getConfig();
 		
 		// aggregate data
-		String jobId = "transform_"+sourceIndex+"_to_"+destIndex;
+		String jobId = "t_"+sourceIndex+"2"+destIndex;
+		if (jobId.length()>63) {	// 64 chars max -- an ES limitation
+			jobId = jobId.substring(0, 30)+"_"+StrUtils.md5(jobId);
+		}
 		
 		//safety mechanism -- make sure that the jobID doens't exist, if it does, delete it
 		try {
