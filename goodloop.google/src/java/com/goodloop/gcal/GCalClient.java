@@ -182,7 +182,7 @@ public class GCalClient {
 	}
 
 	public List getEvents(com.google.api.services.calendar.model.Calendar calendar) {
-		
+		calendar.get
 	}
 	
 	/**
