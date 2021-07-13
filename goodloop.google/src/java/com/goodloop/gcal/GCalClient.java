@@ -34,6 +34,7 @@ import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.ConferenceData;
 import com.google.api.services.calendar.model.CreateConferenceRequest;
 import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.Events;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
@@ -57,6 +58,7 @@ import com.google.api.services.sheets.v4.model.UpdateSheetPropertiesRequest;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.winterwell.utils.Printer;
+import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.web.app.Logins;
@@ -181,8 +183,15 @@ public class GCalClient {
 		}
 	}
 
-	public List getEvents(com.google.api.services.calendar.model.Calendar calendar) {
-		calendar.get
+	public List<Event> getEvents(com.google.api.services.calendar.model.Calendar calendar) {
+		Calendar service = getService();
+		try {
+			Events events = service.events().list(calendar.getId()).execute();
+			List<Event> items = events.getItems();
+			return items;
+		} catch (IOException ex) {
+			throw Utils.runtime(ex);
+		}
 	}
 	
 	/**
