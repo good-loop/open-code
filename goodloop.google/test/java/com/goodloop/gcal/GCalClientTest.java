@@ -3,6 +3,7 @@ package com.goodloop.gcal;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,15 +42,16 @@ public class GCalClientTest {
 	@Test
 	public void testMake1to1() throws IOException {
 		GCalClient gcc = new GCalClient();
-		Calendar dw = gcc.getCalendar("daniel@good-loop.com");
+		Calendar dw = gcc.getCalendar("eve@good-loop.com");
+		
 		System.out.println(dw);
-		Calendar dw2 = gcc.getCalendar("daniel.winterstein@gmail.com");
+		Calendar dw2 = gcc.getCalendar("roscoe@good-loop.com");
 		System.out.println(dw2);		
 //		Calendar da = gcc.getCalendar("daniel.appel.winterwell@gmail.com");
 //		System.out.println(da);
 		
 		Event event = new Event()
-			    .setSummary("Test 2 GCalClient #ChatRoundabout "+Utils.getNonce())
+			    .setSummary("A Test by Dan W - please ignore this! #ChatRoundabout "+Utils.getNonce())
 			    .setDescription("A lovely event")
 			    ;
 

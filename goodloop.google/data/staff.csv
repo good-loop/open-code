@@ -1,0 +1,38 @@
+Staff member ,No.,Region,Manager,Legal Status
+Amy Williams ,1,London,The Board,Employee
+Daniel Winterstein ,2,Edinburgh,The Board,Employee
+Ryan Cochrane,3,London,Amy,Employee
+Roscoe McInerney,4,Edinburgh,Dan,Employee
+Daniel Appel,5,Edinburgh,Dan,Employee
+Julia Hitchman,6,London,Amy,Employee
+Stuart Hands-Bellion,7,London,Jules,Employee
+Charley Tunnicliffe,8,London,Jules,Employee
+Eve Hannah,9,Edinburgh,Dan,Employee
+Emilia Buggins,10,London,Amy,Contractor
+Trudi Harris,11,,Amy,Contractor
+Amanda Shields,12,,Dan,Contractor
+Tom Kerslake,13,London,Ryan,Employee
+Nick Rainey,14,London,Jules,Employee
+Claire Gleeson-Landry,15,London,Jules,Employee
+Pete Freeman,16,,Amy / Dan,Contractor
+Katalin Bodi,17,Edinburgh,Dan,Employee
+Vera Ben Durkin,18,Edinburgh,Dan,Employee
+Barbara Liss,19,US,Amy,Associate
+Kai Jun Eer,20,Edinburgh,Dan,Employee
+John O'Brien,21,,Amy,Advisor
+Eamonn Store,22,,Amy,Advisor
+Jim Kite,23,,Amy,Advisor
+Donia Baddou,24,,Jules,Contractor
+xAlexandra Jorge,25,,Ryan,Contractor
+Natasha Taylor,26,London,Jules,Employee
+Hannah Williams,27,Remote,Dan,Employee
+Soraya Yumi,28,,Kati,Contractor
+Alexander Baxter,29,London,Jules,Employee
+Abdikarim Mohamed ,30,London,Nick,Employee
+Laura Carpenter,31,Edinburgh,Charley / Dan,Employee
+Georgia Richardson,32,London,Ryan,Employee
+David Waterhouse,33,,Amy,Contractor
+Natasha Whitfield-Niven,34,,Ryan,Contractor
+Colin Grant,35,London,Dan,Contractor
+Wing Sang Wong,36,Edinburgh,Dan,Employee
+Alexander Scurlock,37,Remote,The Board,Investor

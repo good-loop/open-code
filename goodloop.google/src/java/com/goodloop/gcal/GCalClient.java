@@ -81,6 +81,11 @@ public class GCalClient {
 		// TODO Auto-generated constructor stub
 	}
 	
+	/**
+	 * The calendars you have opened (this is a subset of the ones you can read)
+	 * @return
+	 * @throws IOException
+	 */
 	public List getCalendarList() throws IOException {
 		Calendar service = getService();
 		CalendarList clist = service.calendarList();
@@ -176,6 +181,10 @@ public class GCalClient {
 		}
 	}
 
+	public List getEvents(com.google.api.services.calendar.model.Calendar calendar) {
+		
+	}
+	
 	/**
 	 * 
 	 * @param calendarId Can be "primary"
