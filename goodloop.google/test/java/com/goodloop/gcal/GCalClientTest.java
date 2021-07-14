@@ -42,10 +42,10 @@ public class GCalClientTest {
 	@Test
 	public void testMake1to1() throws IOException {
 		GCalClient gcc = new GCalClient();
-		Calendar dw = gcc.getCalendar("eve@good-loop.com");
+		Calendar dw = gcc.getCalendar("wing@good-loop.com");
 		
 		System.out.println(dw);
-		Calendar dw2 = gcc.getCalendar("roscoe@good-loop.com");
+		Calendar dw2 = gcc.getCalendar("daniel@good-loop.com");
 		System.out.println(dw2);		
 //		Calendar da = gcc.getCalendar("daniel.appel.winterwell@gmail.com");
 //		System.out.println(da);
