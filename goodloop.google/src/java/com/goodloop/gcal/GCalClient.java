@@ -34,6 +34,7 @@ import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.ConferenceData;
 import com.google.api.services.calendar.model.CreateConferenceRequest;
 import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
@@ -57,10 +58,12 @@ import com.google.api.services.sheets.v4.model.UpdateCellsRequest;
 import com.google.api.services.sheets.v4.model.UpdateSheetPropertiesRequest;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import com.winterwell.ical.ICalEvent;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Time;
 import com.winterwell.web.app.Logins;
 
 /**
@@ -194,6 +197,25 @@ public class GCalClient {
 		}
 	}
 	
+	public static ICalEvent toICalEvent(Event event) {
+		ICalEvent e = new ICalEvent(toTime(event.getStart()), toTime(event.getEnd()), event.getSummary());
+		e.description = event.getDescription();
+		e.location = event.getLocation();
+		// TODO more
+		return e;
+	}
+	
+	/**
+	 * Convert the custom g-cal time object into our simple robust Time object 
+	 * TODO test this, inc time zone
+	 * @param edt
+	 * @return
+	 */
+	public static Time toTime(EventDateTime edt) {
+		long t = edt.getDateTime().getValue();
+		return new Time(t);
+	}
+
 	/**
 	 * 
 	 * @param calendarId Can be "primary"
