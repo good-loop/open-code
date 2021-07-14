@@ -183,13 +183,13 @@ public class GCalClient {
 		}
 	}
 
-	public List<Event> getEvents(com.google.api.services.calendar.model.Calendar calendar) {
-		Calendar service = getService();
+	public List<Event> getEvents(String calendarId) {
 		try {
-			Events events = service.events().list(calendar.getId()).execute();
+			Calendar service = getService();
+			Events events = service.events().list(calendarId).execute();
 			List<Event> items = events.getItems();
 			return items;
-		} catch (IOException ex) {
+		} catch(Exception ex) {
 			throw Utils.runtime(ex);
 		}
 	}
