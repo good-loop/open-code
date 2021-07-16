@@ -2,6 +2,7 @@ package com.goodloop.chat;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +15,9 @@ import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.io.CSVWriter;
 import com.winterwell.utils.io.ConfigFactory;
+import com.winterwell.utils.web.SimpleJson;
 import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.app.Logins;
@@ -64,6 +67,29 @@ public class SmartSuppRestAPITest {
 		Printer.out(json);
 	}
 	
+	@Test
+	public void testDownloadTranscript() {
+		FakeBrowser fb = fb();
+		String chatId 
+			= "coKTWl63qhJsT"; // Becca 
+//			= ""; // enter your ID
+		
+		String json = fb.getPage("https://api.smartsupp.com/v2/conversations/"+chatId+"/messages?size=100&sort=desc");
+		Map chat = WebUtils2.parseJSON(json);
+		List<Map> items = SimpleJson.getList(chat, "items");
+		File destFile = new File("data/transcript/"+chatId+".csv");
+		destFile.getParentFile().mkdirs();
+		CSVWriter w = new CSVWriter(destFile);	
+		w.write("# created_at","speaker_type", "text");
+		Collections.reverse(items);
+		for (Map msg : items) {
+			boolean isAgent = msg.get("agent_id") != null;
+			Object who = Utils.or(msg.get("agent_id"), msg.get("visitor_id")); // meaningless
+			Object text = SimpleJson.get(msg, "content", "text");
+			w.write(msg.get("created_at"), isAgent?"agent":"visitor", text);
+		}
+		w.close();
+	}
 
 	@Test
 	public void testReply() {
