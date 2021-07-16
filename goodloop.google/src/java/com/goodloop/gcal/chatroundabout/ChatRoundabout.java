@@ -21,12 +21,10 @@ import com.google.api.services.calendar.model.EventReminder;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.CSVReader;
-import com.winterwell.utils.time.TUnit;
-import com.winterwell.utils.time.Time;
 
 public class ChatRoundabout {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		// TODO use AMain and have a running service which goes each Monday
 		new ChatRoundabout().run();
 	}
