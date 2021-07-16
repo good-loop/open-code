@@ -37,15 +37,19 @@ public class ReplyServlet implements IServlet {
 		SmartSuppClient ssc = new SmartSuppClient();
 		ssc.setChatId(chatId);
 		ssc.setAgentId(agentId);
-		// TODO!
-		Map resp;
+
+		// send the reply		
 		if (reply != null) {
-			resp = ssc.sendReply(reply);
-		} else {
-			resp = ssc.sendReply("Hm... What about "+
-					Utils.getRandomMember(new ArraySet<>("anacondas beetles crabs dragons elephants frogs goats hippos iguanas jaguars".split(" ")))
-				+"?");
-		}
+			Map resp = ssc.sendReply(reply);
+		} 
+		
+		// NB: replies are written client side by yieldscripts.
+		// But they have to call the server to post them.
+//		else {
+//			resp = ssc.sendReply("Hm... What about "+
+//					Utils.getRandomMember(new ArraySet<>("anacondas beetles crabs dragons elephants frogs goats hippos iguanas jaguars".split(" ")))
+//				+"?");
+//		}
 		
 		JSend jsend = new JSend();
 		jsend.setStatus(KAjaxStatus.success);
