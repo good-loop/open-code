@@ -36,6 +36,7 @@ public class ChatRoundabout {
 		for (String[] row : r) {
 			if (row[4].equals("Employee")) {
 				String name = row[0];
+				String office = row[2];
 				// Catch Dan A
 				String firstName;
 				if (name.equals("Daniel Appel")) {
@@ -48,7 +49,7 @@ public class ChatRoundabout {
 					firstName = name.split(" ")[0];
 				}
 				String email = firstName.toLowerCase()+"@good-loop.com";
-				emailList.add(email);
+				emailList.add(email + "	" + office);
 			}
 		}
 		return emailList;
@@ -59,6 +60,7 @@ public class ChatRoundabout {
 		ArrayList<String> filerOutEmail = new ArrayList<String>();
 		for (String i : emailList) {
 			String email = i.split("	")[0];
+			// System.out.println(email);
 			GCalClient gccEvent = new GCalClient();
 			List<Event> allEvents = gccEvent.getEvents(email);
 
@@ -66,7 +68,7 @@ public class ChatRoundabout {
 	
 				String eventItem = event.toString();
 				
-				if (eventItem.toLowerCase().contains("holiday") || eventItem.toLowerCase().contains("Chat-roundabout")) {
+				if (eventItem.toLowerCase().contains("holiday") || eventItem.toLowerCase().contains("chat-roundabout")) {
 					LocalDate startDate = ((event.getStart().getDate() != null) ? LocalDate.parse(event.getStart().getDate().toString()) : LocalDate.parse(event.getStart().getDateTime().toString().substring(0, 10)));
 					LocalDate endDate = ((event.getEnd().getDate() != null) ? LocalDate.parse(event.getEnd().getDate().toString()) : LocalDate.parse(event.getEnd().getDateTime().toString().substring(0, 10)).plusDays(1));
 					
@@ -82,30 +84,20 @@ public class ChatRoundabout {
 		return filerOutEmail;
 	}
 	
-	private ArrayList<ArrayList<String>> getRandomPairs(ArrayList<String> emailList) {
+	private ArrayList<ArrayList<String>> getRandomPairs(ArrayList<String> smallOffice, ArrayList<String> largeOffice) {
 		ArrayList<ArrayList<String>> randomPairs = new ArrayList<ArrayList<String>>();
 		Random rand = new Random();
-		while (emailList.size() >= 4) {
-			String randomElement1 = emailList.get(rand.nextInt(emailList.size()));
-			emailList.remove(randomElement1);
-			String randomElement2 = emailList.get(rand.nextInt(emailList.size()));
-			emailList.remove(randomElement2);
+		
+		for (String pairEmail : smallOffice) {
+			String randomEmail = largeOffice.get(rand.nextInt(largeOffice.size()));
+			largeOffice.remove(randomEmail);
 			ArrayList<String> pair = new ArrayList<String>();
-			pair.add(randomElement1);
-			pair.add(randomElement2);
+			pair.add(pairEmail);
+			pair.add(randomEmail);
 			randomPairs.add(pair);
 		}
-		String lastElement1 = emailList.get(0);
-		String lastElement2 = emailList.get(1);
-		if (emailList.size() == 3) {
-			System.out.println("Unlucky person: "+ emailList.get(2));
-		}
-		emailList.remove(lastElement1);
-		emailList.remove(lastElement2);
-		ArrayList<String> pair = new ArrayList<String>();
-		pair.add(lastElement1);
-		pair.add(lastElement2);
-		randomPairs.add(pair);
+		
+		System.out.println("Poor guys who don't have 121 this week: " + largeOffice);
 		
 		return randomPairs;
 	}
@@ -172,24 +164,38 @@ public class ChatRoundabout {
 		
 		// Filter out if on holiday or already have a 121
 		for (String holidayEmails : checkEvent(emailList, nextFriday)) {
-			System.out.println(holidayEmails);
+			System.out.println(holidayEmails + " is in hoilday.");
 			emailList.remove(holidayEmails);
 		}
 		
-		// Random pairings
-		boolean evenNumberPeople = (emailList.size() % 2 == 0);
-		System.out.println("Do we have even number of people this week? " + evenNumberPeople);
+		// Separate Edinburgh and London team into two list
+		ArrayList<String> edinburghEmails = new ArrayList<String>();
+		ArrayList<String> londonEmails = new ArrayList<String>();
 		
-		ArrayList<ArrayList<String>> randomPairs = new ArrayList<ArrayList<String>>();
-		if (evenNumberPeople) {
-			ArrayList<ArrayList<String>> randomPair = getRandomPairs(emailList);
-			randomPairs = randomPair;
-		} else {
-			// TODO what to do if we do not have even numbers
-			ArrayList<ArrayList<String>> randomPair = getRandomPairs(emailList);
-			randomPairs = randomPair;
+		for (String i : emailList) {
+			String email = i.split("	")[0];
+			String office = i.split("	")[1];
+			if (office.equals("Edinburgh")) {
+				edinburghEmails.add(email);
+			} else {
+				londonEmails.add(email);
+			}
 		}
-		System.out.println(randomPairs.size());
+		
+		System.out.println("Edinburgh's team size today: " + edinburghEmails.size());
+		System.out.println("London's team size today: " + londonEmails.size());
+		
+		// Logic: which office is larger
+		boolean e2l = (edinburghEmails.size() > londonEmails.size());
+		
+		// Random pairings
+		ArrayList<ArrayList<String>> randomPairs = new ArrayList<ArrayList<String>>();
+		if (e2l) {
+			randomPairs = getRandomPairs(londonEmails, edinburghEmails);
+		} else {
+			randomPairs = getRandomPairs(edinburghEmails, londonEmails);
+		}
+		
 		System.out.println(randomPairs);
 		
 		// Make events
@@ -197,7 +203,7 @@ public class ChatRoundabout {
 			System.out.println(roundaboutPairs.get(0));
 			System.out.println(roundaboutPairs.get(1));
 			
-			Make1to1(roundaboutPairs.get(0), roundaboutPairs.get(1), nextFriday);
+			// Make1to1(roundaboutPairs.get(0), roundaboutPairs.get(1), nextFriday);
 		}
 	}
 	
