@@ -97,7 +97,7 @@ public class ChatRoundabout {
 			randomPairs.add(pair);
 		}
 		
-		System.out.println("Poor guys who don't have 121 this week: " + largeOffice);
+		System.out.println("Poor guys who won't have 121 this week: " + largeOffice);
 		
 		return randomPairs;
 	}
@@ -111,7 +111,7 @@ public class ChatRoundabout {
 		System.out.println(person2);		
 		
 		Event event = new Event()
-	    .setSummary("A Test by Dan W - please ignore this! #ChatRoundabout "+Utils.getNonce())
+	    .setSummary("#Chat-Roundabout "+Utils.getNonce())
 	    .setDescription("A lovely event")
 	    ;
 
@@ -190,11 +190,7 @@ public class ChatRoundabout {
 		
 		// Random pairings
 		ArrayList<ArrayList<String>> randomPairs = new ArrayList<ArrayList<String>>();
-		if (e2l) {
-			randomPairs = getRandomPairs(londonEmails, edinburghEmails);
-		} else {
-			randomPairs = getRandomPairs(edinburghEmails, londonEmails);
-		}
+		randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails) : getRandomPairs(edinburghEmails, londonEmails);
 		
 		System.out.println(randomPairs);
 		
