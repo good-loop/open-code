@@ -60,7 +60,8 @@ public class ChatRoundabout {
 		ArrayList<String> filerOutEmail = new ArrayList<String>();
 		for (String i : emailList) {
 			String email = i.split("	")[0];
-			// System.out.println(email);
+			String office = i.split("	")[1];
+			System.out.println(email);
 			GCalClient gccEvent = new GCalClient();
 			List<Event> allEvents = gccEvent.getEvents(email);
 
@@ -73,10 +74,10 @@ public class ChatRoundabout {
 					LocalDate endDate = ((event.getEnd().getDate() != null) ? LocalDate.parse(event.getEnd().getDate().toString()) : LocalDate.parse(event.getEnd().getDateTime().toString().substring(0, 10)).plusDays(1));
 					
 					List<LocalDate> holiDays = startDate.datesUntil(endDate).collect(Collectors.toList());
+					System.out.println(holiDays);
 					
-					boolean haveHolidayOnFriday = holiDays.contains(nextFriday);
-					if (haveHolidayOnFriday) {
-						filerOutEmail.add(email);
+					if (holiDays.contains(nextFriday)) {
+						filerOutEmail.add(email + "	" + office);
 					}
 				}
 			}
