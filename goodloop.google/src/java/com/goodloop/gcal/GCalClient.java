@@ -22,6 +22,7 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.DateTime;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.Calendar.CalendarList;
@@ -186,16 +187,23 @@ public class GCalClient {
 		}
 	}
 
-	public List<Event> getEvents(String calendarId) {
-		try {
-			Calendar service = getService();
-			Events events = service.events().list(calendarId).execute();
-			List<Event> items = events.getItems();
-			return items;
-		} catch(Exception ex) {
-			throw Utils.runtime(ex);
-		}
-	}
+    public List<Event> getEvents(String calendarId) {
+        return getEvents(calendarId, null, null);
+    }
+    
+    public List<Event> getEvents(String calendarId, DateTime start, DateTime end) {
+        try {
+            Calendar service = getService();
+            Calendar.Events.List listReq = service.events().list(calendarId);
+            if (start != null) listReq.setTimeMin(start);
+            if (end != null) listReq.setTimeMax(end);
+            Events events = listReq.execute();
+            List<Event> items = events.getItems();
+            return items;
+        } catch(Exception ex) {
+            throw Utils.runtime(ex);
+        }
+    }
 	
 	public static ICalEvent toICalEvent(Event event) {
 		ICalEvent e = new ICalEvent(toTime(event.getStart()), toTime(event.getEnd()), event.getSummary());

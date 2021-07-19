@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +50,7 @@ public class ChatRoundabout {
 					firstName = name.split(" ")[0];
 				}
 				String email = firstName.toLowerCase()+"@good-loop.com";
-				emailList.add(email + "	" + office);
+				emailList.add(email + "\t" + office);
 			}
 		}
 		return emailList;
@@ -57,27 +58,41 @@ public class ChatRoundabout {
 	
 	private ArrayList<String> checkEvent(ArrayList<String> emailList, LocalDate nextFriday) {
 		
+		// Restrict events around the date of the meeting
+		
+		// Only getting events 1 days before and after next Friday to try to catch long holidays but not getting too many event results		
+		String startString = nextFriday.minusDays(1).atStartOfDay().format(DateTimeFormatter.ISO_DATE_TIME);
+        DateTime start = DateTime.parseRfc3339(startString);
+    	String endString = nextFriday.plusDays(1).atStartOfDay().format(DateTimeFormatter.ISO_DATE_TIME);
+        DateTime end = DateTime.parseRfc3339(endString);
+		
+		GCalClient client = new GCalClient();
+		
 		ArrayList<String> filerOutEmail = new ArrayList<String>();
 		for (String i : emailList) {
-			String email = i.split("	")[0];
-			String office = i.split("	")[1];
+			String email = i.split("\t")[0];
+			String office = i.split("\t")[1];
 			System.out.println(email);
-			GCalClient gccEvent = new GCalClient();
-			List<Event> allEvents = gccEvent.getEvents(email);
+			
+			List<Event> allEvents = client.getEvents(email, start, end);
 
 			for (Event event : allEvents) {
 	
-				String eventItem = event.toString();
+				String eventItem = event.toString().toLowerCase();
 				
-				if (eventItem.toLowerCase().contains("holiday") || eventItem.toLowerCase().contains("chat-roundabout")) {
-					LocalDate startDate = ((event.getStart().getDate() != null) ? LocalDate.parse(event.getStart().getDate().toString()) : LocalDate.parse(event.getStart().getDateTime().toString().substring(0, 10)));
-					LocalDate endDate = ((event.getEnd().getDate() != null) ? LocalDate.parse(event.getEnd().getDate().toString()) : LocalDate.parse(event.getEnd().getDateTime().toString().substring(0, 10)).plusDays(1));
+				if (eventItem.contains("holiday") || eventItem.contains("chat-roundabout")) {
+					boolean formatIsDate = event.getStart().getDate() != null;
+					LocalDate startDate = (formatIsDate ? LocalDate.parse(event.getStart().getDate().toString()) : LocalDate.parse(event.getStart().getDateTime().toString().substring(0, 10)));
+					LocalDate endDate = (formatIsDate ? LocalDate.parse(event.getEnd().getDate().toString()) : LocalDate.parse(event.getEnd().getDateTime().toString().substring(0, 10)).plusDays(1));
 					
 					List<LocalDate> holiDays = startDate.datesUntil(endDate).collect(Collectors.toList());
-					System.out.println(holiDays);
+					System.out.println("Holidays: " + holiDays);
 					
+					if (email.equals("daniel@good-loop.com")) {
+						System.out.print("");
+					}
 					if (holiDays.contains(nextFriday)) {
-						filerOutEmail.add(email + "	" + office);
+						filerOutEmail.add(email + "\t" + office);
 					}
 				}
 			}
@@ -103,7 +118,29 @@ public class ChatRoundabout {
 		return randomPairs;
 	}
 	
-	public void Make1to1(String email1, String email2, LocalDate nextFriday) throws IOException {
+    public void Make1to1(String email1, String email2, LocalDate nextFriday) throws IOException {
+        GCalClient gcc = new GCalClient();
+        Calendar person1 = gcc.getCalendar(email1);
+        Calendar person2 = gcc.getCalendar(email2);
+
+        String eventDesc = "#Chat-Roundabout " + Utils.getNonce();
+
+        DateTime startDateTime = new DateTime(nextFriday.toString() + "T11:30:00.00Z");
+        DateTime endDateTime = new DateTime(nextFriday.toString() + "T11:40:00.00Z");
+        String eventTimeDesc = "From " + startDateTime.toString() + " to " + endDateTime.toString();
+        EventAttendee[] attendees = new EventAttendee[] {
+            new EventAttendee().setEmail(email1)
+                .setResponseStatus("tentative"),
+            new EventAttendee().setEmail(email2)
+                .setResponseStatus("tentative"),
+        };
+        String eventAttendeeDesc = "Attending: " + attendees.toString();
+        String eventRemindersDesc = "Sending reminders via email (10 minutes) and popup (1 minute)";
+        String calendarId = person1.getId(); // "primary";
+        Printer.out("Adding to calendar " + calendarId + ": " + eventDesc + " " + eventTimeDesc + " " + eventAttendeeDesc + " " + eventRemindersDesc);
+    }
+	
+	public void Make1to1ForReal(String email1, String email2, LocalDate nextFriday) throws IOException {
 		GCalClient gcc = new GCalClient();
 		Calendar person1 = gcc.getCalendar(email1);
 		
@@ -174,8 +211,8 @@ public class ChatRoundabout {
 		ArrayList<String> londonEmails = new ArrayList<String>();
 		
 		for (String i : emailList) {
-			String email = i.split("	")[0];
-			String office = i.split("	")[1];
+			String email = i.split("\t")[0];
+			String office = i.split("\t")[1];
 			if (office.equals("Edinburgh")) {
 				edinburghEmails.add(email);
 			} else {
@@ -197,10 +234,8 @@ public class ChatRoundabout {
 		
 		// Make events
 		for (ArrayList<String> roundaboutPairs : randomPairs) {
-			System.out.println(roundaboutPairs.get(0));
-			System.out.println(roundaboutPairs.get(1));
 			
-			// Make1to1(roundaboutPairs.get(0), roundaboutPairs.get(1), nextFriday);
+			Make1to1(roundaboutPairs.get(0), roundaboutPairs.get(1), nextFriday);
 		}
 	}
 	
