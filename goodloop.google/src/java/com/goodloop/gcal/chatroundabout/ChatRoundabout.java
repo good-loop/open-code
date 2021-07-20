@@ -23,10 +23,9 @@ import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.CSVReader;
 
-public class ChatRoundabout {
+public class ChatRoundabout  {
 
 	public static void main(String[] args) throws IOException {
-		// TODO use AMain and have a running service which goes each Monday
 		new ChatRoundabout().run();
 	}
 	
@@ -191,7 +190,7 @@ public class ChatRoundabout {
 		Printer.out(event2.toPrettyString());
 	}
 	
-	private void run() throws IOException {
+	void run() throws IOException {
 		
 		// Get a list of email
 		ArrayList<String> emailList = emailList();
