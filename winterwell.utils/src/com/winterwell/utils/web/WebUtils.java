@@ -590,7 +590,7 @@ public class WebUtils {
 
 	/**
 	 * @param tag
-	 *            E.g. "div" Can be badly formed xml
+	 *            E.g. "div" or "img" Can be badly formed xml
 	 * @param includeTag
 	 *            If false, return just the tag's content text (not the tag or
 	 *            the attributes). Extract all instances of tag from the xml
@@ -614,11 +614,8 @@ public class WebUtils {
 		}
 		// One tag (e.g. <img />
 		if (includeTag) {
-			p = Pattern.compile("<" + tag + "[^>]*/>");
-			m = p.matcher(xml);
-			while (m.find()) {
-				list.add(m.group());
-			}
+			List<String> selfClosing = extractXmlTagsSelfClosing(tag, xml);
+			list.addAll(selfClosing);
 		}
 		return list;
 	}
@@ -630,7 +627,12 @@ public class WebUtils {
 		Matcher m = p.matcher(xml);
 		List<String> list = new ArrayList<String>();
 		while (m.find()) {
-			list.add(m.group());
+			String egtag = m.group();
+			// Allow some lax syntax for e.g. <img>
+			// NB: checking for /> in the regex without mangling attribute /s is a bit fiddly
+			if (tag.equals("img") || tag.equals("hr") || egtag.endsWith("/>")) {
+				list.add(egtag);
+			}
 		}
 		return list;
 	}

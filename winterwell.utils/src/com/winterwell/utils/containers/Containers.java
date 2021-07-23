@@ -1086,23 +1086,23 @@ public final class Containers  {
 
 	/**
 	 * Convenience for "get if array is long enough"
-	 * @param row
+	 * @param row Can be null
 	 * @param i
 	 * @return row[i] or null if i is too high
 	 */
 	public static Object get(Object[] row, int i) {
-		if (i>= row.length) return null;
+		if (row==null || i>= row.length) return null;
 		return row[i];
 	}
 
 	/**
 	 * Convenience for "get if array is long enough"
-	 * @param row
+	 * @param row Can be null
 	 * @param i
 	 * @return row[i] or null if i is too high
 	 */
 	public static String get(String[] row, int i) {
-		if (i>= row.length) return null;
+		if (row==null || i>= row.length) return null;
 		return row[i];
 	}
 
