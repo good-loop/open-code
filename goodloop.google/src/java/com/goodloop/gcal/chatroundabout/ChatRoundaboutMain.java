@@ -12,6 +12,8 @@ import com.winterwell.web.app.AMain;
 
 public class ChatRoundaboutMain extends AMain {
 	
+	private static final String FILENAME = "ChatRoundabout.txt";
+	
 	public static void main(String[] args) throws IOException {
 		ChatRoundaboutMain mymain = new ChatRoundaboutMain();
         mymain.doMain(args);
@@ -19,26 +21,25 @@ public class ChatRoundaboutMain extends AMain {
 	
 	@Override
 	protected void doMainLoop() throws IOException {
+		
 		// Create last ran date file if not exist
 	    try {
-	        File myObj = new File("ChatRoundaboutLastRan.txt");
-	        if (myObj.createNewFile()) {
-	          System.out.println("File created: " + myObj.getName());
-	        } else {
-	        }
+	        File lastRanFile = new File(FILENAME);
+	        if (lastRanFile.createNewFile()) {
+	          System.out.println("File created: " + lastRanFile.getName());
+	        } 
 	      } catch (IOException e) {
 	        System.out.println("An error occurred.");
 	        e.printStackTrace();
 	      }
 	    
 	    // Reading lastran.txt
-	    String lastRanOnFile = "";
+	    String lastRanString = "";
 	    try {
-	        File myObj = new File("ChatRoundaboutLastRan.txt");
-	        Scanner myReader = new Scanner(myObj);
+	        File lastRanFile = new File(FILENAME);
+	        Scanner myReader = new Scanner(lastRanFile);
 	        while (myReader.hasNextLine()) {
-	          String data = myReader.nextLine();
-	          lastRanOnFile = data;
+	          lastRanString = myReader.nextLine();;
 	        }
 	        myReader.close();
 	      } catch (IOException e) {
@@ -47,8 +48,8 @@ public class ChatRoundaboutMain extends AMain {
 	      }
 
 	    // Logic: Is it on the same day as last run and is it on Monday
-		boolean onLastRD = LocalDate.now().toString() == lastRanOnFile;
-		boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
+		boolean onLastRD = LocalDate.now().toString().equals(lastRanString);
+		boolean isMonday = LocalDate.now().getDayOfWeek().equals(DayOfWeek.MONDAY);
 		
 		if (isMonday && !onLastRD) {
 			// Run the service
@@ -65,10 +66,9 @@ public class ChatRoundaboutMain extends AMain {
 				System.out.println("An error occurred.");
 				e.printStackTrace();
 			}
-		}
+		} 
 		
-//		Utils.sleep(86400000);
-		Utils.sleep(10000);
+		Utils.sleep(3600000);
 	}
 	
 }

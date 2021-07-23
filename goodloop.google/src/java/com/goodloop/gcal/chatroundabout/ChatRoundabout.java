@@ -29,6 +29,10 @@ public class ChatRoundabout  {
 		new ChatRoundabout().run();
 	}
 	
+	/**
+	 * Convert staff.csv into an ArrayList of two items
+	 * @return email + "\t" + office
+	 */
 	private ArrayList<String> emailList() {
 		ArrayList<String> emailList = new ArrayList<String>();
 		
@@ -55,6 +59,12 @@ public class ChatRoundabout  {
 		return emailList;
 	}
 	
+	/**
+	 * Check if anyone inside of the ArrayList is on holiday on next Friday or already have 121 assigned
+	 * @param emailList the emailList returned from emailList() in (email + "\t" + office) format
+	 * @param nextFriday date of the upcoming 121 event a.k.a next Friday
+	 * @return filtered emailList of same format
+	 */
 	private ArrayList<String> checkEvent(ArrayList<String> emailList, LocalDate nextFriday) {
 		
 		// Restrict events around the date of the meeting
@@ -86,10 +96,7 @@ public class ChatRoundabout  {
 					
 					List<LocalDate> holiDays = startDate.datesUntil(endDate).collect(Collectors.toList());
 					System.out.println("Holidays: " + holiDays);
-					
-					if (email.equals("daniel@good-loop.com")) {
-						System.out.print("");
-					}
+
 					if (holiDays.contains(nextFriday)) {
 						filerOutEmail.add(email + "\t" + office);
 					}
@@ -99,7 +106,15 @@ public class ChatRoundabout  {
 		return filerOutEmail;
 	}
 	
+	/**
+	 * Randomly generate 121 pairs between two office. Some people in the larger office will not have 121 event.
+	 * @param smallOffice ArrayList of email of the smaller team
+	 * @param largeOfficeArrayList of email of the larger team
+	 * @return An ArrayList of an ArrayList: a pair = [staff from small office, staff from large office]
+	 */
 	private ArrayList<ArrayList<String>> getRandomPairs(ArrayList<String> smallOffice, ArrayList<String> largeOffice) {
+		// TODO make sure we hit every pairing
+		
 		ArrayList<ArrayList<String>> randomPairs = new ArrayList<ArrayList<String>>();
 		Random rand = new Random();
 		
@@ -112,17 +127,28 @@ public class ChatRoundabout  {
 			randomPairs.add(pair);
 		}
 		
+		// TODO make sure nobody left unassigned two weeks in a row
 		System.out.println("Poor guys who won't have 121 this week: " + largeOffice);
 		
 		return randomPairs;
 	}
 	
-    public void Make1to1(String email1, String email2, LocalDate nextFriday) throws IOException {
+	/**
+	 * Testing the function of making 121 events without actually writing them to everyone's calendar 
+	 * @param email1 first email in the pair
+	 * @param email2 second email in the pair
+	 * @param nextFriday date of next Friday
+	 * @throws IOException
+	 */
+    public void testMake121(String email1, String email2, LocalDate nextFriday) throws IOException {
         GCalClient gcc = new GCalClient();
         Calendar person1 = gcc.getCalendar(email1);
         Calendar person2 = gcc.getCalendar(email2);
 
-        String eventDesc = "#Chat-Roundabout " + Utils.getNonce();
+        Event event = new Event()
+        	    .setSummary("#Chat-Roundabout "+Utils.getNonce())
+        	    .setDescription("Random weekly chat between " + email1.split("@")[0] + " and " + email2.split("@")[0])
+        	    ;
 
         DateTime startDateTime = new DateTime(nextFriday.toString() + "T11:30:00.00Z");
         DateTime endDateTime = new DateTime(nextFriday.toString() + "T11:40:00.00Z");
@@ -136,10 +162,17 @@ public class ChatRoundabout  {
         String eventAttendeeDesc = "Attending: " + attendees.toString();
         String eventRemindersDesc = "Sending reminders via email (10 minutes) and popup (1 minute)";
         String calendarId = person1.getId(); // "primary";
-        Printer.out("Adding to calendar " + calendarId + ": " + eventDesc + " " + eventTimeDesc + " " + eventAttendeeDesc + " " + eventRemindersDesc);
+        Printer.out("Adding to calendar " + calendarId + ": " + event + " " + eventTimeDesc + " " + eventAttendeeDesc + " " + eventRemindersDesc);
     }
 	
-	public void Make1to1ForReal(String email1, String email2, LocalDate nextFriday) throws IOException {
+    /**
+     * Making 121 events in everyone's calendar on next Friday
+     * @param email1 first email in the pair
+     * @param email2 second email in the pair
+     * @param nextFriday nextFriday date of next Friday
+     * @throws IOException
+     */
+	public void make121(String email1, String email2, LocalDate nextFriday) throws IOException {
 		GCalClient gcc = new GCalClient();
 		Calendar person1 = gcc.getCalendar(email1);
 		
@@ -149,7 +182,7 @@ public class ChatRoundabout  {
 		
 		Event event = new Event()
 	    .setSummary("#Chat-Roundabout "+Utils.getNonce())
-	    .setDescription("A lovely event")
+	    .setDescription("Random weekly chat between " + email1.split("@")[0] + " and " + email2.split("@")[0])
 	    ;
 
 		DateTime startDateTime = new DateTime(nextFriday.toString() + "T11:30:00.00Z");
@@ -232,9 +265,10 @@ public class ChatRoundabout  {
 		System.out.println(randomPairs);
 		
 		// Make events
-		for (ArrayList<String> roundaboutPairs : randomPairs) {
+		for (ArrayList<String> pair : randomPairs) {
 			
-			Make1to1(roundaboutPairs.get(0), roundaboutPairs.get(1), nextFriday);
+			// TODO Change this method to `make121` when deploy
+			testMake121(pair.get(0), pair.get(1), nextFriday);
 		}
 	}
 	
