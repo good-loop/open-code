@@ -36,9 +36,18 @@ public final class SimpleTemplateVars {
 	private Map<String, ?> vars;
 	private boolean useJS;
 	private Map<String,IFn> fns = new HashMap();
+	/**
+	 * Simulate a small fragment of js
+	 */
+	private boolean useJSLite = true;
 	
 	public SimpleTemplateVars setUseJS(boolean useJS) {
 		this.useJS = useJS;
+		if (useJS) useJSLite = false;
+		return this;
+	}
+	public SimpleTemplateVars setUseJSLite(boolean useJSLite) {
+		this.useJSLite = useJSLite;
 		return this;
 	}
 
@@ -66,16 +75,25 @@ public final class SimpleTemplateVars {
 			return txtWithVars; // blank = no-op
 		}
 		String txt1 = txtWithVars;
-
+		String txt2 = txt1;
+		
 		// TODO process ${name} 
-		String txt2 = process2_dollarBracket(txt1);
-
+		if (useJSLite) {
+			txt2 = process2_dollarBracket(txt1);
+		}
+		
 		// process $vars
 		String txt3 = process2_vars(txt2);
 				
 		// process js
 		if (useJS) {
 			txt2 = process2_js(txtWithVars, txt2);
+		}
+		
+		// any missed vars?
+		List<String> missed = StrUtils.findAll(p, txt3);
+		if ( ! missed.isEmpty()) {
+			Log.w("SimpleTemplateVars", "Possibly missed variables: "+missed);
 		}
 		
 		// done
@@ -111,7 +129,7 @@ public final class SimpleTemplateVars {
 		return txtOut;
 	}
 
-	static final Pattern p = Pattern.compile("\\$([a-zA-Z0-9_]+)(\\.[a-zA-Z0-9_]+)?");
+	static final Pattern p = Pattern.compile("\\$([a-zA-Z_][a-zA-Z0-9_]*)(\\.[a-zA-Z0-9_]+)?");
 	
 	private String process2_vars(String txt) {		
 		List unsets = new ArrayList();
@@ -181,6 +199,9 @@ public final class SimpleTemplateVars {
 	private String process2_js(String txtWithVars, String txt2) {
 		ScriptEngineManager manager = new ScriptEngineManager();
 		ScriptEngine js = manager.getEngineByName("javascript");
+		if (js==null) {
+			throw new FailureException("Could not find script engine 'javascript'");
+		}
 		Bindings bindings = js.getBindings(ScriptContext.ENGINE_SCOPE);
 		if (vars != null) {
 			// TODO blanks as ""

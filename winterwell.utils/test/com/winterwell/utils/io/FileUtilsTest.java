@@ -38,6 +38,14 @@ public class FileUtilsTest extends TestCase {
 			assert FileUtils.globMatch("*reseller*", f);
 			assert FileUtils.globMatch("*partner*", f);
 		}
+		{	// multi star
+			File f = new File("dirry/blah/foo.txt");
+			assert FileUtils.globMatch("**rry*", f);
+			assert FileUtils.globMatch("**blah/*txt", f);
+			assert FileUtils.globMatch("**blah*txt", f);
+			assert ! FileUtils.globMatch("**foo*foo*txt", f);
+		}
+
 	}
 	
 	public void testGetWWDir() throws IOException {
