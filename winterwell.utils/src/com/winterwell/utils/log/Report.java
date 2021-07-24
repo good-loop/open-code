@@ -13,7 +13,7 @@ import com.winterwell.utils.time.Time;
  * 
  */
 public final class Report implements Serializable {
-
+	
 	private static final long serialVersionUID = 1L;
 	/**
 	 * NB: Only set by exceptions

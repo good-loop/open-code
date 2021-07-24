@@ -335,7 +335,7 @@ public class ConfigBuilder {
 			remainderArgs = Arrays.asList(Arrays.copyOfRange(args, i, args.length));
 			return this;
 		} catch (Exception e) {
-			throw Utils.runtime(e);
+			throw new IllegalArgumentException(StrUtils.join(args,  " "), e);
 		} finally {
 			source = null;
 		}

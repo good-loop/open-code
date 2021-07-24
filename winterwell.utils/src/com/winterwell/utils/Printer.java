@@ -1,5 +1,6 @@
 package com.winterwell.utils;
 
+import java.awt.Color;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.SQLException;
@@ -23,6 +24,7 @@ import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.ArraySet;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.log.Log;
 
 
 /**
@@ -323,7 +325,29 @@ public class Printer {
 	}
 	public static String out(String... x) {
 		String s = toString(x);
-		System.out.println(toString(x));
+		System.out.println(s);
+		return s;
+	}
+	
+	/**
+	 * 
+	 * See https://stackoverflow.com/questions/1448858/how-to-color-system-out-println-output
+	 * @param col
+	 * @param x
+	 * @return
+	 */
+	public static String outInColor(Color col, String... x) {
+		String s = toString(x);
+		String colCode = null;
+		if (col==Color.BLUE) colCode = "34";
+		if (col==Color.YELLOW) colCode = "33";
+		if (col==Color.GREEN) colCode = "32";
+		if (col==Color.RED) colCode = "31";
+		if (colCode==null) {
+			colCode = "38;3;"+col.getRed()+";"+col.getGreen()+";"+col.getBlue();
+		}
+		String scol = (char)27 + "["+colCode+"m"+s+(char)27 + "[0m";
+		System.out.println(scol);
 		return s;
 	}
 

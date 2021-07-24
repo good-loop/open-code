@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -74,6 +75,10 @@ public class Log {
 	 */
 	public static final int MAX_LENGTH = 1048 * 4;
 
+	/**
+	 * An important OK :)
+	 */
+	public static final Level SUCCESS = new Level("SUCCESS", Level.WARNING.intValue()-1) {};
 	public static final Level WARNING = Level.WARNING;
 	public static final Level ERROR = Level.SEVERE;
 	public static final Level DEBUG = Level.FINE;
@@ -215,6 +220,10 @@ public class Log {
 		listeners = ls.toArray(new ILogListener[0]);
 	}
 
+	public static List<ILogListener> getListeners() {
+		return Arrays.asList(listeners);
+	}
+	
 	@Deprecated
 	public static void report(Object msg) {
 		if (!(msg instanceof Throwable)) {
