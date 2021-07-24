@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.winterwell.datalog.Rate;
+import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
+import com.winterwell.utils.gui.GuiUtils;
 import com.winterwell.utils.io.Option;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.TUnit;
@@ -28,6 +30,9 @@ public class LogConfig {
 		ignoretags.add(tag);
 		return this;
 	}
+	
+	@Option 
+	boolean useColor; // ?? = Utils.OSisUnix() && GuiUtils.isInteractive();
 	
 	@Option
 	public List<String> verbosetags; 

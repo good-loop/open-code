@@ -182,6 +182,13 @@ public class Log {
 			};
 		}
 		
+		// colour sysout?
+		if (config.useColor) {
+			SystemOutLogListener ll = Containers.firstClass(Log.getListeners(), SystemOutLogListener.class);
+			if (ll != null) {
+				ll.setUseColor(config.useColor);
+			}
+		}
 		// throttle cache??
 		
 		// all set (let's log that)
