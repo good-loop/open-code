@@ -24,6 +24,8 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.CSVReader;
 
 public class ChatRoundabout  {
+	
+	private static final Boolean LIVE_MODE = false;
 
 	public static void main(String[] args) throws IOException {
 		new ChatRoundabout().run();
@@ -134,14 +136,14 @@ public class ChatRoundabout  {
 	}
     
     /**
-     * Making 121 events in everyone's calendar on next Friday
-     * @param email1 first email in the pair
-     * @param email2 second email in the pair
-     * @param nextFriday nextFriday date of next Friday
+     * Create a 1-to-1 event for a pair of users
+     * @param email1 email of first attendee
+     * @param email2 email of second attendee
+     * @param date Date of event
      * @return event will use in addEvent method
      * @throws IOException
      */
-	public Event prepare121(String email1, String email2, LocalDate nextFriday) throws IOException {		
+	public Event prepare121(String email1, String email2, LocalDate date) throws IOException {		
 		System.out.println("Creating 121 event between " + email1 + "and " + email2);		
 		
 		String name1 = email1.split("@")[0].substring(0, 1).toUpperCase() + email1.split("@")[0].substring(1);
@@ -153,13 +155,13 @@ public class ChatRoundabout  {
 	    .setDescription("Random weekly chat between " + name1 + " and " + name2)
 	    ;
 
-		DateTime startDateTime = new DateTime(nextFriday.toString() + "T11:30:00.00Z");
+		DateTime startDateTime = new DateTime(date.toString() + "T11:30:00.00Z");
 		EventDateTime start = new EventDateTime()
 		    .setDateTime(startDateTime)
 		    .setTimeZone("GMT");
 		event.setStart(start);
 
-		DateTime endDateTime = new DateTime(nextFriday.toString() + "T11:40:00.00Z");
+		DateTime endDateTime = new DateTime(date.toString() + "T11:40:00.00Z");
 		EventDateTime end = new EventDateTime()
 		    .setDateTime(endDateTime)
 		    .setTimeZone("GMT");
@@ -184,27 +186,7 @@ public class ChatRoundabout  {
 		
 		return event;
 	}
-	
-	/**
-	 * 
-	 * @param email1 first email in the pair 
-	 * @param event prepared event
-	 * @param test test mode (set false to make event for real)
-	 * @throws IOException
-	 */
-	public void make121(String email1, Event event, boolean test ) throws IOException {
-		GCalClient gcc = new GCalClient();
-		Calendar person1 = gcc.getCalendar(email1);
-		
-		if (test) {
-			Printer.out("\nTESTING \nEvent: " + event.getSummary() + "\nDescription: " + event.getDescription() + 
-					"\nTime: " + event.getStart() + event.getEnd() + "\nAttendess: " + event.getAttendees());
-		} else {
-			String calendarId = person1.getId(); // "primary";
-			Event event2 = gcc.addEvent(calendarId, event, false, true);
-			Printer.out(event2.toPrettyString());
-		}
-	}
+
 	
 	void run() throws IOException {
 		
@@ -250,9 +232,24 @@ public class ChatRoundabout  {
 		
 		// Make events
 		for (ArrayList<String> pair : randomPairs) {
+			String email1 = pair.get(1);
+			String email2 = pair.get(2);
+			Event preparedEvent = prepare121(email1, email2, nextFriday);
 			
-			Event preparedEvent = prepare121(pair.get(0), pair.get(1), nextFriday);
-			make121(pair.get(0), preparedEvent, true); // Set true to enable test mode
+			// Save events to Google Calendar, or just do a dry run?
+			if (LIVE_MODE) {
+				GCalClient gcc = new GCalClient();
+				Calendar person1 = gcc.getCalendar(email1);
+				String calendarId = person1.getId(); // "primary";
+				Event event2 = gcc.addEvent(calendarId, preparedEvent, false, true);
+				Printer.out("Saved event to Google Calendar: " + event2.toPrettyString());
+			} else {
+				Printer.out("\nTESTING \nEvent: " + preparedEvent.getSummary() +
+						"\nDescription: " + preparedEvent.getDescription() + 
+						"\nTime: " + preparedEvent.getStart() + " - " + preparedEvent.getEnd() +
+						"\nAttendees: " + preparedEvent.getAttendees()
+				);
+			}
 		}
 	}
 	
