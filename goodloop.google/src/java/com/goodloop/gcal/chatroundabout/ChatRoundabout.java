@@ -132,67 +132,6 @@ public class ChatRoundabout  {
 		
 		return randomPairs;
 	}
-	
-	/**
-	 * Testing the function of making 121 events without actually writing them to everyone's calendar 
-	 * @param email1 first email in the pair
-	 * @param email2 second email in the pair
-	 * @param nextFriday date of next Friday
-	 * @throws IOException
-	 */
-    public void testMake121(String email1, String email2, LocalDate nextFriday) throws IOException {
-		GCalClient gcc = new GCalClient();
-		
-		System.out.println("Creating 121 event between " + email1 + "and " + email2);		
-		Calendar person1 = gcc.getCalendar(email1);
-		Printer.out(person1);
-		Calendar person2 = gcc.getCalendar(email2);
-		Printer.out(person2);
-		
-		String name1 = email1.split("@")[0].substring(0, 1).toUpperCase() + email1.split("@")[0].substring(1);
-		String name2 = email2.split("@")[0].substring(0, 1).toUpperCase() + email2.split("@")[0].substring(1);
-		// Setting event details
-		Event event = new Event()
-	    .setSummary("#Chat-Roundabout "+Utils.getNonce())
-	    .setDescription("Random weekly chat between " + name1 + " and " + name2)
-	    ;
-
-		DateTime startDateTime = new DateTime(nextFriday.toString() + "T11:30:00.00Z");
-		EventDateTime start = new EventDateTime()
-		    .setDateTime(startDateTime)
-		    .setTimeZone("GMT");
-		event.setStart(start);
-
-		DateTime endDateTime = new DateTime(nextFriday.toString() + "T11:40:00.00Z");
-		EventDateTime end = new EventDateTime()
-		    .setDateTime(endDateTime)
-		    .setTimeZone("GMT");
-		event.setEnd(end);
-
-		EventAttendee[] attendees = new EventAttendee[] {
-		    new EventAttendee().setEmail(email1)
-		    	.setResponseStatus("tentative"),
-		    new EventAttendee().setEmail(email2)
-		    	.setResponseStatus("tentative"),
-		};
-		event.setAttendees(Arrays.asList(attendees));
-
-		EventReminder[] reminderOverrides = new EventReminder[] {
-		    new EventReminder().setMethod("email").setMinutes(10),
-		    new EventReminder().setMethod("popup").setMinutes(1),
-		};
-		Event.Reminders reminders = new Event.Reminders()
-		    .setUseDefault(false)
-		    .setOverrides(Arrays.asList(reminderOverrides));
-		event.setReminders(reminders);
-
-		// Not Creating events, instead print out details for testing
-		// String calendarId = person1.getId(); // "primary";
-		// Event event2 = gcc.addEvent(calendarId, event, false, true)
-		
-		
-    }
-	
     
     /**
      * Making 121 events in everyone's calendar on next Friday
@@ -205,10 +144,13 @@ public class ChatRoundabout  {
 	public Event prepare121(String email1, String email2, LocalDate nextFriday) throws IOException {		
 		System.out.println("Creating 121 event between " + email1 + "and " + email2);		
 		
+		String name1 = email1.split("@")[0].substring(0, 1).toUpperCase() + email1.split("@")[0].substring(1);
+		String name2 = email2.split("@")[0].substring(0, 1).toUpperCase() + email2.split("@")[0].substring(1);
+		
 		// Setting event details
 		Event event = new Event()
 	    .setSummary("#Chat-Roundabout "+Utils.getNonce())
-	    .setDescription("Random weekly chat between " + email1.split("@")[0] + " and " + email2.split("@")[0])
+	    .setDescription("Random weekly chat between " + name1 + " and " + name2)
 	    ;
 
 		DateTime startDateTime = new DateTime(nextFriday.toString() + "T11:30:00.00Z");
