@@ -204,7 +204,6 @@ public class ChatRoundabout  {
 			Event event2 = gcc.addEvent(calendarId, event, false, true);
 			Printer.out(event2.toPrettyString());
 		}
-		
 	}
 	
 	void run() throws IOException {
