@@ -129,8 +129,10 @@ public class ChatRoundabout  {
 			randomPairs.add(pair);
 		}
 		
-		// TODO make sure nobody left unassigned two weeks in a row
-		System.out.println("Poor guys who won't have 121 this week: " + largeOffice);
+		System.out.println("Poor guys who won't have 121 this week: ");
+		for (String missEmail : largeOffice) {
+			System.out.println(missEmail);
+		}
 		
 		return randomPairs;
 	}
@@ -232,8 +234,8 @@ public class ChatRoundabout  {
 		
 		// Make events
 		for (ArrayList<String> pair : randomPairs) {
-			String email1 = pair.get(1);
-			String email2 = pair.get(2);
+			String email1 = pair.get(0);
+			String email2 = pair.get(1);
 			Event preparedEvent = prepare121(email1, email2, nextFriday);
 			
 			// Save events to Google Calendar, or just do a dry run?
