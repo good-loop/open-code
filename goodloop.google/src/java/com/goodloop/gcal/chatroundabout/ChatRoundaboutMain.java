@@ -51,8 +51,12 @@ public class ChatRoundaboutMain extends AMain {
 		boolean onLastRD = LocalDate.now().toString().equals(lastRanString);
 		boolean isMonday = LocalDate.now().getDayOfWeek().equals(DayOfWeek.MONDAY);
 		
+//		System.out.println("onLastRD: " + onLastRD);
+//		System.out.println("isMonday: " + isMonday);
+		
 		if (isMonday && !onLastRD) {
 			// Run the service
+			System.out.println("ChatRoundabout: Running");
 			new ChatRoundabout().run();
 			
 			//Write last ran date
@@ -66,7 +70,9 @@ public class ChatRoundaboutMain extends AMain {
 				System.out.println("An error occurred.");
 				e.printStackTrace();
 			}
-		} 
+		} else {
+			System.out.println("ChatRoundabout: Today is not Monday or Today is the same day as last ran date, Abort.");
+		}
 		
 		Utils.sleep(3600000);
 	}
