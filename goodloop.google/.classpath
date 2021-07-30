@@ -34,9 +34,10 @@
 	<classpathentry kind="lib" path="dependencies/google-api-services-calendar.jar" sourcepath="dependencies/google-api-services-calendar-v3-rev20210429-sources.jar"/>
 	<classpathentry kind="lib" path="dependencies/google-http-client-apache-v2.jar"/>
 	<classpathentry kind="lib" path="dependencies/google-http-client-gson.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.web"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.utils"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.bob"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.webappbase"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.bob"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.utils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.web"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.datalog"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
