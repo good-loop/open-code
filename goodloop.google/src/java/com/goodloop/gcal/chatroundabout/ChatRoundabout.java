@@ -202,7 +202,7 @@ public class ChatRoundabout  {
 		
 		// Filter out if on holiday or already have a 121
 		for (String holidayEmails : checkEvent(emailList, nextFriday)) {
-			System.out.println(holidayEmails + " is in hoilday.");
+			System.out.println(holidayEmails + " is in holiday.");
 			emailList.remove(holidayEmails);
 		}
 		
