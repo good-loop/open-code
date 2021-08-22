@@ -37,7 +37,7 @@ import com.winterwell.utils.web.SimpleJson;
  * Use uncommon props for "audit trail" details -- stored but not easily
  * searchable.
  * 
- * 
+ * See: https://github.com/good-loop/doc/blob/master/pages/dev/flow-vast-vpaid-advert.md
  * 
  * @author daniel
  */

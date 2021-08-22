@@ -117,7 +117,7 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 		String destIndex = Utils.or(getConfig().destIndex, sourceIndex+"_compressed");
 		Log.i(LOGTAG, "Compress "+sourceIndex+" --> "+destIndex);
 
-		// specify some terms that we want to keep
+		// Specify some terms that we want to keep
 		// See DataLogEvent#COMMON_PROPS
 		// TODO increase this list as our usage changes		
 		List<String> aggs = Arrays.asList(("amount dntn").split(" "));
