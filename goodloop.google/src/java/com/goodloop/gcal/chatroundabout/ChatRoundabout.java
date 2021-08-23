@@ -23,7 +23,10 @@ import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.CSVReader;
 
+// July Version
 public class ChatRoundabout  {
+	
+	private static final Boolean LIVE_MODE = false;
 
 	public static void main(String[] args) throws IOException {
 		new ChatRoundabout().run();
@@ -127,78 +130,45 @@ public class ChatRoundabout  {
 			randomPairs.add(pair);
 		}
 		
-		// TODO make sure nobody left unassigned two weeks in a row
-		System.out.println("Poor guys who won't have 121 this week: " + largeOffice);
+		System.out.println("Poor guys who won't have 121 this week: ");
+		for (String missEmail : largeOffice) {
+			System.out.println(missEmail);
+		}
 		
 		return randomPairs;
 	}
-	
-	/**
-	 * Testing the function of making 121 events without actually writing them to everyone's calendar 
-	 * @param email1 first email in the pair
-	 * @param email2 second email in the pair
-	 * @param nextFriday date of next Friday
-	 * @throws IOException
-	 */
-    public void testMake121(String email1, String email2, LocalDate nextFriday) throws IOException {
-        GCalClient gcc = new GCalClient();
-        Calendar person1 = gcc.getCalendar(email1);
-        Calendar person2 = gcc.getCalendar(email2);
-
-        Event event = new Event()
-        	    .setSummary("#Chat-Roundabout "+Utils.getNonce())
-        	    .setDescription("Random weekly chat between " + email1.split("@")[0] + " and " + email2.split("@")[0])
-        	    ;
-
-        DateTime startDateTime = new DateTime(nextFriday.toString() + "T11:30:00.00Z");
-        DateTime endDateTime = new DateTime(nextFriday.toString() + "T11:40:00.00Z");
-        String eventTimeDesc = "From " + startDateTime.toString() + " to " + endDateTime.toString();
-        EventAttendee[] attendees = new EventAttendee[] {
-            new EventAttendee().setEmail(email1)
-                .setResponseStatus("tentative"),
-            new EventAttendee().setEmail(email2)
-                .setResponseStatus("tentative"),
-        };
-        String eventAttendeeDesc = "Attending: " + attendees.toString();
-        String eventRemindersDesc = "Sending reminders via email (10 minutes) and popup (1 minute)";
-        String calendarId = person1.getId(); // "primary";
-        Printer.out("Adding to calendar " + calendarId + ": " + event + " " + eventTimeDesc + " " + eventAttendeeDesc + " " + eventRemindersDesc);
-    }
-	
+    
     /**
-     * Making 121 events in everyone's calendar on next Friday
-     * @param email1 first email in the pair
-     * @param email2 second email in the pair
-     * @param nextFriday nextFriday date of next Friday
+     * Create a 1-to-1 event for a pair of users
+     * @param email1 email of first attendee
+     * @param email2 email of second attendee
+     * @param date Date of event
+     * @return event will use in addEvent method
      * @throws IOException
      */
-	public void make121(String email1, String email2, LocalDate nextFriday) throws IOException {
-		GCalClient gcc = new GCalClient();
-		Calendar person1 = gcc.getCalendar(email1);
+	public Event prepare121(String email1, String email2, LocalDate date) throws IOException {		
+		System.out.println("Creating 121 event between " + email1 + "and " + email2);		
 		
-		System.out.println(person1);
-		Calendar person2 = gcc.getCalendar(email2);
-		System.out.println(person2);		
+		String name1 = email1.split("@")[0].substring(0, 1).toUpperCase() + email1.split("@")[0].substring(1);
+		String name2 = email2.split("@")[0].substring(0, 1).toUpperCase() + email2.split("@")[0].substring(1);
 		
+		// Setting event details
 		Event event = new Event()
 	    .setSummary("#Chat-Roundabout "+Utils.getNonce())
-	    .setDescription("Random weekly chat between " + email1.split("@")[0] + " and " + email2.split("@")[0])
+	    .setDescription("Random weekly chat between " + name1 + " and " + name2)
 	    ;
 
-		DateTime startDateTime = new DateTime(nextFriday.toString() + "T11:30:00.00Z");
+		DateTime startDateTime = new DateTime(date.toString() + "T11:30:00.00Z");
 		EventDateTime start = new EventDateTime()
 		    .setDateTime(startDateTime)
 		    .setTimeZone("GMT");
 		event.setStart(start);
 
-		DateTime endDateTime = new DateTime(nextFriday.toString() + "T11:40:00.00Z");
+		DateTime endDateTime = new DateTime(date.toString() + "T11:40:00.00Z");
 		EventDateTime end = new EventDateTime()
 		    .setDateTime(endDateTime)
 		    .setTimeZone("GMT");
 		event.setEnd(end);
-
-		// String[] recurrence = new String[] {"RRULE:FREQ=DAILY;COUNT=2"};
-		// event.setRecurrence(Arrays.asList(recurrence));
 
 		EventAttendee[] attendees = new EventAttendee[] {
 		    new EventAttendee().setEmail(email1)
@@ -216,12 +186,10 @@ public class ChatRoundabout  {
 		    .setUseDefault(false)
 		    .setOverrides(Arrays.asList(reminderOverrides));
 		event.setReminders(reminders);
-
-		String calendarId = person1.getId(); // "primary";
-		Event event2 = gcc.addEvent(calendarId, event, false, true);
 		
-		Printer.out(event2.toPrettyString());
+		return event;
 	}
+
 	
 	void run() throws IOException {
 		
@@ -234,7 +202,7 @@ public class ChatRoundabout  {
 		
 		// Filter out if on holiday or already have a 121
 		for (String holidayEmails : checkEvent(emailList, nextFriday)) {
-			System.out.println(holidayEmails + " is in hoilday.");
+			System.out.println(holidayEmails + " is in holiday.");
 			emailList.remove(holidayEmails);
 		}
 		
@@ -245,10 +213,11 @@ public class ChatRoundabout  {
 		for (String i : emailList) {
 			String email = i.split("\t")[0];
 			String office = i.split("\t")[1];
-			if (office.equals("Edinburgh")) {
-				edinburghEmails.add(email);
-			} else {
+			// TODO Decide what to do with remote team (For now remote team are counted as Edinburgh team)
+			if (office.equals("London")) {
 				londonEmails.add(email);
+			} else {
+				edinburghEmails.add(email);
 			}
 		}
 		
@@ -266,10 +235,24 @@ public class ChatRoundabout  {
 		
 		// Make events
 		for (ArrayList<String> pair : randomPairs) {
+			String email1 = pair.get(0);
+			String email2 = pair.get(1);
+			Event preparedEvent = prepare121(email1, email2, nextFriday);
 			
-			// TODO Change this method to `make121` when deploy
-			testMake121(pair.get(0), pair.get(1), nextFriday);
+			// Save events to Google Calendar, or just do a dry run?
+			if (LIVE_MODE) {
+				GCalClient gcc = new GCalClient();
+				Calendar person1 = gcc.getCalendar(email1);
+				String calendarId = person1.getId(); // "primary";
+				Event event2 = gcc.addEvent(calendarId, preparedEvent, false, true);
+				Printer.out("Saved event to Google Calendar: " + event2.toPrettyString());
+			} else {
+				Printer.out("\nTESTING \nEvent: " + preparedEvent.getSummary() +
+						"\nDescription: " + preparedEvent.getDescription() + 
+						"\nTime: " + preparedEvent.getStart() + " - " + preparedEvent.getEnd() +
+						"\nAttendees: " + preparedEvent.getAttendees()
+				);
+			}
 		}
 	}
-	
 }

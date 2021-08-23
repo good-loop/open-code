@@ -1,45 +1,48 @@
-package com.goodloop.gcal.chatroundabout;
+package com.goodloop.gcal;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Scanner;
+
+import org.junit.Test;
+
 import java.io.File;
 import java.io.FileWriter;
 
 import com.winterwell.utils.Utils;
-import com.winterwell.web.app.AMain;
 
-public class ChatRoundaboutMain extends AMain {
+public class ChatRoundaboutMainTest {
 	
 	private static final String FILENAME = "ChatRoundabout.txt";
-	
-	public static void main(String[] args) throws IOException {
-		ChatRoundaboutMain mymain = new ChatRoundaboutMain();
-        mymain.doMain(args);
-	}
-	
-	@Override
-	protected void doMainLoop() throws IOException {
-		
+
+	@Test
+	public void doMainLoop() throws IOException {
 		// Create last ran date file if not exist
+		System.out.println("Create last ran date file if not exist...");
 	    try {
 	        File lastRanFile = new File(FILENAME);
 	        if (lastRanFile.createNewFile()) {
 	          System.out.println("File created: " + lastRanFile.getName());
-	        } 
+	        } else {
+	        	System.out.println(lastRanFile.getName() + "Already exist");
+	        }
 	      } catch (IOException e) {
 	        System.out.println("An error occurred.");
 	        e.printStackTrace();
 	      }
 	    
 	    // Reading lastran.txt
+	    System.out.println("Reading lastran.txt...");
 	    String lastRanString = "";
 	    try {
 	        File lastRanFile = new File(FILENAME);
+	        System.out.println("lastRanFile: " + lastRanFile);
 	        Scanner myReader = new Scanner(lastRanFile);
+	        System.out.println("myReader: " + myReader);
+	        System.out.println("myReader.hasNextLine(): " + myReader.hasNextLine());
 	        while (myReader.hasNextLine()) {
-	          lastRanString = myReader.nextLine();;
+	          lastRanString = myReader.nextLine();
 	        }
 	        myReader.close();
 	      } catch (IOException e) {
@@ -47,22 +50,27 @@ public class ChatRoundaboutMain extends AMain {
 	        e.printStackTrace();
 	      }
 
+	    System.out.println("lastRanString: " + lastRanString);
 	    // Logic: Is it on the same day as last run and is it on Monday
+	    System.out.println("Today: " + LocalDate.now().toString());
 		boolean onLastRD = LocalDate.now().toString().equals(lastRanString);
-		boolean isMonday = LocalDate.now().getDayOfWeek().equals(DayOfWeek.MONDAY);
+		// boolean isMonday = LocalDate.now().getDayOfWeek().equals(DayOfWeek.MONDAY);		
+		//Override isMonday
+		boolean isMonday = true;
 		
-//		System.out.println("onLastRD: " + onLastRD);
-//		System.out.println("isMonday: " + isMonday);
+		System.out.println("onLastRD: " + onLastRD);
+		System.out.println("isMonday: " + isMonday);
 		
 		if (isMonday && !onLastRD) {
 			// Run the service
-			System.out.println("ChatRoundabout: Running");
-			new ChatRoundabout().run();
+			System.out.println("Chat-Roundabout: I am runnning");
 			
 			//Write last ran date
+			System.out.println("Writing last ran date...");
 			try {
 				FileWriter myWriter = new FileWriter("ChatRoundabout.txt");
 				String lastRan = LocalDate.now().toString();
+				System.out.println("lastRan: " + lastRan);
 				myWriter.write(lastRan);
 				myWriter.close();
 				System.out.println("Last ran date written");
@@ -71,10 +79,9 @@ public class ChatRoundaboutMain extends AMain {
 				e.printStackTrace();
 			}
 		} else {
-			System.out.println("ChatRoundabout: Today is not Monday or Today is the same day as last ran date, Abort.");
+			System.out.println("Chat-Roundabout: Did not ran");
 		}
 		
-		Utils.sleep(3600000);
+		Utils.sleep(10000);
 	}
-	
 }
