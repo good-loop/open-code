@@ -279,6 +279,7 @@ public class WebUtils2 extends WebUtils {
 					"png", "image/png",
 					"jpg", "image/jpeg",
 					"gif", "image/gif",
+					"svg", "image/svg",
 					// Workaround for bug in MimeUtil re css
 					"css", "text/css",
 					// csv is text/csv c.f. http://tools.ietf.org/html/rfc4180
