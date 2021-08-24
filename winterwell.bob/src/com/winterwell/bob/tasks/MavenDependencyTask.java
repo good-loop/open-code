@@ -29,6 +29,11 @@ import com.winterwell.utils.time.TUnit;
  * Warning: This will not overwrite existing .jar files 
  * ??does setForceUpdate(boolean) affect this??
  * 
+ * TODO direct download via eg
+ * https://repo1.maven.org/maven2/org/jsoup/jsoup/1.14.1/jsoup-1.14.1.jar
+ * https://repo1.maven.org/maven2/org/jsoup/jsoup/1.14.1/jsoup-1.14.1-sources.jar
+ * 
+ * 
  * See https://stackoverflow.com/questions/1895492/how-can-i-download-a-specific-maven-artifact-in-one-command-line
  * @author daniel
  *
