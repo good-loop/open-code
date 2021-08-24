@@ -46,9 +46,13 @@ public class ChatRoundaboutMain extends AMain {
 	        System.out.println("An error occurred.");
 	        e.printStackTrace();
 	      }
-
+	    
+	    if (!lastRanString.equals("")) {
+	    	System.out.println("ChatRoundabout ran on: "+lastRanString);
+	    } else { System.out.println("ChatRoundabout.txt is empty"); }
+	    
 	    // Logic: Is it on the same day as last run and is it on Monday
-		boolean onLastRD = LocalDate.now().toString().equals(lastRanString);
+		boolean onLastRD = LocalDate.now().toString().equals(lastRanString) || lastRanString.equals("");
 		boolean isMonday = LocalDate.now().getDayOfWeek().equals(DayOfWeek.MONDAY);
 		
 //		System.out.println("onLastRD: " + onLastRD);

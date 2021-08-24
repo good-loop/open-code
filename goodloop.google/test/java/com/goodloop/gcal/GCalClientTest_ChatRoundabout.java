@@ -18,30 +18,15 @@ import com.winterwell.utils.Utils;
 
 public class GCalClientTest_ChatRoundabout {
 	
-	public void make121(String email1, Event event, boolean test ) throws IOException {
-		GCalClient gcc = new GCalClient();
-		Calendar person1 = gcc.getCalendar(email1);
-		
-		if (test) {
-			Printer.out("\nTESTING \nEvent: " + event.getSummary() + "\nDescription: " + event.getDescription() + 
-					"\nTime: " + event.getStart() + event.getEnd() + "\nAttendess: " + event.getAttendees());
-		} else {
-			String calendarId = person1.getId(); // "primary";
-			Event event2 = gcc.addEvent(calendarId, event, false, true);
-			Printer.out(event2.toPrettyString());
-		}
-	}
-	
-	
-	@Test
-	public void testMake1to1() throws IOException {
-		LocalDate nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
-		System.out.println("Next Friday is: " + nextFriday);
-		
-		// Manually prepare 121 for testing
-		String email1 = "wing@good-loop.com";
-		String email2 = "daniel@good-loop.com";
-		
+    /**
+     * Create a 1-to-1 event for a pair of users
+     * @param email1 email of first attendee
+     * @param email2 email of second attendee
+     * @param date Date of event
+     * @return event will use in addEvent method
+     * @throws IOException
+     */
+	public Event prepare121(String email1, String email2, LocalDate date) throws IOException {		
 		System.out.println("Creating 121 event between " + email1 + "and " + email2);		
 		
 		String name1 = email1.split("@")[0].substring(0, 1).toUpperCase() + email1.split("@")[0].substring(1);
@@ -49,17 +34,17 @@ public class GCalClientTest_ChatRoundabout {
 		
 		// Setting event details
 		Event event = new Event()
-	    .setSummary("FOR TEST Please Kindly Ignore #Chat-Roundabout "+Utils.getNonce())
-	    .setDescription("For test only/ Random weekly chat between " + name1 + " and " + name2)
+	    .setSummary("#Chat-Roundabout "+Utils.getNonce())
+	    .setDescription("Random weekly chat between " + name1 + " and " + name2)
 	    ;
 
-		DateTime startDateTime = new DateTime(nextFriday.toString() + "T11:30:00.00Z");
+		DateTime startDateTime = new DateTime(date.toString() + "T11:30:00.00Z");
 		EventDateTime start = new EventDateTime()
 		    .setDateTime(startDateTime)
 		    .setTimeZone("GMT");
 		event.setStart(start);
 
-		DateTime endDateTime = new DateTime(nextFriday.toString() + "T11:40:00.00Z");
+		DateTime endDateTime = new DateTime(date.toString() + "T11:40:00.00Z");
 		EventDateTime end = new EventDateTime()
 		    .setDateTime(endDateTime)
 		    .setTimeZone("GMT");
@@ -82,7 +67,22 @@ public class GCalClientTest_ChatRoundabout {
 		    .setOverrides(Arrays.asList(reminderOverrides));
 		event.setReminders(reminders);
 		
-		// Creating the event
-		make121(email1, event, false);
+		return event;
+	}
+	
+	@Test
+	public void testMake1to1() throws IOException {
+		LocalDate nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
+		System.out.println("Next Friday is: " + nextFriday);
+		
+		String email1 = "wing@good-loop.com";
+		String email2 = "wing@good-loop.com";
+		Event preparedEvent = prepare121(email1, email2, nextFriday);
+		
+		GCalClient gcc = new GCalClient();
+		Calendar person1 = gcc.getCalendar(email1);
+		String calendarId = person1.getId(); // "primary";
+		Event event2 = gcc.addEvent(calendarId, preparedEvent, false, true);
+		Printer.out("Saved event to Google Calendar: " + event2.toPrettyString());
 	}
 }
