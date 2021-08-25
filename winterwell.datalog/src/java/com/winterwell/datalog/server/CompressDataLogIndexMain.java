@@ -107,6 +107,7 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 	
 	@Override
 	protected void doMain2() {		
+		pleaseStop = true; // no main loop - exit after this method
 		// e.g. "scrubbed.datalog."+dataspace+"_" + MMMyy;
 		String sourceIndex = Containers.get(configRemainderArgs, 0);
 		if (Utils.isBlank(sourceIndex)) {
@@ -129,7 +130,7 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 		ESConfig esConfig = esc.getConfig();
 		
 		// aggregate data
-		String jobId = "t_"+sourceIndex;
+		String jobId = "t_"+sourceIndex.replace(".", "");
 		if (jobId.length()>63) {	// 64 chars max -- an ES limitation
 			jobId = jobId.substring(0, 30)+"_"+StrUtils.md5(jobId);
 		}
