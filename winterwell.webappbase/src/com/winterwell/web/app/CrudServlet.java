@@ -1331,17 +1331,17 @@ public abstract class CrudServlet<T> implements IServlet {
 		XId user = state.getUserId(); // TODO save who did the edit + audit trail
 		
 		String diff = state.get("diff");
-		if (diff!=null) {
+		if (diff != null) {
 			// TODO Instead of applying the diff here, why not save the diff directly using an ES update? That would allow for multiple editors
 			Object jdiff = WebUtils2.parseJSON(diff);
 			List<Map> diffs = Containers.asList(jdiff);
 			JThing<T> oldThing = getThingFromDB(state);
 			applyDiff(oldThing, diffs);
 			jthing = oldThing; // NB: getThing(state) below will now return the diff-modified oldThing
+		} else {
+			T thing = getThing(state); 
+			assert thing != null : "null thing?! "+state;
 		}
-		
-		T thing = getThing(state);
-		assert thing != null : "null thing?! "+state;
 		
 		// This has probably been done already in getThing(), but harmless to repeat
 		// run the object through Java, to trigger IInit
