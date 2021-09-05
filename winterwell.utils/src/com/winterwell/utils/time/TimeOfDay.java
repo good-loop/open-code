@@ -63,6 +63,11 @@ public class TimeOfDay implements Serializable {
 	
 	static Pattern TOD = Pattern.compile("(\\d{1,2})(:\\d{2})?(:\\d{2})?(Z|[+\\-][\\d:]{1,4}|am|pm)?");
 			
+	
+	public TimeOfDay(String v) {
+		this(v, null);
+	}
+	
 	public TimeOfDay(String v, TimeZone timezone) {
 		Matcher m = TOD.matcher(v);
 		if ( ! m.matches()) {

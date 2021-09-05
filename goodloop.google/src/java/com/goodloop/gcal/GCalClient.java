@@ -35,6 +35,7 @@ import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.ConferenceData;
 import com.google.api.services.calendar.model.CreateConferenceRequest;
 import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 import com.google.api.services.sheets.v4.Sheets;
@@ -64,6 +65,8 @@ import com.winterwell.utils.Printer;
 import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Period;
+import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.web.app.Logins;
 
@@ -191,12 +194,12 @@ public class GCalClient {
         return getEvents(calendarId, null, null);
     }
     
-    public List<Event> getEvents(String calendarId, DateTime start, DateTime end) {
+    public List<Event> getEvents(String calendarId, Time start, Time end) {
         try {
             Calendar service = getService();
             Calendar.Events.List listReq = service.events().list(calendarId);
-            if (start != null) listReq.setTimeMin(start);
-            if (end != null) listReq.setTimeMax(end);
+            if (start != null) listReq.setTimeMin(new DateTime(start.getTime()));
+            if (end != null) listReq.setTimeMax(new DateTime(end.getTime()));
             Events events = listReq.execute();
             List<Event> items = events.getItems();
             return items;
@@ -260,6 +263,37 @@ public class GCalClient {
 		} catch (IOException e) {
 			throw Utils.runtime(e);
 		}
+	}
+
+	public Period getPeriod(Event event) {
+		// NB: I _think_ this will get the specific time of this instance for recurring events. ^Dan
+		EventDateTime s = event.getOriginalStartTime();
+		if (s==null) s = event.getStart();
+
+		Time start = new Time(s.getDateTime().getValue());
+		EventDateTime e = event.getEnd();
+		return new Period(start, e==null? start.plus(TUnit.HOUR) : new Time(e.getDateTime().getValue()));
+	}
+
+	/**
+	 * 
+	 * @param event
+	 * @param email
+	 * @return true=accepted, false=declined, null=no-answer/tentative
+	 */
+	public Boolean isAttending(Event event, String email) {
+		List<EventAttendee> attendees = event.getAttendees();
+		for (EventAttendee attendee : attendees) {
+			if ( ! email.equalsIgnoreCase(attendee.getEmail())) continue;
+			String rs = attendee.getResponseStatus();
+			if ("accepted".equalsIgnoreCase(rs)) {
+				return true;
+			}
+			if ("declined".equalsIgnoreCase(rs)) {
+				return false;
+			}
+		}
+		return null;
 	}
 	
 }

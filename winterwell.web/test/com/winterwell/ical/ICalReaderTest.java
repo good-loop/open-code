@@ -154,6 +154,45 @@ public class ICalReaderTest {
 	
 	
 	@Test
+	public void testAttending() throws ParseException {
+		ICalReader r = new ICalReader("");
+		String se = "BEGIN:VEVENT\n" + 
+				"DTSTART;TZID=Europe/London:20171115T110000\n" + 
+				"DTEND;TZID=Europe/London:20171115T123000\n" + 
+				"RRULE:FREQ=WEEKLY;BYDAY=WE\n" + 
+				"EXDATE;TZID=Europe/London:20180103T110000\n" + 
+				"EXDATE;TZID=Europe/London:20171227T110000\n" + 
+				"EXDATE;TZID=Europe/London:20171206T110000\n" + 
+				"DTSTAMP:20180112T150452Z\n" + 
+				"ORGANIZER;CN=daniel.winterstein@gmail.com:mailto:daniel.winterstein@gmail.c\n" + 
+				" om\n" + 
+				"UID:lq4s9poqcfcgd2g473v8k5h794_R20171115T110000@google.com\n" + 
+				"ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;CN=fw\n" + 
+				" b2@hw.ac.uk;X-NUM-GUESTS=0:mailto:fwb2@hw.ac.uk\n" + 
+				"ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN=m.summ\n" + 
+				" ers@zonefox.com;X-NUM-GUESTS=0:mailto:m.summers@inquisitivesystems.net\n" + 
+				"ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=DECLINED;CN=c.leon\n" + 
+				" ard@inquisitive-systems.com;X-NUM-GUESTS=0:mailto:c.leonard@zonefox.com\n" + 
+				"ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN=Daniel\n" + 
+				"  Winterstein;X-NUM-GUESTS=0:mailto:daniel.winterstein@gmail.com\n" + 
+				"ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN=m.goul\n" + 
+				" d@inquisitive-systems.com;X-NUM-GUESTS=0:mailto:m.gould@zonefox.com\n" + 
+				"CREATED:20160704T105144Z\n" + 
+				"DESCRIPTION:\n" + 
+				"LAST-MODIFIED:20171214T095704Z\n" + 
+				"LOCATION:\n" + 
+				"SEQUENCE:3\n" + 
+				"STATUS:CONFIRMED\n" + 
+				"SUMMARY:ZoneFox AI weekly meeting\n" + 
+				"TRANSP:OPAQUE\n" + 
+				"END:VEVENT";
+		ICalEvent e = r.parseEvent(se);
+		assert e.isAttending("m.gould@zonefox.com");
+		assert ! e.isAttending("c.leonard@zonefox.com");
+	}
+	
+	
+	@Test
 	public void testRepeatingRule() throws ParseException {
 		ICalReader r = new ICalReader("");
 		String se = "BEGIN:VEVENT"

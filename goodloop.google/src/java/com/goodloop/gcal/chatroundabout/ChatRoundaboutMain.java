@@ -10,7 +10,7 @@ import java.io.FileWriter;
 import com.winterwell.utils.Utils;
 import com.winterwell.web.app.AMain;
 
-public class ChatRoundaboutMain extends AMain {
+public class ChatRoundaboutMain extends AMain<ChatRoundaboutConfig> {
 	
 	private static final String FILENAME = "ChatRoundabout.txt";
 	

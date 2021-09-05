@@ -21,92 +21,117 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.CSVReader;
+import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Period;
+import com.winterwell.utils.time.TUnit;
+import com.winterwell.utils.time.Time;
+import com.winterwell.utils.time.TimeOfDay;
+import com.winterwell.utils.time.TimeUtils;
 
-// July Version
+/**
+ * 121s
+ * 
+ * cross-office 121 on Friday at 11:30
+ * Plus a within-team 121 on Friday at 11:00 for Tech
+ * 
+ * @author daniel
+ *
+ */
 public class ChatRoundabout  {
 	
 	private static final Boolean LIVE_MODE = false;
+	private static final String LOGTAG = null;
 
 	public static void main(String[] args) throws IOException {
 		new ChatRoundabout().run();
 	}
 	
+	public void TODOremoveEventsByRegex() {
+		
+	}
+	
 	/**
 	 * Convert staff.csv into an ArrayList of two items
-	 * @return email + "\t" + office
 	 */
-	private ArrayList<String> emailList() {
-		ArrayList<String> emailList = new ArrayList<String>();
+	private List<Employee> emailList() {
+		ArrayList<Employee> emailList = new ArrayList<>();
 		
 		CSVReader r = new CSVReader(new File("data/staff.csv"));
 		for (String[] row : r) {
-			if (row[4].equals("Employee")) {
-				String name = row[0];
-				String office = row[2];
-				// Catch Dan A
-				String firstName;
-				if (name.equals("Daniel Appel")) {
-					firstName = "sysadmin";
-				} else if (name.equals("Natasha Taylor")) {
-					firstName = "tash";
-				} else if (name.equals("Abdikarim Mohamed")) {
-					firstName = "karim";
-				} else {
-					firstName = name.split(" ")[0];
-				}
-				String email = firstName.toLowerCase()+"@good-loop.com";
-				emailList.add(email + "\t" + office);
+			if (row.length < 5) continue;
+			if ( ! (""+row[4]).equalsIgnoreCase("employee")) {
+				Log.d(LOGTAG, "skip non-employee "+row[0]);
+				continue;
 			}
+			String name = row[0];
+			String office = row[2];
+			String team = Containers.get(row, 5);
+			// Catch Dan A
+			String firstName;
+			if (name.equals("Daniel Appel")) {
+				firstName = "sysadmin";
+			} else if (name.equals("Natasha Taylor")) {
+				firstName = "tash";
+			} else if (name.equals("Abdikarim Mohamed")) {
+				firstName = "karim";
+			} else {
+				firstName = name.split(" ")[0];
+			}
+			String email = firstName.toLowerCase()+"@good-loop.com";
+			emailList.add(new Employee(email, firstName, office, team));
 		}
 		return emailList;
 	}
 	
 	/**
-	 * Check if anyone inside of the ArrayList is on holiday on next Friday or already have 121 assigned
-	 * @param emailList the emailList returned from emailList() in (email + "\t" + office) format
+	 * Check if the person is on holiday or already have 121 assigned
 	 * @param nextFriday date of the upcoming 121 event a.k.a next Friday
-	 * @return filtered emailList of same format
+	 * @param chatSet "team" or "cross-team"
+	 * @return true if OK
 	 */
-	private ArrayList<String> checkEvent(ArrayList<String> emailList, LocalDate nextFriday) {
+	private boolean checkEvent(String email, String chatSet, Period slot) {
 		
 		// Restrict events around the date of the meeting
 		
 		// Only getting events 1 days before and after next Friday to try to catch long holidays but not getting too many event results		
-		String startString = nextFriday.minusDays(1).atStartOfDay().format(DateTimeFormatter.ISO_DATE_TIME);
-        DateTime start = DateTime.parseRfc3339(startString);
-    	String endString = nextFriday.plusDays(1).atStartOfDay().format(DateTimeFormatter.ISO_DATE_TIME);
-        DateTime end = DateTime.parseRfc3339(endString);
-		
+		Time start = TimeUtils.getStartOfDay(slot.first.minus(TUnit.DAY));
+		Time end = TimeUtils.getStartOfDay(slot.first.plus(TUnit.DAY));
+        
 		GCalClient client = new GCalClient();
-		
-		ArrayList<String> filerOutEmail = new ArrayList<String>();
-		for (String i : emailList) {
-			String email = i.split("\t")[0];
-			String office = i.split("\t")[1];
-			System.out.println(email);
+		List<Event> allEvents = client.getEvents(email, start, end);
+
+		for (Event event : allEvents) {
+			if (client.isAttending(event, email) == false) {
+				// ignore cancelled
+				continue;
+			}
+			String eventItem = event.toString().toLowerCase();
 			
-			List<Event> allEvents = client.getEvents(email, start, end);
-
-			for (Event event : allEvents) {
-	
-				String eventItem = event.toString().toLowerCase();
-				
-				if (eventItem.contains("holiday") || eventItem.contains("chat-roundabout")) {
-					boolean formatIsDate = event.getStart().getDate() != null;
-					LocalDate startDate = (formatIsDate ? LocalDate.parse(event.getStart().getDate().toString()) : LocalDate.parse(event.getStart().getDateTime().toString().substring(0, 10)));
-					LocalDate endDate = (formatIsDate ? LocalDate.parse(event.getEnd().getDate().toString()) : LocalDate.parse(event.getEnd().getDateTime().toString().substring(0, 10)).plusDays(1));
-					
-					List<LocalDate> holiDays = startDate.datesUntil(endDate).collect(Collectors.toList());
-					System.out.println("Holidays: " + holiDays);
-
-					if (holiDays.contains(nextFriday)) {
-						filerOutEmail.add(email + "\t" + office);
-					}
+			// no clashes
+			Period period = client.getPeriod(event);
+			if (period.intersects(slot)) {
+				Log.d(LOGTAG, "Clash: "+event+" vs "+slot);
+				return false;
+			}
+			
+			// TODO no repeat 121s - though the clash check will probably get that
+			if (eventItem.contains("chat-roundabout") && eventItem.contains(chatSet)) {
+				Log.d(LOGTAG, "Already has a 121: "+event+" vs "+slot);
+				return false;
+			}
+			
+			// care with holidays (is this needed??) and TODO all day events??			
+			if (eventItem.contains("holiday")) {
+				Period p2 = new Period(TimeUtils.getStartOfDay(period.first), TimeUtils.getEndOfDay(period.second));
+				if (p2.intersects(slot)) {
+					Log.d(LOGTAG, "Holiday Clash: "+event+" vs "+slot);
+					return false;
 				}
 			}
 		}
-		return filerOutEmail;
+		return true;
 	}
 	
 	/**
@@ -194,32 +219,44 @@ public class ChatRoundabout  {
 	void run() throws IOException {
 		
 		// Get a list of email
-		ArrayList<String> emailList = emailList();
+		List<Employee> emailList = emailList();
 		
 		// Get 121 Date (Next Friday)
-		LocalDate nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
+		LocalDate _nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
+		Time nextFriday = new Time(_nextFriday.toString());
 		System.out.println("Next Friday is: " + nextFriday);
-		
-		// Filter out if on holiday or already have a 121
-		for (String holidayEmails : checkEvent(emailList, nextFriday)) {
-			System.out.println(holidayEmails + " is in holiday.");
-			emailList.remove(holidayEmails);
-		}
-		
+						
 		// Separate Edinburgh and London team into two list
-		ArrayList<String> edinburghEmails = new ArrayList<String>();
-		ArrayList<String> londonEmails = new ArrayList<String>();
-		
-		for (String i : emailList) {
-			String email = i.split("\t")[0];
-			String office = i.split("\t")[1];
-			// TODO Decide what to do with remote team (For now remote team are counted as Edinburgh team)
+		ArrayList<Employee> edinburghEmails = new ArrayList<>();
+		ArrayList<Employee> londonEmails = new ArrayList<>();		
+		for (Employee i : emailList) {
+			String office = i.office;
+			// ?? Decide what to do with remote team (For now remote team are counted as Edinburgh team)
 			if (office.equals("London")) {
-				londonEmails.add(email);
+				londonEmails.add(i);
 			} else {
-				edinburghEmails.add(email);
+				edinburghEmails.add(i);
 			}
 		}
+		
+		// Cross team
+		createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);
+		
+		// Within team
+		createTeamEvents(edinburghEmails);
+	}
+
+	ChatRoundaboutConfig config;
+	
+	private void createCrossTeamEvents(Time nextFriday, List<Employee> londonEmails, List<Employee> edinburghEmails) {
+		Time s = config.crossTeamTime.set(nextFriday);
+		Time e = s.plus(config.duration);
+		Period slot = new Period(s, e);
+		String chatSet = "cross-team";
+		// filter out people who cant make the slot
+		londonEmails = Containers.filter(londonEmails, employee -> checkEvent(employee.email, chatSet, slot));
+		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
+		
 		
 		System.out.println("Edinburgh's team size today: " + edinburghEmails.size());
 		System.out.println("London's team size today: " + londonEmails.size());
@@ -228,8 +265,7 @@ public class ChatRoundabout  {
 		boolean e2l = (edinburghEmails.size() > londonEmails.size());
 		
 		// Random pairings
-		ArrayList<ArrayList<String>> randomPairs = new ArrayList<ArrayList<String>>();
-		randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails) : getRandomPairs(edinburghEmails, londonEmails);
+		ArrayList<ArrayList<String>> randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails) : getRandomPairs(edinburghEmails, londonEmails);
 		
 		System.out.println(randomPairs);
 		
@@ -254,5 +290,6 @@ public class ChatRoundabout  {
 				);
 			}
 		}
+
 	}
 }

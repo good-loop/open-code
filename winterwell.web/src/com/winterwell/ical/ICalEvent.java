@@ -155,4 +155,21 @@ public class ICalEvent {
 	public Repeat getRepeat() {
 		return repeat;
 	}
+
+	public Boolean isAttending(String email) {
+		List<Attendee> attendees = getAttendees();
+		for (Attendee attendee : attendees) {
+			if (email.equalsIgnoreCase(attendee.getEmail())) {
+				// TODO				
+			}
+		}
+		return null;
+	}
+
+	private List<Attendee> getAttendees() {
+		
+		// TODO Auto-generated method stub
+		return new ArrayList();
+	}
 }
+
