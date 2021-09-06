@@ -22,6 +22,7 @@ import com.google.api.services.calendar.model.EventReminder;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.containers.Pair;
 import com.winterwell.utils.io.CSVReader;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Period;
@@ -140,25 +141,21 @@ public class ChatRoundabout  {
 	 * @param largeOfficeArrayList of email of the larger team
 	 * @return An ArrayList of an ArrayList: a pair = [staff from small office, staff from large office]
 	 */
-	private ArrayList<ArrayList<String>> getRandomPairs(ArrayList<String> smallOffice, ArrayList<String> largeOffice) {
+	private ArrayList<Pair<Employee>> getRandomPairs(List<Employee> smallOffice, List<Employee> _largeOffice) {
 		// TODO make sure we hit every pairing
-		
-		ArrayList<ArrayList<String>> randomPairs = new ArrayList<ArrayList<String>>();
+		// NB: defensive copy so we can edit locally
+		ArrayList<Employee> largeOffice = new ArrayList(_largeOffice);
+		ArrayList<Pair<Employee>> randomPairs = new ArrayList<>();
 		Random rand = new Random();
 		
-		for (String pairEmail : smallOffice) {
-			String randomEmail = largeOffice.get(rand.nextInt(largeOffice.size()));
+		for (Employee pairEmail : smallOffice) {
+			Employee randomEmail = largeOffice.get(rand.nextInt(largeOffice.size()));
 			largeOffice.remove(randomEmail);
-			ArrayList<String> pair = new ArrayList<String>();
-			pair.add(pairEmail);
-			pair.add(randomEmail);
+			Pair pair = new Pair(pairEmail, randomEmail);
 			randomPairs.add(pair);
 		}
 		
-		System.out.println("Poor guys who won't have 121 this week: ");
-		for (String missEmail : largeOffice) {
-			System.out.println(missEmail);
-		}
+		Log.i(LOGTAG, "Poor guys who won't have 121 this week: "+largeOffice);
 		
 		return randomPairs;
 	}
@@ -240,7 +237,7 @@ public class ChatRoundabout  {
 		}
 		
 		// Cross team
-		createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);
+		pairings = createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);
 		
 		// Within team
 		createTeamEvents(edinburghEmails);
@@ -257,6 +254,7 @@ public class ChatRoundabout  {
 		londonEmails = Containers.filter(londonEmails, employee -> checkEvent(employee.email, chatSet, slot));
 		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
 		
+		// TODO fetch last weeks 121s
 		
 		System.out.println("Edinburgh's team size today: " + edinburghEmails.size());
 		System.out.println("London's team size today: " + londonEmails.size());
@@ -268,6 +266,7 @@ public class ChatRoundabout  {
 		ArrayList<ArrayList<String>> randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails) : getRandomPairs(edinburghEmails, londonEmails);
 		
 		System.out.println(randomPairs);
+		return randomPairs;
 		
 		// Make events
 		for (ArrayList<String> pair : randomPairs) {

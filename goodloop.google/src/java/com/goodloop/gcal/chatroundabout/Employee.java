@@ -32,4 +32,9 @@ public class Employee {
 		this.team = team;
 	}
 	
+	@Override
+	public String toString() {
+		return "Employee[email=_" + email + "_, team=" + team + "]";
+	}
+	
 }
