@@ -188,12 +188,12 @@ public class ChatRoundabout  {
      * @return event will use in addEvent method
      * @throws IOException
      */
-	public Event prepare121(Pair<Employee> ab, Period slot, String chatSet) throws IOException {		
+	Event prepare121(Pair<Employee> ab, Period slot, String chatSet) throws IOException {		
 		System.out.println("Creating 121 event between " + ab);		
 		
 		// Setting event details
 		Event event = new Event()
-	    .setSummary("#ChatRoundabout "+chatSet+" "+ab.first.getFirstName()+" <> "+ab.second.getFirstName())
+	    .setSummary("#ChatRoundabout "+chatSet+" 121 "+ab.first.getFirstName()+" <> "+ab.second.getFirstName())
 	    .setDescription("Random short weekly chat between " + ab.first.name + " and " + ab.second.name+". Talk about anything you like.")
 	    ;
 		
