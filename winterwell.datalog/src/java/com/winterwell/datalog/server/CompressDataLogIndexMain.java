@@ -103,7 +103,7 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 		System.out.println(cb.getOptionsMessage("source index (full name), e.g. `scrubbed.datalog.gl_jan21`"));
 	}	
 	
-	static String version = "0.1.1"; 
+	static String version = "0.1.2"; 
 	
 	@Override
 	protected void doMain2() {		
