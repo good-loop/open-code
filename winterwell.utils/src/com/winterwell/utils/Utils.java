@@ -258,8 +258,9 @@ public final class Utils {
 	
 	public static <X> Collection<X> getRandomSelection(int num, Collection<X> choices, Random rnd) 
 	{
-		if (num >= choices.size())
+		if (num >= choices.size()) {
 			return new HashSet<X>(choices);
+		}
 		if (num < 0)
 			throw new IllegalArgumentException("Num must be >= 0");
 		List<X> listChoices = Containers.getList(choices);

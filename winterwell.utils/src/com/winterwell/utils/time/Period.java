@@ -164,7 +164,7 @@ public final class Period extends Pair<Time> {
 	 * @return true if they overlap
 	 */
 	public boolean intersects(Period slot) {
-		return intersects(slot) != null;
+		return intersect(slot) != null;
 	}
 
 }

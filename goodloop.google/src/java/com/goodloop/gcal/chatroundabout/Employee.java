@@ -32,9 +32,18 @@ public class Employee {
 		this.team = team;
 	}
 	
+	String getFirstName() {
+		// HACK: non-standard names
+		switch(name) {
+		case "Natasha Taylor": return "Tash";
+		case "Abdikarim Mohamed": return "Karim";
+		}
+		return name.split(" ")[0];
+	}
+	
 	@Override
 	public String toString() {
-		return "Employee[email=_" + email + "_, team=" + team + "]";
+		return "Employee[ " + email + " ]";
 	}
 	
 }

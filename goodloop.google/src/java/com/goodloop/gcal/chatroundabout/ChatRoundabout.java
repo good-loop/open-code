@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
+import com.winterwell.utils.Dep;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
@@ -44,11 +46,9 @@ public class ChatRoundabout  {
 	
 	private static final Boolean LIVE_MODE = false;
 	private static final String LOGTAG = null;
+	private static final String CHATSET_CROSS_TEAM = "cross-team";
+	private static final String CHATSET_IN_TEAM = "within-team";
 
-	public static void main(String[] args) throws IOException {
-		new ChatRoundabout().run();
-	}
-	
 	public void TODOremoveEventsByRegex() {
 		
 	}
@@ -69,7 +69,8 @@ public class ChatRoundabout  {
 			String name = row[0];
 			String office = row[2];
 			String team = Containers.get(row, 5);
-			// Catch Dan A
+
+			// HACK: non-standard emails
 			String firstName;
 			if (name.equals("Daniel Appel")) {
 				firstName = "sysadmin";
@@ -81,8 +82,10 @@ public class ChatRoundabout  {
 				firstName = name.split(" ")[0];
 			}
 			String email = firstName.toLowerCase()+"@good-loop.com";
-			emailList.add(new Employee(email, firstName, office, team));
+
+			emailList.add(new Employee(email, name, office, team));
 		}
+		Log.d(LOGTAG, "All employees: "+emailList);
 		return emailList;
 	}
 	
@@ -100,20 +103,23 @@ public class ChatRoundabout  {
 		Time start = TimeUtils.getStartOfDay(slot.first.minus(TUnit.DAY));
 		Time end = TimeUtils.getStartOfDay(slot.first.plus(TUnit.DAY));
         
-		GCalClient client = new GCalClient();
-		List<Event> allEvents = client.getEvents(email, start, end);
+		List<Event> allEvents = client().getEvents(email, start, end);
 
 		for (Event event : allEvents) {
-			if (client.isAttending(event, email) == false) {
+			Boolean attending = client().isAttending(event, email);
+			if (Boolean.FALSE.equals(attending)) {
 				// ignore cancelled
 				continue;
 			}
 			String eventItem = event.toString().toLowerCase();
 			
 			// no clashes
-			Period period = client.getPeriod(event);
+			Period period = client().getPeriod(event);
+			if (period==null) {
+				continue; // non-event - skip
+			}
 			if (period.intersects(slot)) {
-				Log.d(LOGTAG, "Clash: "+event+" vs "+slot);
+				Log.d(LOGTAG, email+" has a Clash: "+event.getSummary()+" "+period+" vs "+slot);
 				return false;
 			}
 			
@@ -134,23 +140,36 @@ public class ChatRoundabout  {
 		}
 		return true;
 	}
-	
+
+	/**
+	 * NB: the seed is fixed so that same day runs would produce the same output
+	 */
+	Random rand = new Random(TimeUtils.getStartOfDay(new Time()).getTime());
+
 	/**
 	 * Randomly generate 121 pairs between two office. Some people in the larger office will not have 121 event.
-	 * @param smallOffice ArrayList of email of the smaller team
-	 * @param largeOfficeArrayList of email of the larger team
-	 * @return An ArrayList of an ArrayList: a pair = [staff from small office, staff from large office]
+	 * @param _smallOffice
+	 * @param _largeOffice Can be the same as smallOffice
 	 */
-	private ArrayList<Pair<Employee>> getRandomPairs(List<Employee> smallOffice, List<Employee> _largeOffice) {
+	private ArrayList<Pair<Employee>> getRandomPairs(List<Employee> _smallOffice, List<Employee> _largeOffice) {
 		// TODO make sure we hit every pairing
 		// NB: defensive copy so we can edit locally
 		ArrayList<Employee> largeOffice = new ArrayList(_largeOffice);
+		ArrayList<Employee> smallOffice = new ArrayList(_smallOffice);
 		ArrayList<Pair<Employee>> randomPairs = new ArrayList<>();
-		Random rand = new Random();
 		
-		for (Employee pairEmail : smallOffice) {
-			Employee randomEmail = largeOffice.get(rand.nextInt(largeOffice.size()));
-			largeOffice.remove(randomEmail);
+		Collections.shuffle(smallOffice, rand); // for fairness re being left out
+		Collections.shuffle(largeOffice, rand);
+		
+		while( ! smallOffice.isEmpty()) {
+			Employee pairEmail = smallOffice.remove(0);
+			largeOffice.remove(pairEmail);
+			if (largeOffice.isEmpty()) {
+				break; // last person can be left out for in-team
+			}
+			Employee randomEmail = largeOffice.remove(0);
+			smallOffice.remove(randomEmail);
+			assert ! pairEmail.equals(randomEmail);
 			Pair pair = new Pair(pairEmail, randomEmail);
 			randomPairs.add(pair);
 		}
@@ -162,40 +181,30 @@ public class ChatRoundabout  {
     
     /**
      * Create a 1-to-1 event for a pair of users
+     * @param chatSet 
      * @param email1 email of first attendee
      * @param email2 email of second attendee
      * @param date Date of event
      * @return event will use in addEvent method
      * @throws IOException
      */
-	public Event prepare121(String email1, String email2, LocalDate date) throws IOException {		
-		System.out.println("Creating 121 event between " + email1 + "and " + email2);		
-		
-		String name1 = email1.split("@")[0].substring(0, 1).toUpperCase() + email1.split("@")[0].substring(1);
-		String name2 = email2.split("@")[0].substring(0, 1).toUpperCase() + email2.split("@")[0].substring(1);
+	public Event prepare121(Pair<Employee> ab, Period slot, String chatSet) throws IOException {		
+		System.out.println("Creating 121 event between " + ab);		
 		
 		// Setting event details
 		Event event = new Event()
-	    .setSummary("#Chat-Roundabout "+Utils.getNonce())
-	    .setDescription("Random weekly chat between " + name1 + " and " + name2)
+	    .setSummary("#ChatRoundabout "+chatSet+" "+ab.first.getFirstName()+" <> "+ab.second.getFirstName())
+	    .setDescription("Random short weekly chat between " + ab.first.name + " and " + ab.second.name+". Talk about anything you like.")
 	    ;
-
-		DateTime startDateTime = new DateTime(date.toString() + "T11:30:00.00Z");
-		EventDateTime start = new EventDateTime()
-		    .setDateTime(startDateTime)
-		    .setTimeZone("GMT");
+		
+		EventDateTime start = GCalClient.toEventDateTime(slot.first);
 		event.setStart(start);
-
-		DateTime endDateTime = new DateTime(date.toString() + "T11:40:00.00Z");
-		EventDateTime end = new EventDateTime()
-		    .setDateTime(endDateTime)
-		    .setTimeZone("GMT");
-		event.setEnd(end);
+		event.setEnd(GCalClient.toEventDateTime(slot.second));
 
 		EventAttendee[] attendees = new EventAttendee[] {
-		    new EventAttendee().setEmail(email1)
+		    new EventAttendee().setEmail(ab.first.email)
 		    	.setResponseStatus("tentative"),
-		    new EventAttendee().setEmail(email2)
+		    new EventAttendee().setEmail(ab.second.email)
 		    	.setResponseStatus("tentative"),
 		};
 		event.setAttendees(Arrays.asList(attendees));
@@ -229,7 +238,7 @@ public class ChatRoundabout  {
 		for (Employee i : emailList) {
 			String office = i.office;
 			// ?? Decide what to do with remote team (For now remote team are counted as Edinburgh team)
-			if (office.equals("London")) {
+			if ("London".equalsIgnoreCase(office)) {
 				londonEmails.add(i);
 			} else {
 				edinburghEmails.add(i);
@@ -237,19 +246,24 @@ public class ChatRoundabout  {
 		}
 		
 		// Cross team
-		pairings = createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);
+		createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);
+		
 		
 		// Within team
-		createTeamEvents(edinburghEmails);
+		createTeamEvents(nextFriday, edinburghEmails);
 	}
 
-	ChatRoundaboutConfig config;
+	final ChatRoundaboutConfig config;
 	
-	private void createCrossTeamEvents(Time nextFriday, List<Employee> londonEmails, List<Employee> edinburghEmails) {
+	public ChatRoundabout(ChatRoundaboutConfig config) {
+		this.config = config;
+	}
+	
+	private void createCrossTeamEvents(Time nextFriday, List<Employee> londonEmails, List<Employee> edinburghEmails) throws IOException {
 		Time s = config.crossTeamTime.set(nextFriday);
 		Time e = s.plus(config.duration);
 		Period slot = new Period(s, e);
-		String chatSet = "cross-team";
+		String chatSet = CHATSET_CROSS_TEAM;
 		// filter out people who cant make the slot
 		londonEmails = Containers.filter(londonEmails, employee -> checkEvent(employee.email, chatSet, slot));
 		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
@@ -263,21 +277,21 @@ public class ChatRoundabout  {
 		boolean e2l = (edinburghEmails.size() > londonEmails.size());
 		
 		// Random pairings
-		ArrayList<ArrayList<String>> randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails) : getRandomPairs(edinburghEmails, londonEmails);
+		List<Pair<Employee>> randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails) : getRandomPairs(edinburghEmails, londonEmails);
 		
-		System.out.println(randomPairs);
-		return randomPairs;
-		
+		postEventsToCalendar(chatSet, slot, randomPairs);
+	}
+
+	
+
+	private void postEventsToCalendar(String chatSet, Period slot, List<Pair<Employee>> randomPairs) throws IOException {
 		// Make events
-		for (ArrayList<String> pair : randomPairs) {
-			String email1 = pair.get(0);
-			String email2 = pair.get(1);
-			Event preparedEvent = prepare121(email1, email2, nextFriday);
-			
+		for (Pair<Employee> ab : randomPairs) {
+			Event preparedEvent = prepare121(ab, slot, chatSet);			
 			// Save events to Google Calendar, or just do a dry run?
 			if (LIVE_MODE) {
-				GCalClient gcc = new GCalClient();
-				Calendar person1 = gcc.getCalendar(email1);
+				GCalClient gcc = client();
+				Calendar person1 = gcc.getCalendar(ab.first.email);
 				String calendarId = person1.getId(); // "primary";
 				Event event2 = gcc.addEvent(calendarId, preparedEvent, false, true);
 				Printer.out("Saved event to Google Calendar: " + event2.toPrettyString());
@@ -289,6 +303,29 @@ public class ChatRoundabout  {
 				);
 			}
 		}
-
 	}
+
+	private GCalClient client() {
+		GCalClient client = Dep.setIfAbsent(GCalClient.class, new GCalClient());
+		return client;
+	}
+
+	private void createTeamEvents(Time nextFriday, List<Employee> edinburghEmails) throws IOException {
+		Time s = config.inTeamTime.set(nextFriday);
+		Time e = s.plus(config.duration);
+		Period slot = new Period(s, e);
+		String chatSet = CHATSET_IN_TEAM;
+		// filter out people who cant make the slot
+		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
+		
+		// TODO fetch last weeks 121s
+		
+		// Random pairings
+		List<Pair<Employee>> randomPairs = getRandomPairs(edinburghEmails, edinburghEmails);
+		
+
+		postEventsToCalendar(chatSet, slot, randomPairs);
+		
+	}
+
 }
