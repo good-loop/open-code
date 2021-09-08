@@ -125,9 +125,9 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 		List<String> aggs = Arrays.asList(("amount dntn").split(" "));
 		Log.d(LOGTAG, "Sum these properties: "+aggs);
 		// This list may need updating from time to time!
-		List<String> terms = getConfig().longterms;
+		List<String> terms = new ArrayList(getConfig().longterms);
 		if (getConfig().removeProperty != null) {
-			terms.removeAll(getConfig().longterms);
+			terms.removeAll(getConfig().removeProperty);
 		}
 		Log.d(LOGTAG, "Keep these properties: "+terms);
 		
