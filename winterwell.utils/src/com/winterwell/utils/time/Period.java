@@ -158,4 +158,13 @@ public final class Period extends Pair<Time> {
 		return new Time((getStart().getTime() + getEnd().getTime()) / 2);
 	}
 
+	/**
+	 * Convenience for intersect != null
+	 * @param slot
+	 * @return true if they overlap
+	 */
+	public boolean intersects(Period slot) {
+		return intersect(slot) != null;
+	}
+
 }

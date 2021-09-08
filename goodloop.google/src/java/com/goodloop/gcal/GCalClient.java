@@ -35,6 +35,7 @@ import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.ConferenceData;
 import com.google.api.services.calendar.model.CreateConferenceRequest;
 import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 import com.google.api.services.sheets.v4.Sheets;
@@ -64,7 +65,10 @@ import com.winterwell.utils.Printer;
 import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Period;
+import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
+import com.winterwell.utils.time.TimeUtils;
 import com.winterwell.web.app.Logins;
 
 /**
@@ -81,10 +85,10 @@ public class GCalClient {
 	private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 	private static final String TOKENS_DIRECTORY_PATH = "tokens";
 	private static final String LOGTAG = "GCalClient";
+	private static Calendar _service;
 
 
 	public GCalClient() {
-		// TODO Auto-generated constructor stub
 	}
 	
 	/**
@@ -141,20 +145,20 @@ public class GCalClient {
 	}
 
 	static Calendar getService() {
+		if (_service != null) return _service;
 		Log.i(LOGTAG, "getService...");
 		try {
 			final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-			 Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+			 _service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
 		                .setApplicationName(APPLICATION_NAME)
 		                .build();
-			return service;
+			return _service;
 		} catch(Exception ex) {
 			Log.i(LOGTAG, "getService :( "+ex); // make sure its logged
 			throw Utils.runtime(ex);
 		}
 	}
 
-	
 	/**
 	 * 
 	 * @param w
@@ -191,12 +195,12 @@ public class GCalClient {
         return getEvents(calendarId, null, null);
     }
     
-    public List<Event> getEvents(String calendarId, DateTime start, DateTime end) {
+    public List<Event> getEvents(String calendarId, Time start, Time end) {
         try {
             Calendar service = getService();
             Calendar.Events.List listReq = service.events().list(calendarId);
-            if (start != null) listReq.setTimeMin(start);
-            if (end != null) listReq.setTimeMax(end);
+            if (start != null) listReq.setTimeMin(new DateTime(start.getTime()));
+            if (end != null) listReq.setTimeMax(new DateTime(end.getTime()));
             Events events = listReq.execute();
             List<Event> items = events.getItems();
             return items;
@@ -220,7 +224,12 @@ public class GCalClient {
 	 * @return
 	 */
 	public static Time toTime(EventDateTime edt) {
-		long t = edt.getDateTime().getValue();
+		DateTime dateTime = edt.getDateTime();
+		if (dateTime==null) {
+			dateTime = edt.getDate();
+		}
+		assert dateTime != null : edt;
+		long t = dateTime.getValue();
 		return new Time(t);
 	}
 
@@ -260,6 +269,65 @@ public class GCalClient {
 		} catch (IOException e) {
 			throw Utils.runtime(e);
 		}
+	}
+
+	/**
+	 * 
+	 * @param event
+	 * @return warning: can be null!
+	 */
+	public Period getPeriod(Event event) {
+		assert event != null;
+		// NB: I _think_ this will get the specific time of this instance for recurring events. ^Dan
+		EventDateTime s = event.getOriginalStartTime();
+		if (s==null) s = event.getStart();
+		if (s==null) {
+			// a non-event?! They do seem to exist
+			return null;
+		}
+		Time start = toTime(s);
+		EventDateTime e = event.getEnd();		
+		Time end = e==null? start.plus(TUnit.HOUR) : toTime(e);
+		if (start.equals(end) && start.getHour()==0) {
+			// Paranoia for an all day event (should be encoded as end=next-day)
+			end = TimeUtils.getEndOfDay(end);
+		}
+		return new Period(start, end);
+	}
+
+	/**
+	 * 
+	 * @param event
+	 * @param email
+	 * @return true=accepted, false=declined, null=no-answer/tentative
+	 */
+	public Boolean isAttending(Event event, String email) {
+		List<EventAttendee> attendees = event.getAttendees();
+		if (attendees==null) {
+			return true; // a solo calendar event
+		}
+		for (EventAttendee attendee : attendees) {
+			if ( ! email.equalsIgnoreCase(attendee.getEmail())) continue;
+			String rs = attendee.getResponseStatus();
+			if ("accepted".equalsIgnoreCase(rs)) {
+				return true;
+			}
+			if ("declined".equalsIgnoreCase(rs)) {
+				return false;
+			}
+		}
+		return null;
+	}
+
+	public static EventDateTime toEventDateTime(Time time) {
+		// ISO8601 and RFC3339 are mostly interchangeable
+		// c.f. https://ijmacd.github.io/rfc3339-iso8601/
+		DateTime dateTime = DateTime.parseRfc3339(time.toISOString());
+		EventDateTime start = new EventDateTime()
+		    .setDateTime(dateTime)
+		    .setTimeZone("GMT"); // is this needed??
+		return start;
+
 	}
 	
 }
