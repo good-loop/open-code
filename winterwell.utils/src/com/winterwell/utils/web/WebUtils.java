@@ -1793,14 +1793,8 @@ public class WebUtils {
 	}
 	
 	public static Proc renderToPdf_usingChrome(File html, File pdf, String options) {
-		// works in Jerbil?? But can spit out raw html??
-		Proc proc = new Proc(
-				"chrome-headless-render-pdf"
-				+ (options==null? "" : " "+options)				
-				+ " --url=file://"+html.getAbsolutePath()+" --pdf="+pdf.getAbsolutePath());
-		Log.d("pdf", proc.getCommand());
-		proc.start();
-		return proc;
+		String url = "file://"+html.getAbsolutePath();
+		return renderUrlToPdf_usingChrome(url, pdf, options);
 	}
 	
 	/**
@@ -1811,16 +1805,23 @@ public class WebUtils {
 	 * @return
 	 * @throws MalformedURLException
 	 */
-	public static Proc renderUrlToPdf_usingChrome(String url, File pdf, String options) throws MalformedURLException {
+	public static Proc renderUrlToPdf_usingChrome(String url, File pdf, String options) {
 		// works in Jerbil?? But can spit out raw html??
-		URL u = new URL(url);
-		Proc proc = new Proc(
-				"chrome-headless-render-pdf"
-				+ (options==null? "" : " "+options)				
-				+ " --url="+u+" --pdf="+pdf.getAbsolutePath());
-		Log.d("pdf", proc.getCommand());
-		proc.start();
-		return proc;
+		try {
+			URL u = new URL(url); // why??
+			Proc proc = new Proc(
+					"chrome-headless-render-pdf"
+					+ (options==null? "" : " "+options)				
+					+ " --url="+u+" --pdf="+pdf.getAbsolutePath());
+			Log.d("pdf", proc.getCommand());
+			proc.start();
+			return proc;
+		} catch(Exception ex) {
+			if (ex.toString().contains("Cannot run program \"chrome-headless-render-pdf\"") && ex.toString().contains("No such file or directory")) {
+				throw new FailureException("Cannot run `chrome-headless-render-pdf` - It is not installed. Use npm -g to install https://www.npmjs.com/package/chrome-headless-render-pdf", ex);
+			}
+			throw Utils.runtime(ex);
+		}
 	}
 
 	/**
