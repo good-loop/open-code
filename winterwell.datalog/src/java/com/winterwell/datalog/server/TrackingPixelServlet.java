@@ -33,6 +33,7 @@ public class TrackingPixelServlet implements IServlet {
 	public static final String trkid = "trkid";
 	private static final long serialVersionUID = 1L;
 	static final String DATALOG_EVENT_TYPE = "pxl";
+	
 	/**
 	 * GL "tracking" as an app for You-Again
 	 */
@@ -107,7 +108,7 @@ public class TrackingPixelServlet implements IServlet {
 		} catch (IOException e) {
 			Log.w("img0", e);
 		}
-		String tag = DATALOG_EVENT_TYPE;
+		String tag = state.get(LgServlet.TAG, DATALOG_EVENT_TYPE);
 		
 		// Default to dataspace "trk" but allow override
 		Dataspace dataspace = state.get(LgServlet.DATASPACE);
