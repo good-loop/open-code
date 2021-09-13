@@ -1,5 +1,7 @@
 package com.winterwell.datalog.server;
 
+import java.util.List;
+
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.utils.io.Option;
 
@@ -13,5 +15,9 @@ public class CompressDataLogIndexConfig extends DataLogConfig {
 
 	@Option(description="Normally unset. A filter to only process some data. HACK setting `-user:/.+@trk/`")
 	public String filter;
+	
+	@Option(description="Normally unset. Remove some properties from what is normally kept in the transformed data. i.e. this modifies longterms")
+	public List<String> removeProperty;
+	
 	
 }

@@ -156,7 +156,10 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 		// do Main once
 		doMain2();		
 		// loop? (does nothing but stay alive by default)
-		if (pleaseStop) return;
+		if (pleaseStop) {
+			stop();
+			return;
+		}
 		mainLoopThread = new MainLoopThread(this);
 		mainLoopThread.start();
 		// ready
@@ -247,6 +250,7 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 		// break the loop, if we are in one
 		if (mainLoopThread!=null && mainLoopThread.isAlive()) {
 			mainLoopThread.interrupt();
+			mainLoopThread = null;
 		}
 	}
 

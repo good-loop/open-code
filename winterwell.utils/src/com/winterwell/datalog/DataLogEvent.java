@@ -68,7 +68,7 @@ public final class DataLogEvent implements Serializable, IHasJson
 			new HashMap(new ArrayMap(			
 			// tracking
 			"ip", String.class,
-			/** Before July 2021, can mix xids with temp and @trk ids. See `trk` */
+			/** User XID. Before July 2021, can mix xids with temp and @trk ids. See `trk` */
 			"user", String.class,
 			/** temp and @trk ids */
 			"trk", String.class,
@@ -122,6 +122,7 @@ public final class DataLogEvent implements Serializable, IHasJson
 			"oxid", String.class,
 			"txid", String.class,
 			"email", String.class,
+			// Is uxid not used anywhere?? "user" seems the preferred prop (see #initAdjustUserProp(0)
 			"uxid", String.class,
 			"su",String.class,
 			"gby", String.class, // group-by ID -- for collating events together into one summary event

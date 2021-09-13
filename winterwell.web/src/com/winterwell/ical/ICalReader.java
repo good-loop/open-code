@@ -114,6 +114,14 @@ public class ICalReader {
 		return e;
 	}
 	
+	/**
+	 * 
+	 * @param e
+	 * @param line
+	 * @param key
+	 * @return key, to allow lines to be joined together
+	 * @throws ParseException
+	 */
 	String parseEvent2_line(ICalEvent e, String line, String key) throws ParseException {
 		String value = line;
 		// doc - when does/doesnt the key change??
@@ -193,6 +201,9 @@ public class ICalReader {
 				Time exdate = parseTime(v, keyValueBumpf);
 				e.repeat.addExclude(exdate);				
 			}
+			return key;
+		case "ATTENDEE":
+			Log.w(LOGTAG, "TODO "+value);
 			return key;
 		}
 		return null;

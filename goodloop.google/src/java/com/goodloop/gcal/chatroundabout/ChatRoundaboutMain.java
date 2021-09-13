@@ -8,9 +8,10 @@ import java.io.File;
 import java.io.FileWriter;
 
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.time.TUnit;
 import com.winterwell.web.app.AMain;
 
-public class ChatRoundaboutMain extends AMain {
+public class ChatRoundaboutMain extends AMain<ChatRoundaboutConfig> {
 	
 	private static final String FILENAME = "ChatRoundabout.txt";
 	
@@ -19,66 +20,20 @@ public class ChatRoundaboutMain extends AMain {
         mymain.doMain(args);
 	}
 	
+	public ChatRoundaboutMain() {
+		super("chatroundabout", ChatRoundaboutConfig.class);
+	}
+	
 	@Override
-	protected void doMainLoop() throws IOException {
-		
-		// Create last ran date file if not exist
-	    try {
-	        File lastRanFile = new File(FILENAME);
-	        if (lastRanFile.createNewFile()) {
-	          System.out.println("File created: " + lastRanFile.getName());
-	        } 
-	      } catch (IOException e) {
-	        System.out.println("An error occurred.");
-	        e.printStackTrace();
-	      }
-	    
-	    // Reading lastran.txt
-	    String lastRanString = "";
-	    try {
-	        File lastRanFile = new File(FILENAME);
-	        Scanner myReader = new Scanner(lastRanFile);
-	        while (myReader.hasNextLine()) {
-	          lastRanString = myReader.nextLine();;
-	        }
-	        myReader.close();
-	      } catch (IOException e) {
-	        System.out.println("An error occurred.");
-	        e.printStackTrace();
-	      }
-	    
-	    if (!lastRanString.equals("")) {
-	    	System.out.println("ChatRoundabout ran on: "+lastRanString);
-	    } else { System.out.println("ChatRoundabout.txt is empty"); }
-	    
-	    // Logic: Is it on the same day as last run and is it on Monday
-		boolean onLastRD = LocalDate.now().toString().equals(lastRanString) || lastRanString.equals("");
-		boolean isMonday = LocalDate.now().getDayOfWeek().equals(DayOfWeek.MONDAY);
-		
-//		System.out.println("onLastRD: " + onLastRD);
-//		System.out.println("isMonday: " + isMonday);
-		
-		if (isMonday && !onLastRD) {
-			// Run the service
-			System.out.println("ChatRoundabout: Running");
-			new ChatRoundabout().run();
-			
-			//Write last ran date
-			try {
-				FileWriter myWriter = new FileWriter("ChatRoundabout.txt");
-				String lastRan = LocalDate.now().toString();
-				myWriter.write(lastRan);
-				myWriter.close();
-				System.out.println("Last ran date written");
-			} catch (IOException e) {
-				System.out.println("An error occurred.");
-				e.printStackTrace();
-			}
-		} else {
-			System.out.println("ChatRoundabout: Today is not Monday or Today is the same day as last ran date, Abort.");
+	protected void doMain2() {
+		// ChatRoundabout should be idempotent within a given week.
+		// A repeated call should (painstakingly) fail to make any events, because they already exist
+		try {
+			new ChatRoundabout(getConfig()).run();
+			pleaseStop = true;
+		} catch (IOException e) {
+			throw Utils.runtime(e);
 		}
-		
-		Utils.sleep(3600000);
 	}
 	
 }

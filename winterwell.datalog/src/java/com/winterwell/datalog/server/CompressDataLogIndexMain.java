@@ -1,5 +1,6 @@
 package com.winterwell.datalog.server;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -103,7 +104,7 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 		System.out.println(cb.getOptionsMessage("source index (full name), e.g. `scrubbed.datalog.gl_jan21`"));
 	}	
 	
-	static String version = "0.1.1"; 
+	static String version = "0.1.2"; 
 	
 	@Override
 	protected void doMain2() {		
@@ -122,9 +123,14 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 		// See DataLogEvent#COMMON_PROPS
 		// TODO increase this list as our usage changes		
 		List<String> aggs = Arrays.asList(("amount dntn").split(" "));
+		Log.d(LOGTAG, "Sum these properties: "+aggs);
 		// This list may need updating from time to time!
-		List<String> terms = getConfig().longterms;
-
+		List<String> terms = new ArrayList(getConfig().longterms);
+		if (getConfig().removeProperty != null) {
+			terms.removeAll(getConfig().removeProperty);
+		}
+		Log.d(LOGTAG, "Keep these properties: "+terms);
+		
 		// create index and mapping
 		createIndexWithPropertiesMapping(destIndex, null, terms);				
 		ESConfig esConfig = esc.getConfig();
