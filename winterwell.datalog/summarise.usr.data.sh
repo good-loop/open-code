@@ -4,7 +4,7 @@
 # A bash wrapper for a java process which summarises (or compresses) datalog indices
 ####
 
-USAGE="\n\nUSAGE:\n\n./summarise.datalog.data.sh full-name-of-target-index name-of-output-index\n\n"
+USAGE="\n\nUSAGE:\n\n./summarise.usr.data.sh full-name-of-target-index name-of-new-index\n\n"
 
 ####
 # Check if name of index was passed in
@@ -25,7 +25,7 @@ case $ANSWER in
 	yes|YES)
 		printf "\n\n\tContinuing to launch JVM process to summarise $1\n"
 		sleep 2
-		java -cp build-lib/datalog.compressor.jar:build-lib/* com.winterwell.datalog.server.CompressDataLogIndexMain -noAliasSwap -filter "user:/.+@trk/" -removeProperty user -destIndex $2 $1
+		java -cp build-lib/winterwell.datalog.jar:build-lib/* com.winterwell.datalog.server.CompressDataLogIndexMain -noAliasSwap -filter "user:/.+@email/" -destIndex $2  $1
 	;;
 	no|NO)
 		printf "\n\n\tAttempting to launch 'bob' to build this project\n"
