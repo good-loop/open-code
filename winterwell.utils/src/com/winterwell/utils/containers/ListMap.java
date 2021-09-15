@@ -37,6 +37,14 @@ public final class ListMap<K, V> extends CollectionMap<K, V, List<V>> implements
 	}
 }
 
+/**
+ * Base for ListMap
+ * @author daniel
+ *
+ * @param <K>
+ * @param <V>
+ * @param <CV>
+ */
 abstract class CollectionMap<K, V, CV extends Collection<V>> extends HashMap<K, CV> {
 
 	private static final long serialVersionUID = 1L;

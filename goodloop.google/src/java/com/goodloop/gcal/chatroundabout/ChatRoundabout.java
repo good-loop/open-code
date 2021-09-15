@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.goodloop.gcal.GCalClient;
@@ -24,6 +25,7 @@ import com.winterwell.utils.Dep;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.containers.ListMap;
 import com.winterwell.utils.containers.Pair;
 import com.winterwell.utils.io.CSVReader;
 import com.winterwell.utils.log.Log;
@@ -32,6 +34,8 @@ import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.time.TimeOfDay;
 import com.winterwell.utils.time.TimeUtils;
+import com.winterwell.web.app.Emailer;
+import com.winterwell.web.email.SimpleMessage;
 
 /**
  * 121s
@@ -95,18 +99,18 @@ public class ChatRoundabout  {
 	 * @param chatSet "team" or "cross-team"
 	 * @return true if OK
 	 */
-	private boolean checkEvent(String email, String chatSet, Period slot) {
-		
+	private boolean checkEvent(Employee employee, String chatSet, Period slot) {
+		assert employee.email != null;
 		// Restrict events around the date of the meeting
 		
 		// Only getting events 1 days before and after next Friday to try to catch long holidays but not getting too many event results		
 		Time start = TimeUtils.getStartOfDay(slot.first.minus(TUnit.DAY));
 		Time end = TimeUtils.getStartOfDay(slot.first.plus(TUnit.DAY));
         
-		List<Event> allEvents = client().getEvents(email, start, end);
+		List<Event> allEvents = client().getEvents(employee.email, start, end);
 
 		for (Event event : allEvents) {
-			Boolean attending = client().isAttending(event, email);
+			Boolean attending = client().isAttending(event, employee.email);
 			if (Boolean.FALSE.equals(attending)) {
 				// ignore cancelled
 				continue;
@@ -119,7 +123,8 @@ public class ChatRoundabout  {
 				continue; // non-event - skip
 			}
 			if (period.intersects(slot)) {
-				Log.d(LOGTAG, email+" has a Clash: "+event.getSummary()+" "+period+" vs "+slot);
+				Log.d(LOGTAG, employee+" has a Clash: "+event.getSummary()+" "+period+" vs "+slot);
+				no121forChatset.add(chatSet, employee);
 				return false;
 			}
 			
@@ -189,7 +194,7 @@ public class ChatRoundabout  {
      * @throws IOException
      */
 	Event prepare121(Pair<Employee> ab, Period slot, String chatSet) throws IOException {		
-		System.out.println("Creating 121 event between " + ab);		
+		Log.d(LOGTAG,"Creating 121 event between " + ab);		
 		
 		// Setting event details
 		Event event = new Event()
@@ -221,6 +226,8 @@ public class ChatRoundabout  {
 		return event;
 	}
 
+	ListMap<String,Employee> no121forChatset = new ListMap();
+	ListMap<Employee,Event> eventsForEmployee = new ListMap();
 	
 	void run() throws IOException {
 		
@@ -230,7 +237,7 @@ public class ChatRoundabout  {
 		// Get 121 Date (Next Friday)
 		LocalDate _nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
 		Time nextFriday = new Time(_nextFriday.toString());
-		System.out.println("Next Friday is: " + nextFriday);
+		Log.d(LOGTAG,"Next Friday is: " + nextFriday);
 						
 		// Separate Edinburgh and London team into two list
 		ArrayList<Employee> edinburghEmails = new ArrayList<>();
@@ -247,10 +254,26 @@ public class ChatRoundabout  {
 		
 		// Cross team
 		createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);
-		
-		
+				
 		// Within team
 		createTeamEvents(nextFriday, edinburghEmails);
+		
+		// Notify people without 121s
+		notifyPeopleWithout121s();
+	}
+	
+
+	private void notifyPeopleWithout121s() {
+		Log.i(LOGTAG, "*No 121 was set up for these people*");
+		Log.i(LOGTAG, no121forChatset);
+
+		// TODO send emails to those without 121s, so they dont feel left out
+		Set<Employee> people = no121forChatset.getValueSet();
+//		for(Employee peep : people) {
+//			Emailer emailer = Dep.get(Emailer.class);
+//			SimpleMessage email;
+//			emailer.send(email);
+//		}
 	}
 
 	final ChatRoundaboutConfig config;
@@ -265,13 +288,13 @@ public class ChatRoundabout  {
 		Period slot = new Period(s, e);
 		String chatSet = CHATSET_CROSS_TEAM;
 		// filter out people who cant make the slot
-		londonEmails = Containers.filter(londonEmails, employee -> checkEvent(employee.email, chatSet, slot));
-		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
+		londonEmails = Containers.filter(londonEmails, employee -> checkEvent(employee, chatSet, slot));
+		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee, chatSet, slot));
 		
 		// TODO fetch last weeks 121s
 		
-		System.out.println("Edinburgh's team size today: " + edinburghEmails.size());
-		System.out.println("London's team size today: " + londonEmails.size());
+		Log.d(LOGTAG,"Edinburgh's team size today: " + edinburghEmails.size());
+		Log.d(LOGTAG,"London's team size today: " + londonEmails.size());
 		
 		// Logic: which office is larger
 		boolean e2l = (edinburghEmails.size() > londonEmails.size());
@@ -287,13 +310,16 @@ public class ChatRoundabout  {
 	private void postEventsToCalendar(String chatSet, Period slot, List<Pair<Employee>> randomPairs) throws IOException {
 		// Make events
 		for (Pair<Employee> ab : randomPairs) {
-			Event preparedEvent = prepare121(ab, slot, chatSet);			
+			Event preparedEvent = prepare121(ab, slot, chatSet);	
+			eventsForEmployee.add(ab.first, preparedEvent);
+			eventsForEmployee.add(ab.second, preparedEvent);
 			// Save events to Google Calendar, or just do a dry run?
 			if (LIVE_MODE) {
 				GCalClient gcc = client();
 				Calendar person1 = gcc.getCalendar(ab.first.email);
 				String calendarId = person1.getId(); // "primary";
-				Event event2 = gcc.addEvent(calendarId, preparedEvent, false, true);
+				// NB: notify people, and add video conferencing
+				Event event2 = gcc.addEvent(calendarId, preparedEvent, true, true);
 				Printer.out("Saved event to Google Calendar: " + event2.toPrettyString());
 			} else {
 				Printer.out("\nTESTING \nEvent: " + preparedEvent.getSummary() +
@@ -316,7 +342,7 @@ public class ChatRoundabout  {
 		Period slot = new Period(s, e);
 		String chatSet = CHATSET_IN_TEAM;
 		// filter out people who cant make the slot
-		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
+		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee, chatSet, slot));
 		
 		// TODO fetch last weeks 121s
 		
