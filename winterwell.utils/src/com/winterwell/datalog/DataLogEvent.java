@@ -57,7 +57,7 @@ public final class DataLogEvent implements Serializable, IHasJson
 	 * 
 	 * It allows for one DataLogEvent to hold a few stats. This is handy for one DL event describes one advert.
 	 * 
-	 * The other DatLog approach is to turn multiple stats into multiple events, and let ES handle it. 
+	 * The other DataLog approach is to turn multiple stats into multiple events, and let ES handle it. 
 	 * 
 	 * 
 	 * HACK: use StringBuilder.class as a marker for "text with tokenisation", and String.class for keywords.
@@ -136,8 +136,12 @@ public final class DataLogEvent implements Serializable, IHasJson
 			"score", Double.class,
 			"amount", Double.class,
 			"price", Double.class,
+			/** For easy summation and FX handling, store price in dollars (which are considered a stable currency) */
+			"priceusd", Double.class,		
 			/** Use a distinct param for donation amount, so theres no clashes when grouping events together */
-			"dntn", Double.class,
+			"dntn", Double.class,			
+			/** For easy summation and FX handling, store dntn in dollars (which are considered a stable currency) */			
+			"dntnusd", Double.class,		
 			/**
 			 * revenue model
 			 */
@@ -151,7 +155,7 @@ public final class DataLogEvent implements Serializable, IHasJson
 			 */
 			"revagent", Double.class,
 			"currency", String.class, // deprecated
-			"curr", String.class,
+			"curr", String.class, // use this instead of currency
 			"w", Integer.class, // width
 			"h", Integer.class, // height
 			"size", String.class, // size could be e.g. "300x250", "billboard", or a number. So lets just store it as a keyword.
