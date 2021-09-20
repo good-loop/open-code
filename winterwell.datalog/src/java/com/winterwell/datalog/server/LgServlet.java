@@ -61,7 +61,7 @@ import ua_parser.Parser;
  */
 public class LgServlet {
 
-	static final SField TAG = DataLogFields.t;
+	public static final SField TAG = DataLogFields.t;
 	static final AField<Dataspace> DATASPACE = DataLogFields.d;
 
 	public LgServlet() {		

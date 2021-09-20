@@ -151,7 +151,7 @@ public class AppUtils {
 		// Minor TODO both indices in one call
 		s.setIndices(path.indices[0]).setType(path.type).setId(path.id);
 		if (version==null) s.setSourceOnly(true);
-		s.setDebug(true);
+//		s.setDebug(true);
 		GetResponse sr = s.get();
 		if (sr.isSuccess()) {
 			if (klass!=null) {
