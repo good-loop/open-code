@@ -25,7 +25,7 @@ public class DataLogServer extends AMain<DataLogConfig> {
 
 	/**
 	 * static ref to config
-	 * @deprecated why not use config?
+	 * @deprecated why not use config? wiring with LgServlet is a bit clumsy
 	 */
 	static DataLogConfig settings;
 

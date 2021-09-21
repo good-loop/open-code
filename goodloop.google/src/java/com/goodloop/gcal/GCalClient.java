@@ -258,10 +258,14 @@ public class GCalClient {
 				cd.setCreateRequest(
 						new CreateConferenceRequest().setRequestId(Utils.getNonce())						
 				);				
-				confPlease.setConferenceData(cd);
+				confPlease.setConferenceData(cd);				
 				Patch patchreq = getService().events().patch(calendarId, event2.getId(), confPlease)
 						.setSendNotifications(sendNotifications);
 				Event presp = patchreq.setConferenceDataVersion(1).execute();
+				
+				// TODO wrap the urls in link-trackers so we can see if people are attending
+//				cd.setEntryPoints(ep);
+				
 				event2 = presp;
 			}
 			// insert!
