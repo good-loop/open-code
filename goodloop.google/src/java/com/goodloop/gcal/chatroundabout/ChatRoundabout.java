@@ -44,7 +44,7 @@ import com.winterwell.utils.time.TimeUtils;
  */
 public class ChatRoundabout  {
 	
-	private static final Boolean LIVE_MODE = false;
+	private static final Boolean LIVE_MODE = true;
 	private static final String LOGTAG = null;
 	private static final String CHATSET_CROSS_TEAM = "cross-team";
 	private static final String CHATSET_IN_TEAM = "within-team";
