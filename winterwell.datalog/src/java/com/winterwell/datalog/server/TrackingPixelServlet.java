@@ -14,6 +14,7 @@ import com.winterwell.web.app.FileServlet;
 import com.winterwell.web.app.IServlet;
 import com.winterwell.web.app.WebRequest;
 import com.winterwell.web.data.XId;
+import com.winterwell.web.fields.StringField;
 import com.winterwell.youagain.client.AuthToken;
 
 /**
@@ -102,24 +103,26 @@ public class TrackingPixelServlet implements IServlet {
 		String uid = getCreateCookieTrackerId(state);
 		String ref = Utils.or(state.get("ref"), state.getReferer());
 		// ??transfer link properties to cookie? -- like the affiliate
-		// serve the resource, so we can release the request
+
 		try {
+			// Serve the resource, so we can release the request
 			FileServlet.serveFile(PIXEL, state);
+
+			// Apply default event tag "pxl" if none specified
+			if (state.get(LgServlet.TAG) == null) {
+				state.put(LgServlet.TAG, DATALOG_EVENT_TYPE);
+			}
+
+			// Apply default dataspace "trk" if none specified
+			if (state.get(LgServlet.DATASPACE) == null) {
+				state.put(new StringField(LgServlet.DATASPACE.name), APP);
+			}
+			// Count it (fastLog will check for isOpen() on the request and not try to send a response)
+			LgServlet.fastLog(state);
 		} catch (IOException e) {
 			Log.w("img0", e);
 		}
-		String tag = state.get(LgServlet.TAG, DATALOG_EVENT_TYPE);
-		
-		// Default to dataspace "trk" but allow override
-		Dataspace dataspace = state.get(LgServlet.DATASPACE);
-		if (dataspace == null) {
-			dataspace = new Dataspace(APP);
-		}
-		String gby = state.get(LgServlet.GBY);
-		// Count it
-		LgServlet.doLog(state, dataspace, gby, tag, 1, null, null, true);
 
-		
 		// log it
 		Log.d("track", state.getReferer()+" uid: "+uid);		
 	}

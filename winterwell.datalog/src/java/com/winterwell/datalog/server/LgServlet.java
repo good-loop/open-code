@@ -81,7 +81,7 @@ public class LgServlet {
 	static final BoolField track = new BoolField("track");
 	
 	/**
-	 * Log msg to fast.log file.  
+	 * Log msg to fast.log file and send appropriate response
 	 * @param req
 	 * @param resp
 	 * @throws IOException 
@@ -125,7 +125,7 @@ public class LgServlet {
 //		if (ref != null) {
 //			readGoogleAnalyticsTokens(ref, params);
 //		}
-						
+
 		// group by
 		String gby = state.get(GBY);
 		if (gby==null) {
@@ -150,6 +150,9 @@ public class LgServlet {
 			}
 		}
 		
+		// Has the request already received a response (eg from TrackingPixelServlet)? Stop here.
+		if (!state.isOpen()) return;
+
 		// Reply		
 		// Send a .gif for a pixel?
 		if (state.getResponseType()==KResponseType.image) {
