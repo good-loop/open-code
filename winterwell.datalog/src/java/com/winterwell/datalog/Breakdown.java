@@ -17,7 +17,7 @@ import com.winterwell.utils.TodoException;
 public final class Breakdown {
 
 	/**
-	 * e.g. "pub" or ",pub" for top-level + breakdown-by-pub, or "" for just top-level.
+	 * e.g. "pub" or ",pub" for top-level + breakdown-by-pub, or "" for just top-level (i.e. the total).
 	 * Never null or empty! null is converted into [""]
 	 */
 	final String[] by;
