@@ -17,49 +17,36 @@ import com.winterwell.utils.TodoException;
 public final class Breakdown {
 
 	/**
-	 * e.g. "pub" or ",pub" for top-level + breakdown-by-pub
+	 * e.g. "pub" or ",pub" for top-level + breakdown-by-pub, or "" for just top-level.
+	 * Never null or empty! null is converted into [""]
 	 */
 	final String[] by;
 	/**
 	 * e.g. "count" or "price"
+	 * Never null
 	 */
 	final String field;
 	/**
 	 * Currently assumed to be sum and ignored??
 	 */
-	final String op;
-
+	final KBreakdownOp op;
+	
 	public List<String> getBy() {
 		return Arrays.asList(by);
 	}
 	
-	public Breakdown(String field) {
-		this(null, field, null);
-	}
-	
 	/**
 	 * 
-	 * @param by e.g. "pub" or ",pub" for top-level + breakdown-by-pub
+	 * @param by e.g. "pub" or ",pub" for top-level + breakdown-by-pub. Can be null
 	 * NB: a trailing comma will be ignored, but a leading one works.
 	 * @param field e.g. "count" or "price"
 	 * @param operator e.g. "sum"
 	 */
-	public Breakdown(String by, String field, String operator) {
+	public Breakdown(String by, String field, KBreakdownOp operator) {
 		this.by = by==null? new String[]{""} : by.split(",");
 		this.field =field;
 		this.op = operator;
-		assert op==null || op.equals("sum") : op+" TODO"; 
-	}
-
-	/**
-	 * @return make an aggregation for this breakdown
-	 */
-	public Aggregation getAggregation() {
-		if (by==null) {
-			// HACK top-level total stat
-			return Aggregations.stats(field, field);
-		}
-		throw new TodoException();
+		assert ! field.isEmpty();
 	}
 	
 	@Override

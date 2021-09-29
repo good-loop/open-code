@@ -7,6 +7,7 @@ import java.util.Map;
 import com.winterwell.depot.IInit;
 import com.winterwell.es.ESNoIndex;
 import com.winterwell.es.ESType;
+import com.winterwell.gson.FlexiGson;
 import com.winterwell.gson.StandardAdapters.LenientLongAdapter;
 import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.Utils;
@@ -135,6 +136,12 @@ implements Comparable<Money>, IHasJson, IInit {
 		this(copyMe.getCurrency(), copyMe.getValue());
 		this.name = copyMe.getName();
 	}
+
+	public static Money fromJson(String jsonMoney) {
+		Money m = new FlexiGson().fromJson(jsonMoney, Money.class);
+		return m;
+	}
+	
 	
 	String name;
 	

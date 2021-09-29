@@ -114,29 +114,6 @@ public class SearchQuery implements Serializable, IHasJson {
 		parse();
 	}
 
-//	/**
-//	 * Guess when a comma should be read as an OR.
-//	 * @param raw Can be null (returns null)
-//	 * @return
-//	 */
-//	public static SearchQuery newSearchSpecGuessORs(String raw) {
-//		if (raw==null) return null;
-//		if (raw.contains(" OR ") || raw.contains(" or ")) {
-//			return new SearchQuery(raw);
-//		}
-//		if (raw.contains(" AND ") || raw.contains(" and ")) {
-//			return new SearchQuery(raw);
-//		}
-//		List<String> row = StrUtils.splitOnComma(raw);
-//		if (row.size() > 1) {
-//			// commas? they probably wanted OR
-//			String raw2 = StrUtils.join(row, " OR ");
-//			Log.d("SearchSpec", "interpret , as OR in: "+raw+" -> "+raw2+" "+ReflectionUtils.getSomeStack(8));
-//			return new SearchQuery(raw2);	
-//		}
-//		return new SearchQuery(raw);
-//	}
-	
 	/**
 	 * 
 	 * @param raw

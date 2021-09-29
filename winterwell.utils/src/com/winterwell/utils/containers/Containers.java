@@ -1523,6 +1523,8 @@ public final class Containers  {
 	}
 
 	/**
+	 * counts[key] += dx
+	 * 
 	 * Thread safety: YES for ConcurrentMap, NO for other maps!
 	 * 
 	 * @param counts

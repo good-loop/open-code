@@ -35,7 +35,7 @@ public class DataLogHttpClientTest {
 		// get all
 		DataLogHttpClient dlc = new DataLogHttpClient(new Dataspace("gl"));
 		SearchQuery q = new SearchQuery("evt:spend");
-		Breakdown breakdown = new Breakdown("pub", "count", "sum");
+		Breakdown breakdown = new Breakdown("pub", "count", KBreakdownOp.sum);
 		Map<String, Double> events = dlc.getBreakdown(q, breakdown);
 		System.out.println(events);
 	}
@@ -47,7 +47,7 @@ public class DataLogHttpClientTest {
 		SearchQuery sqd = new SearchQuery("evt:donation");
 		List<DataLogEvent> donEvents = dlc.getEvents(sqd, 10);
 		// NB: the count field is always present on DataLogEvents
-		Breakdown bd = new Breakdown("cid", "count", "sum");
+		Breakdown bd = new Breakdown("cid", "count", KBreakdownOp.sum);
 		Map<String, Double> dontnForAdvert = dlc.getBreakdown(sqd, bd);	
 		System.out.println(dontnForAdvert);
 	}

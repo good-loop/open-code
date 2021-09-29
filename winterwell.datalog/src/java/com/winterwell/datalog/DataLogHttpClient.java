@@ -153,11 +153,13 @@ public class DataLogHttpClient {
 	 * Side effects: set examples
 	 * @param q
 	 * @param breakdown
-	 * @return {key e.g. "oxfam": value e.g. 100}
+	 * @return {key e.g. "oxfam": value e.g. 100} 
+	 * Warning: if the breakdown had null by (e.g. you wanted a total) then this is empty.
+	 * But you can call getTotalFor() to fetch the result
 	 */
 	public Map<String, Double> getBreakdown(SearchQuery q, Breakdown breakdown) {
 		// Call DataServlet		
-		String b = breakdown.toString();		
+		String b = breakdown==null? null : breakdown.toString();		
 		ArrayMap vars = new ArrayMap(
 				"dataspace", dataspace,				
 				"q", q.getRaw(), 
@@ -169,10 +171,11 @@ public class DataLogHttpClient {
 		// Call!
 		JSend jobj = get2_httpCall(vars);		
 		
-		// e.g. by_cid buckets		
+		// e.g. by_cid buckets
 		List<Map> buckets = new ArrayList();
 		Map jobjMap = jobj.getDataMap();
-		for(String byi : breakdown.by) {
+		for(String byi : breakdown.by) { 
+			// NB: can include byi="" for top-level total, but that will be null here (there's no "by_") - handled later
 			List byi_buckets = Containers.asList((Object)SimpleJson.get(jobjMap, "by_"+byi, "buckets"));
 			if (byi_buckets != null) buckets.addAll(byi_buckets);
 		}		
@@ -186,29 +189,43 @@ public class DataLogHttpClient {
 			}
 			double v = MathUtils.toNum(ov);
 			byX.put(k, v);
-		}		
+		}			
 		// ...count of docs
 		Object _allCount = SimpleJson.get(jobjMap, ESDataLogSearchBuilder.allCount);
 		if (_allCount instanceof Map) {	// HACK old code, Jan 2021
 			_allCount = ((Map)_allCount).get("count");
 		}
 		allCount = MathUtils.toNum(_allCount);
+		
 		// ...total
+		// e.g. .cid -- ??How is this ever set?? Does this code work??
 		for(String byi : breakdown.by) {
 			Object _btotal = SimpleJson.get(jobjMap, byi);
 			if (_btotal == null) {
-				Log.w(LOGTAG, "No top-by total?! "+b+" "+jobjMap);
+				Log.w(LOGTAG, "No top-by total?! "+byi+" "+jobjMap);
 				continue;
 			}
 			double bttl = MathUtils.toNum(_btotal);
 			totalFor.put(byi, bttl);
+			Log.w(LOGTAG, "Yes top-by total "+byi+" "+jobjMap);
+		}	
+		// e.g. sum of "dntn"
+		Object _btotal = SimpleJson.get(jobjMap, breakdown.field);
+		if (_btotal != null) {
+			double bttl = MathUtils.toNum(_btotal);
+			totalFor.put(breakdown.field, bttl);
 		}
+
 		// ...examples
 		examples = Containers.asList((Object)SimpleJson.get(jobjMap, "examples"));
 		
 		return byX;
 	}
 	
+	/**
+	 * The totals
+	 * {breakdown-by-KEY: total}
+	 */
 	Map<String,Double> totalFor = new ArrayMap();
 
 	/**
@@ -270,7 +287,7 @@ public class DataLogHttpClient {
 	
 	/**
 	 * 
-	 * @return {breakdown-by ID: total}
+	 * @return {breakdown-by-key: total} E.g. {cid:100, vert:100}
 	 */
 	public Map<String, Double> getTotalFor() {
 		return totalFor;
