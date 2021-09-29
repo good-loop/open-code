@@ -15,8 +15,12 @@ import com.winterwell.utils.time.Time;
 import com.winterwell.utils.time.TimeUtils;
 
 /**
- * Like DateField, adding support for relative-time answers such as "last week"
+ * Like DateField, adding support for relative-time answers such as "last week".
+ * These RelTime objects can be stored, and called with different results later.
+ * 
  * See {@link RelTime}
+ * 
+ * Use `ICallable.callOrNull()` to conveniently get a Time.
  * 
  * Enter dates (and times). 
  * TODO handle time zones configurably

@@ -268,6 +268,10 @@ public class DataLogHttpClient {
 		return allCount;
 	}
 	
+	/**
+	 * 
+	 * @return {breakdown-by ID: total}
+	 */
 	public Map<String, Double> getTotalFor() {
 		return totalFor;
 	}
