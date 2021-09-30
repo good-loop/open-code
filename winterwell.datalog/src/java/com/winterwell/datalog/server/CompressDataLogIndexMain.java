@@ -57,8 +57,6 @@ import com.winterwell.web.app.AppUtils;
  */
 public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> {
 	
-//	public final static String ALIAS = "datalog.transformed.all";
-	
 	@Override
 	protected void launchJetty() {
 		Log.d(LOGTAG, "No Jetty launch - this app doesn't need or want a web server.");

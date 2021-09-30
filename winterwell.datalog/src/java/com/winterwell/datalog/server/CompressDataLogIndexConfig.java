@@ -19,5 +19,6 @@ public class CompressDataLogIndexConfig extends DataLogConfig {
 	@Option(description="Normally unset. Remove some properties from what is normally kept in the transformed data. i.e. this modifies longterms")
 	public List<String> removeProperty;
 	
-	
+	@Option(description="Create dntnblock events per-campaign from donation votes + spend events")
+	public boolean allocateDntnblocks = true;
 }
