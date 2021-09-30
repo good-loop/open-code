@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -462,7 +463,7 @@ public class SearchQuery implements Serializable, IHasJson {
 	static final Pattern kv = Pattern.compile("([a-zA-Z]+):(.+)");
 
 	/**
-	 * Modify output - Convert "k:v" into {k:v}. Filters nulls
+	 * Modify output - Convert "k:v" into {k:v}. Filters nulls. Values CANNOT contain spaces. Does NOT support quoting :(
 	 * @param output
 	 */
 	private void parse2_keyvalue(List output) {
@@ -809,6 +810,35 @@ public class SearchQuery implements Serializable, IHasJson {
 		parseTree = null;
 		canonicalise = b;
 		return this;
-	}	
+	}
+
+	/**
+	 * AND a top-level OR over a set of prop:values. Convenience for a common enough case.
+	 * @param propKey
+	 * @param propValues
+	 * @return a new SearchQuery
+	 */
+	public SearchQuery addPropOr(String propKey, Collection<String> propValues) {
+		if (propValues.isEmpty()) {
+			throw new IllegalArgumentException(propKey+":nothing");
+		}
+		StringBuilder cs = new StringBuilder(propKey+":");
+		for (String string2 : propValues) {
+			cs.append(string2);
+			cs.append(" OR ");
+			cs.append(propKey);cs.append(":");
+		}
+		if (propValues.size() > 1) {
+			StrUtils.pop(cs, propKey.length()+1);
+		}
+		if (raw.isEmpty()) {
+			return new SearchQuery(cs.toString());
+		}
+		if (propValues.size()==1) {
+			return new SearchQuery(raw+" AND "+cs);
+		}
+		return new SearchQuery(raw+" AND ("+cs+")");
+	}
+
 
 }
