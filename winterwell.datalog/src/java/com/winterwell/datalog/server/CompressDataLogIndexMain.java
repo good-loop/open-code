@@ -7,6 +7,7 @@ import java.util.List;
 import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.DataLogEvent;
+import com.winterwell.datalog.Dataspace;
 import com.winterwell.datalog.ESStorage;
 import com.winterwell.es.ESType;
 import com.winterwell.es.client.ESConfig;
@@ -37,6 +38,7 @@ import com.winterwell.utils.log.Log;
 import com.winterwell.utils.log.LogFile;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
+import com.winterwell.utils.time.TimeParser;
 import com.winterwell.utils.time.TimeUtils;
 import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.app.AMain;
@@ -110,9 +112,18 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 		// e.g. "scrubbed.datalog."+dataspace+"_" + MMMyy;
 		String sourceIndex = Containers.get(configRemainderArgs, 0);
 		if (Utils.isBlank(sourceIndex)) {
-			showHelp();
-			throw new IllegalArgumentException("Pass in a source index.");
+			// by month?
+			if (getConfig().month != null) {
+				Time tMonth = getConfig().getMonth();
+				ESStorage ess = new ESStorage();
+				Dataspace ds = new Dataspace("gl");
+				sourceIndex = ess.baseIndexFromDataspace(ds, tMonth);
+			} else {
+				showHelp();
+				throw new IllegalArgumentException("Pass in a source index.");
+			}
 		}
+		
 		ESHttpClient esc = Dep.get(ESHttpClient.class);
 		String destIndex = Utils.or(getConfig().destIndex, sourceIndex+"_compressed");
 		Log.i(LOGTAG, "Compress "+sourceIndex+" --> "+destIndex);
@@ -215,6 +226,7 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 			iar.get().check();
 			Log.i("Alias swap done! "+sourceIndex+" -> "+destIndex);
 		}
+		
 		Log.i("All done :) Enjoy your data");
 	}
 	

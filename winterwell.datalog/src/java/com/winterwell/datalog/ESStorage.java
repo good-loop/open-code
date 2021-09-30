@@ -272,6 +272,7 @@ public class ESStorage implements IDataLogStorage {
 			return false;
 		}
 		try {
+			Log.i(LOGTAG, "register dataspace: "+dataspace+" baseIndex: "+baseIndex);
 			// HACK
 			CreateIndexRequest pc = _client.admin().indices().prepareCreate(baseIndex);			
 //			actually, you can have multiple for all pc.setFailIfAliasExists(true); // this is synchronized, but what about other servers?
@@ -319,7 +320,7 @@ public class ESStorage implements IDataLogStorage {
 	 * @param time
 	 * @return the base index name
 	 */
-	String baseIndexFromDataspace(Dataspace dataspace, Time time) {
+	public String baseIndexFromDataspace(Dataspace dataspace, Time time) {
 		// replaces _client.getConfig().getIndexAliasVersion()
 		String v = time.format("MMMyy").toLowerCase();
 		String index = writeIndexFromDataspace(dataspace);

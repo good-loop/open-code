@@ -195,7 +195,7 @@ public class TimeParser {
 	 * yyyy-MM-dd -- be careful to sanity check values
 	 */
 	static final Pattern pISODATE = Pattern.compile("^(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)");
-	static final Pattern pMONTH = Pattern.compile("jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec");
+	public static final Pattern pMONTH = Pattern.compile("jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec");
 	static final Pattern pDAY = Pattern.compile("sun|mon|tue|wed|thu|fri|sat");
 	/**
 	 * TODO break this out into a TimeParser class so we can have language & timezone support.
