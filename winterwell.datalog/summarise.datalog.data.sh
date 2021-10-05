@@ -25,7 +25,7 @@ case $ANSWER in
 	yes|YES)
 		printf "\n\n\tContinuing to launch JVM process to summarise $1\n"
 		sleep 2
-		java -cp build-lib/datalog.compressor.jar:build-lib/* com.winterwell.datalog.server.CompressDataLogIndexMain -noAliasSwap -filter "user:/.+@trk/" -removeProperty user -destIndex $2 $1
+		java -cp build-lib/datalog.compressor.jar:build-lib/* com.winterwell.datalog.server.CompressDataLogIndexMain -destIndex $2 $1
 	;;
 	no|NO)
 		printf "\n\n\tAttempting to launch 'bob' to build this project\n"
