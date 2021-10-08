@@ -218,6 +218,8 @@ public class ChatRoundabout  {
 		    .setOverrides(Arrays.asList(reminderOverrides));
 		event.setReminders(reminders);
 		
+		event.setGuestsCanModify(true);
+		
 		return event;
 	}
 
