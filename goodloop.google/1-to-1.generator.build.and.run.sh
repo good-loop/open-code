@@ -90,10 +90,7 @@ function update_logins {
     git reset --hard FETCH_HEAD
 }
 
-# run the 1-to-1 generation routine
-function generate_one_to_ones {
-    cd $PROJECT_ROOT_ON_SERVER && java -cp build-lib/goodloop.google.jar:build-lib/* com.goodloop.gcal.chatroundabout.ChatRoundaboutMain
-}
+
 
 
 # Run the functions in a logical series
@@ -101,4 +98,4 @@ clean_build_env
 build_backend
 check_boblog
 update_logins
-timeout 300 generate_one_to_ones
+timeout 300 ./generate.chat.schedule.sh
