@@ -98,4 +98,4 @@ clean_build_env
 build_backend
 check_boblog
 update_logins
-timeout 300 ./generate.chat.schedule.sh
+timeout 300 /home/winterwell/open-code/goodloop.google/generate.chat.schedule.sh
