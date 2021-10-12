@@ -125,6 +125,10 @@ public final class Period extends Pair<Time> {
 			return null;
 		return new Period(s, e);
 	}
+	
+	public boolean isWholeDay() {
+		return ( first.diff(second) >= 86400000 ? true : false );
+	}
 
 	/**
 	 * @return the length of this period in sensible units

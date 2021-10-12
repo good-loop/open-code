@@ -118,6 +118,7 @@ public class ChatRoundabout  {
 			if (period==null) {
 				continue; // non-event - skip
 			}
+			
 			if (period.intersects(slot)) {
 				Log.d(LOGTAG, email+" has a Clash: "+event.getSummary()+" "+period+" vs "+slot);
 				return false;
@@ -136,6 +137,10 @@ public class ChatRoundabout  {
 					Log.d(LOGTAG, "Holiday Clash: "+event+" vs "+slot);
 					return false;
 				}
+			}
+			
+			if (period.isWholeDay()) {
+				continue; // skipping whole day events (after checking if it is holiday)
 			}
 		}
 		return true;
