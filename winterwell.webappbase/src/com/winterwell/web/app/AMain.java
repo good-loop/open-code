@@ -176,6 +176,7 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 	/**
 	 * Override to do other main stuff.
 	 * This method must return. To implement an infinite loop -- use doMainLoop();
+	 * To avoid staying alive after this: call `stop()`
 	 */
 	protected void doMain2() {
 		

@@ -1,5 +1,6 @@
 package com.winterwell.nlp.query;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -12,7 +13,18 @@ import com.winterwell.utils.Mutable.Int;
  *
  */
 public class SearchQueryTest {
-	
+	@Test
+	public void testQuoteProp() {
+		SearchQuery sq = new SearchQuery("foo");
+		SearchQuery sq2 = sq.addPropOr("mykey", Arrays.asList("v1","value two!"));
+		String sq2s = sq2.getRaw();
+		assert sq2s.equals("foo AND (mykey:v1 OR mykey:\"value two!\")") : sq2s;
+		SearchQuery sq2b = new SearchQuery(sq2s);
+		List pt = sq2b.getParseTree();
+		assert pt.toString().equals("[and, foo, [or, {mykey=v1}, {mykey=value two!}]]") : pt.toString();
+	}
+
+		
 	@Test
 	public void testQuoteBug() {
 		{
