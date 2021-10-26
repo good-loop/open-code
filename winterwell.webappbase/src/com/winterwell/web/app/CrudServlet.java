@@ -541,6 +541,11 @@ public abstract class CrudServlet<T> implements IServlet {
 	 * If true, run all items through {@link #augment(JThing, WebRequest)}
 	 */
 	protected boolean augmentFlag;
+
+	/**
+	 * If true, try to save edits into a git {project}-files repo (if it is present)
+	 */
+	protected boolean gitAuditTrail;
 	
 	public static final SField SORT = new SField("sort");
 	public static final String LIST_SLUG =  "_list";
@@ -626,15 +631,38 @@ public abstract class CrudServlet<T> implements IServlet {
 	 * Sets lastModified by default - override to add custom logic.
 	 * This is called by both {@link #doSave(WebRequest)} and {@link #doPublish(WebRequest)}
 	 * @param _jthing
-	 * @param stateIgnored
+	 * @param state
 	 */
-	protected void doBeforeSaveOrPublish(JThing<T> _jthing, WebRequest stateIgnored) {
+	protected void doBeforeSaveOrPublish(JThing<T> _jthing, WebRequest state) {
 		// set last modified
 		if (_jthing.java() instanceof AThing) {
 			AThing ting = (AThing) _jthing.java();
 			ting.setLastModified(new Time());
-		}
+
+			// Git audit trail?
+			if (gitAuditTrail) {
+				KStatus status = KStatus.DRAFT;
+				if (state!=null && state.actionIs(ACTION_PUBLISH)) status= KStatus.PUBLISHED; 
+				File fd = getGitFile(ting, status);
+				if (fd != null) {
+					String json = prettyPrinter().toJson(ting);
+					doSave2_file_and_git(state, json, fd);
+				}
+			}
+		}		
 	}
+	
+
+	private Gson prettyPrinter() {
+		if (_prettyPrinter==null) {
+			_prettyPrinter = AMain.main.init4_gsonBuilder().setPrettyPrinting().create();
+		}
+		return _prettyPrinter;
+	}
+
+
+	static Gson _prettyPrinter;
+	
 
 
 	protected JThing<T> doUnPublish(WebRequest state) {

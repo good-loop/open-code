@@ -858,4 +858,8 @@ public class SearchQuery implements Serializable, IHasJson {
 		return new SearchQuery(raw+" AND ("+cs+")");
 	}
 
+	public SearchQuery setProp(String key, String value) {
+		return addPropOr(key, Collections.singleton(value));
+	}
+
 }

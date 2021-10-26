@@ -3,7 +3,9 @@ package com.winterwell.web.app;
 import java.util.Map;
 
 import com.winterwell.data.AThing;
+import com.winterwell.data.KStatus;
 import com.winterwell.gson.Gson;
+import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.Dep;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
@@ -59,6 +61,11 @@ public class CrudClient<T> {
 		this.jwt = jwt;
 	}
 	
+	/**
+	 * 
+	 * @param type
+	 * @param endpoint The endpoint for this type, e.g. "https://myserver.com/mytype"
+	 */
 	public CrudClient(Class<T> type, String endpoint) {
 		this.type = type;
 		this.endpoint = endpoint;
@@ -68,16 +75,17 @@ public class CrudClient<T> {
 	public JSend list() {
 		FakeBrowser fb = fb();
 		
-		String response = fb.getPage(endpoint+"/"+CrudServlet.LIST_SLUG);
+		String response = fb.getPage(endpoint+"/"+CrudServlet.LIST_SLUG, params);
 		
 		JSend jsend = jsend(fb, response);
 		return jsend;
 	}
 	
+	Map<String, String> params;
 
 	public JThing<T> get(String id) throws WebEx.E404 {
 		FakeBrowser fb = fb();
-		String response = fb.getPage(endpoint+"/"+WebUtils.urlEncode(id));
+		String response = fb.getPage(endpoint+"/"+WebUtils.urlEncode(id), params);
 		
 		JSend jsend = jsend(fb, response);
 		JThing<T> jt = jsend.getData();
@@ -140,6 +148,21 @@ public class CrudClient<T> {
 	private Gson gson() {
 		Gson gson = Dep.getWithDefault(Gson.class, new Gson());
 		return gson;
+	}
+
+	public void setStatus(KStatus pubOrDraft) {
+		if (params==null) params = new ArrayMap();
+		params.put("status", pubOrDraft.toString());
+	}
+
+	public JSend search(SearchQuery sq) {
+		FakeBrowser fb = fb();
+		ArrayMap qparams = new ArrayMap(params);
+		qparams.put(CommonFields.Q.name, sq.getRaw());
+		String response = fb.getPage(endpoint+"/"+CrudServlet.LIST_SLUG, qparams);
+		
+		JSend jsend = jsend(fb, response);
+		return jsend;
 	}
 	
 }

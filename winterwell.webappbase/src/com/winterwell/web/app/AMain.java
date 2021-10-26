@@ -213,8 +213,13 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 	/**
 	 * TODO refactor so all AMains use this (poss overriding it)
 	 */
-	protected void init3_gson() {
-		Gson gson = new GsonBuilder()
+	public final void init3_gson() {
+		Gson gson = init4_gsonBuilder().create();
+		Dep.set(Gson.class, gson);
+	}
+
+	protected GsonBuilder init4_gsonBuilder() {
+		return new GsonBuilder()
 		.setLenientReader(true)
 		.registerTypeAdapter(Time.class, new StandardAdapters.TimeTypeAdapter())
 		.registerTypeAdapter(XId.class, new XIdTypeAdapter())
@@ -222,9 +227,7 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 		.serializeSpecialFloatingPointValues()
 		.setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
 //		.setClassProperty(null)
-		.setLoopPolicy(KLoopPolicy.QUIET_NULL)
-		.create();
-		Dep.set(Gson.class, gson);
+		.setLoopPolicy(KLoopPolicy.QUIET_NULL);
 	}
 
 	/**
