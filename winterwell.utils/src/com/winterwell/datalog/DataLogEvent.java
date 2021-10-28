@@ -141,7 +141,7 @@ public final class DataLogEvent implements Serializable, IHasJson
 			/** Use a distinct param for donation amount, so theres no clashes when grouping events together */
 			"dntn", Double.class,			
 			/** For easy summation and FX handling, store dntn in dollars (which are considered a stable currency) */			
-			"dntnusd", Double.class,		
+			"dntnusd", Double.class, // TODO do this server-side when logging		
 			/**
 			 * revenue model
 			 */
