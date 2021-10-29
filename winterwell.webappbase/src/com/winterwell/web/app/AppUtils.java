@@ -25,6 +25,7 @@ import com.winterwell.es.client.GetRequest;
 import com.winterwell.es.client.GetResponse;
 import com.winterwell.es.client.IESResponse;
 import com.winterwell.es.client.KRefresh;
+import com.winterwell.es.client.PainlessScriptBuilder;
 import com.winterwell.es.client.ReindexRequest;
 import com.winterwell.es.client.SearchRequest;
 import com.winterwell.es.client.SearchResponse;
@@ -53,6 +54,7 @@ import com.winterwell.utils.io.ConfigFactory;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.time.TimeUtils;
+import com.winterwell.utils.web.JsonPatchOp;
 import com.winterwell.utils.web.WebUtils;
 import com.winterwell.web.WebEx;
 import com.winterwell.web.ajax.JThing;
@@ -305,10 +307,11 @@ public class AppUtils {
 	 * Save edits to *draft*. Modifies status.
 	 * @param path
 	 * @param item
+	 * @param diffs 
 	 * @param state Can be null
 	 * @return
 	 */
-	public static JThing doSaveEdit(ESPath path, JThing item, WebRequest state) {
+	public static JThing doSaveEdit(ESPath path, JThing item, List<Map> diffs, WebRequest state) {
 		// NB: Most classes have a draft phase -- but not Task.java
 		// assert path.index().toLowerCase().contains("draft") : path;
 		
@@ -322,21 +325,23 @@ public class AppUtils {
 			AppUtils.setStatus(item, KStatus.DRAFT);
 		}
 		// talk to ES
-		return doSaveEdit2(path, item, state);
+		return doSaveEdit2(path, item, diffs, state);
 	}
 	
 	/**
 	 * skips the status bit in {@link #doSaveEdit(ESPath, JThing, WebRequest)}
 	 * @param path
 	 * @param item
+	 * @param diffs of Maps or JsonPatchOps
 	 * @param stateCanBeNull
 	 * @return
 	 */
 	@SuppressWarnings("unused")
-	public static JThing doSaveEdit2(ESPath path, JThing item, WebRequest stateCanBeNull) {
-		return doSaveEdit2(path, item, stateCanBeNull, false);
+	public static JThing doSaveEdit2(ESPath path, JThing item, List diffs, WebRequest stateCanBeNull) {
+		return doSaveEdit2(path, item, diffs, stateCanBeNull, false);
 	}
-	public static JThing doSaveEdit2(ESPath path, JThing item, WebRequest stateCanBeNull, boolean instant) {
+	
+	public static JThing doSaveEdit2(ESPath path, JThing item, List diffs, WebRequest stateCanBeNull, boolean instant) {
 		assert path.id != null : "need an id in path to save "+item;
 		ESHttpClient client = new ESHttpClient(Dep.get(ESConfig.class));		
 		// save update
@@ -358,15 +363,20 @@ public class AppUtils {
 		// save to ES
 		UpdateRequest up = client.prepareUpdate(path);
 		if (DEBUG) up.setDebug(DEBUG); // NB: only set if its extra debugging??
-		// This should merge against what's in the DB
-		Map map = item.map();
-		up.setDoc(map);
-		up.setDocAsUpsert(true);
 		// force an instant refresh?
-		if (instant) up.setRefresh("true");
-		
-		// TODO delete stuff?? fields or items from a list
-//		up.setScript(script)
+		if (instant) up.setRefresh("true");		
+		Map map = item.map();
+		// delete stuff?? fields or items from a list
+		if (diffs!=null && ! diffs.isEmpty()) {
+			List<JsonPatchOp> diffsJPO = Containers.apply(diffs, diff -> diff instanceof JsonPatchOp? diff : new JsonPatchOp((Map)diff));
+			PainlessScriptBuilder script = PainlessScriptBuilder.fromJsonPatchOps(diffsJPO);
+			up.setScript(script);
+			up.setUpsert(map);
+		} else {
+			// This should merge against what's in the DB			
+			up.setDoc(map);
+			up.setDocAsUpsert(true);	
+		}
 		
 		// NB: this doesn't return the merged item :(
 		IESResponse resp = up.get().check();
@@ -848,7 +858,7 @@ public class AppUtils {
 		peep = new PersonLite(from);
 		if (info != null) peep.setInfo(info);
 		// store it NB: the only data is the id, so there's no issue with race conditions
-		AppUtils.doSaveEdit(path, new JThing().setJava(peep), null);
+		AppUtils.doSaveEdit(path, new JThing().setJava(peep), null, null);
 		return peep;
 	}
 
@@ -1170,7 +1180,7 @@ public class AppUtils {
 	 */
 	public static void doSaveEdit(AThing item, WebRequest state) {
 		ESPath path = getPath(null, item.getClass(), item.getId(), item.getStatus());
-		doSaveEdit(path, new JThing(item), state);		
+		doSaveEdit(path, new JThing(item), null, state);		
 	}
 
 
@@ -1184,6 +1194,22 @@ public class AppUtils {
 			url = url.replace("://", "://test");
 		}
 		return url;
+	}
+
+
+	/**
+	 * @deprecated
+	 * @param publishPath
+	 * @param jThing
+	 * @param stateCanBeNull
+	 */
+	public static void doSaveEdit2(ESPath publishPath, JThing jThing, WebRequest stateCanBeNull) {
+		doSaveEdit2(publishPath, jThing, null, stateCanBeNull);
+	}
+
+
+	public static void doSaveEdit2(ESPath path, JThing jThing, WebRequest stateCanBeNull, boolean b) {
+		doSaveEdit2(path, jThing, null, stateCanBeNull, b);
 	}
 
 
