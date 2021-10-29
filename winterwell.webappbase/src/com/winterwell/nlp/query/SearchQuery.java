@@ -845,9 +845,7 @@ public class SearchQuery implements Serializable, IHasJson {
 			cs.append(" OR ");
 			cs.append(propKey);cs.append(":");
 		}
-		if (propValues.size() > 1) {
-			StrUtils.pop(cs, propKey.length()+5);
-		}
+		StrUtils.pop(cs, propKey.length()+5);
 		if (raw.isEmpty()) {
 			return new SearchQuery(cs.toString());
 		}
