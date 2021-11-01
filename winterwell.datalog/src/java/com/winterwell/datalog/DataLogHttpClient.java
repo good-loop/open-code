@@ -202,7 +202,7 @@ public class DataLogHttpClient {
 		for(String byi : breakdown.by) {
 			Object _btotal = SimpleJson.get(jobjMap, byi);
 			if (_btotal == null) {
-				Log.w(LOGTAG, "No top-by total?! "+byi+" "+jobjMap);
+				Log.d(LOGTAG, "No top-by total?! "+byi+" "+jobjMap);
 				continue;
 			}
 			double bttl = MathUtils.toNum(_btotal);

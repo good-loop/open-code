@@ -24,7 +24,9 @@ import com.winterwell.utils.containers.ArrayMap;
  *
  */
 public class JsonPatchOp implements Serializable, IHasJson {
-	
+	private static final long serialVersionUID = 1L;
+
+
 	public static enum KOp {
 		test, remove, add, replace, move, copy
 	}

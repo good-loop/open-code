@@ -396,7 +396,7 @@ public abstract class CrudServlet<T> implements IServlet {
 			JThing<T> thing = getThingFromDB(state);
 			if (thing != null) {
 				ESPath path = esRouter.getPath(dataspace, type, id, KStatus.TRASH);
-				AppUtils.doSaveEdit2(path, thing, state, false);
+				AppUtils.doSaveEdit2(path, thing, null, state, false);
 			}
 		} catch(Throwable ex) {
 			Log.e(LOGTAG(), "copy to trash failed: "+state+" -> "+ex);
@@ -1358,11 +1358,13 @@ public abstract class CrudServlet<T> implements IServlet {
 	protected void doSave(WebRequest state) {		
 		XId user = state.getUserId(); // TODO save who did the edit + audit trail
 		
+		// If there is a diff, apply it
+		// TODO We *also* save the diff as an update script
 		String diff = state.get("diff");
+		List<Map> diffs = null;
 		if (diff != null) {
-			// TODO Instead of applying the diff here, why not save the diff directly using an ES update? That would allow for multiple editors
 			Object jdiff = WebUtils2.parseJSON(diff);
-			List<Map> diffs = Containers.asList(jdiff);
+			diffs = Containers.asList(jdiff);
 			JThing<T> oldThing = getThingFromDB(state);
 			applyDiff(oldThing, diffs);
 			jthing = oldThing; // NB: getThing(state) below will now return the diff-modified oldThing
@@ -1384,7 +1386,7 @@ public abstract class CrudServlet<T> implements IServlet {
 			String id = getId(state);
 			assert id != null : "No id? cant save! "+state; 
 			ESPath path = esRouter.getPath(dataspace,type, id, KStatus.DRAFT);
-			AppUtils.doSaveEdit(path, jthing, state);
+			AppUtils.doSaveEdit(path, jthing, diffs, state);
 			Log.d("crud", "doSave "+path+" by "+state.getUserId()+" "+state+" "+jthing.string());
 		}
 	}
