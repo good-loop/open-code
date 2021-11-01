@@ -329,6 +329,14 @@ public class AppUtils {
 	}
 	
 	/**
+	 * @deprecated Backwards compatability
+	 */
+	public static JThing doSaveEdit(ESPath path, JThing item, WebRequest state) {
+		return doSaveEdit(path, item, null, state);
+	}
+	
+	
+	/**
 	 * skips the status bit in {@link #doSaveEdit(ESPath, JThing, WebRequest)}
 	 * @param path
 	 * @param item
