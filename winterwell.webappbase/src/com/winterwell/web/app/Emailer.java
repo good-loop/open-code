@@ -17,7 +17,7 @@ import com.winterwell.web.email.SimpleMessage;
 
 /**
  * Send emails by SMTP, using a bot/admin email account.
- * @testedby  EmailerTest}
+ * @testedby  EmailerTest
  * @author daniel
  *
  */
@@ -83,10 +83,27 @@ public class Emailer implements Closeable {
 	 */
 	private SMTPClient getSMTPClient() throws ConfigException {
 		assert ! closed : "email client has been closed";
-		if (smtpClient != null)
+		if (smtpClient != null) {
 			return smtpClient;
+		}
 		smtpClient = new SMTPClient(config);		
 		return smtpClient;
+	}
+	
+	public boolean isClosed() {
+		return closed;
+	}
+	
+	public void resetup() {
+		if (smtpClient != null) {
+			close();
+		}		
+		// allow re-open
+		closed = false;
+		// get a fresh client
+		assert smtpClient==null;
+		getSMTPClient();
+		assert smtpClient!=null;
 	}
 
 	
@@ -104,7 +121,11 @@ public class Emailer implements Closeable {
 		return true;
 	}
 
-	
+
+	/**
+	 * If closed, use resetup() before re-use. 
+	 * @see #isClosed()
+	 */
 	@Override
 	public void close() {
 		FileUtils.close(smtpClient);
