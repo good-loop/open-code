@@ -123,7 +123,8 @@ public class Emailer implements Closeable {
 
 
 	/**
-	 * Once closed, an Emailer instance cannot be re-used.
+	 * If closed, use resetup() before re-use. 
+	 * @see #isClosed()
 	 */
 	@Override
 	public void close() {
