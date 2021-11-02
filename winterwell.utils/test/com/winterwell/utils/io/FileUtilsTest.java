@@ -424,6 +424,12 @@ public class FileUtilsTest extends TestCase {
 			assert !FileUtils.isSymLink(rt);
 		}
 	}
+	
+	public void testSafeFilename() {
+		// tilda should be preserved, space and / should be changed to _
+		String sf = FileUtils.safeFilename("~foo bar / Yeah!", false);
+		assert sf.equals("~foo_bar___Yeah") : sf;
+	}
 
 	public void testMakeSymLink() throws IOException {
 		File original = File.createTempFile("test", ".txt");
