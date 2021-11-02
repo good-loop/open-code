@@ -1214,12 +1214,12 @@ public abstract class CrudServlet<T> implements IServlet {
  * 		// If user requests ALL_BAR_TRASH, they want to see draft versions of items which have been edited
 		// So when de-duping, give priority to entries from .draft indices where the object is status: DRAFT
 
- * @param status
+ * @param requestStatus
  * @param hits
  * @return unique hits, source
  */
-	private List<ESHit<T>> doList3_source_dedupe(KStatus status, List<ESHit<T>> hits) {
-		if ( ! KStatus.isMultiIndex(status)) {
+	private List<ESHit<T>> doList3_source_dedupe(KStatus requestStatus, List<ESHit<T>> hits) {
+		if ( ! KStatus.isMultiIndex(requestStatus)) {
 			// One index = no deduping necessary.
 //			ArrayList<Object> hits2 = Containers.apply(hits, h -> h.get("_source"));
 			return hits;
@@ -1243,8 +1243,12 @@ public abstract class CrudServlet<T> implements IServlet {
 			// Which copy to keep?
 			// Is this an object from .draft with non-published status? Overwrite the previous entry.
 			Object index = h.getIndex();
-			KStatus hitStatus = KStatus.valueOf(getStatus(h.getJThing()));
-			if (status == KStatus.ALL_BAR_TRASH) {
+			String shitStatus = getStatus(h.getJThing());
+			KStatus hitStatus = shitStatus==null? null : KStatus.valueOf(shitStatus);
+			if (hitStatus==null) { // odd!
+				Log.w(LOGTAG(), "null status for "+id+" "+h.getJThing());
+			}
+			if (requestStatus == KStatus.ALL_BAR_TRASH) {
 				// prefer draft
 				if (index != null && index.toString().contains(".draft")) {
 					things.put(id, h);	
