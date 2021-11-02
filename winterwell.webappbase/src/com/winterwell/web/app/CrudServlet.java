@@ -93,7 +93,8 @@ public abstract class CrudServlet<T> implements IServlet {
 		}
 		String wart = "";
 		if (status==KStatus.DRAFT || status==KStatus.MODIFIED) wart = "~";
-		File f = new File(dir, item.getClass().getSimpleName()+"/"+wart+item.getId());
+		String safename = FileUtils.safeFilename(wart+item.getId(), false);
+		File f = new File(dir, item.getClass().getSimpleName()+"/"+safename);
 		if ( ! f.getParentFile().isDirectory()) {
 			f.getParentFile().mkdir(); // create the repo/Type folder if needed
 		}
