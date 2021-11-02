@@ -169,16 +169,15 @@ public class StrUtils {
 	 * @throws IOException
 	 */
 	public static String convertToJavaString(String txt) {
-//		String etxt = '"'+escape(txt, "\"\\\n", '\\')+'"';
-//		return etxt;
 		String[] lines = splitLines(txt);
-		String jtxt = "";
+		StringBuilder jtxt = new StringBuilder();
 		for (String line : lines) {
 			String oline = escape(line, "\"\\\n", '\\');
-			jtxt += "+\"" + oline + "\"\n";
+			jtxt.append("+\"" + oline + "\"\n");
 		}
-		jtxt = jtxt.substring(1);
-		return jtxt;
+		// pop leading + and trailing \n
+		String sjtxt = jtxt.substring(1, jtxt.length()-1);
+		return sjtxt;
 	}
 
 	/**

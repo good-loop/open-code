@@ -20,6 +20,16 @@ import junit.framework.TestCase;
 */
 public class StrUtilsTest extends TestCase {
 
+
+	@Test
+	public void testConvertToJavaString() {
+		Assert.assertEquals("\"Hello World!\"", 
+				StrUtils.convertToJavaString("Hello World!"));
+		Assert.assertEquals("\"Hello World!\"\n+\"\t3 Lines!\"\n+\"With 'single quotes' and \\\"double quotes\\\" :)\"", 
+				StrUtils.convertToJavaString("Hello World!\n	3 Lines!\nWith 'single quotes' and \"double quotes\" :)"));
+
+	}
+	
 	@Test
 	public void testToCamelCase() {
 		Assert.assertEquals("whatTheDickens", StrUtils.toCamelCase("What the 	Dickens "));
