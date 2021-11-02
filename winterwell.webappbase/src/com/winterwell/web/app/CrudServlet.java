@@ -1244,10 +1244,10 @@ public abstract class CrudServlet<T> implements IServlet {
 			// Is this an object from .draft with non-published status? Overwrite the previous entry.
 			Object index = h.getIndex();
 			String shitStatus = getStatus(h.getJThing());
-			KStatus hitStatus = shitStatus==null? null : KStatus.valueOf(shitStatus);
-			if (hitStatus==null) { // odd!
+			if (shitStatus==null) { // odd!
 				Log.w(LOGTAG(), "null status for "+id+" "+h.getJThing());
 			}
+			KStatus hitStatus = shitStatus==null? null : KStatus.valueOf(shitStatus);			
 			if (requestStatus == KStatus.ALL_BAR_TRASH) {
 				// prefer draft
 				if (index != null && index.toString().contains(".draft")) {
@@ -1302,7 +1302,9 @@ public abstract class CrudServlet<T> implements IServlet {
 		} else {
 			s = h.map().get("status");
 		}
-		return String.valueOf(s);
+		if (s==null) return null;
+		String ss = String.valueOf(s);
+		return ss;
 	}
 
 
