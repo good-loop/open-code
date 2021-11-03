@@ -153,7 +153,11 @@ public class LgServlet {
 		// Has the request already received a response (eg from TrackingPixelServlet)? Stop here.
 		if (!state.isOpen()) return;
 
-		// Reply		
+		// Reply
+		// Always set Access-Control-Allow-Origin on response
+		if (DataLogServer.settings.CORS) {
+			WebUtils2.CORS(state, false);
+		}
 		// Send a .gif for a pixel?
 		if (state.getResponseType()==KResponseType.image) {
 			FileServlet.serveFile(TrackingPixelServlet.PIXEL, state);
@@ -165,9 +169,6 @@ public class LgServlet {
 			return;
 		}
 		// send the event back as json
-		if (DataLogServer.settings.CORS) {
-			WebUtils2.CORS(state, false);
-		}
 		Object jobj = logged==null? null : logged.toJsonPublic();
 		JsonResponse jr = new JsonResponse(state, jobj);
 		WebUtils2.sendJson(jr, state);				
