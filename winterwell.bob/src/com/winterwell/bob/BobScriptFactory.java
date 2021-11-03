@@ -54,7 +54,7 @@ public class BobScriptFactory {
 			Log.i(LOGTAG, "Auto-build: found file "+files.get(0));
 			return files.get(0);
 		}
-		Log.w(LOGTAG, "Auto-build: could not pick between "+files.size()+" tasks in "+bdir);
+		Log.w(LOGTAG, "\nAuto-build: could not pick between "+files.size()+" tasks in "+bdir);
 		Log.w(LOGTAG, Containers.apply(files, FileUtils::getBasename));
 		return null;
 	}
