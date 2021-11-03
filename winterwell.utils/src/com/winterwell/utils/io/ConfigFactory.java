@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.winterwell.utils.Dep;
 import com.winterwell.utils.Mutable;
+import com.winterwell.utils.ReflectionUtils;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.web.WebUtils;
@@ -31,7 +32,7 @@ public class ConfigFactory {
 	/**
 	 * null unless set! See {@link #setServerType(String)}
 	 */
-	String serverType;
+	private String serverType;
 	private String machine = WebUtils.hostname();
 	private boolean debug = true;
 	private final List<ConfigBuilder> history = new ArrayList();
@@ -86,6 +87,7 @@ public class ConfigFactory {
 	 * @return
 	 */
 	public ConfigFactory setArgs(String[] args) {
+		if (this.args != null) Log.w(LOGTAG, "setArgs called twice "+ReflectionUtils.getSomeStack(4));
 		this.args = args;
 		return this;
 	}
@@ -175,7 +177,7 @@ winterwell/logins/stripe.properties
 				appName,
 				// live, local, test? This is null unless set! See KServerType
 				serverType, // e.g. local.properties
-				appName+"."+serverType, // this will resolve to e.g. config/sogive.production.properties
+				serverType==null? null : appName+"."+serverType, // this will resolve to e.g. config/sogive.production.properties
 				// or in a logins file (which should not be in the git repo!), for passwords?
 				"logins", 
 				machine

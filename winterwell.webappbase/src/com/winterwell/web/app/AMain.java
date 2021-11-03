@@ -138,7 +138,8 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 			// Exists but isn't a directory - don't use dir
 			useSubDir = false;
 		}
-		File logLocation = new File((useSubDir ? "logs/" : "") + getAppNameLocal() + ".log");  
+		File logLocation = new File((useSubDir ? "logs/" : "") + getAppNameLocal() + ".log"); 
+		// NB: this log setup will call ConfigFactory early (before the full init)
 		logFile = new LogFile(logLocation).setLogRotation(TUnit.DAY.dt, 14);
 		// also add a never-rotates! audit log for important audit trail info only (ie stuff tagged "audit"		
 		File auditlogLocation = new File((useSubDir ? "logs/" : "") + getAppNameLocal() + ".audit");
@@ -193,21 +194,26 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 	}
 
 	/**
-	 * Calls initConfig() then init2(config)
+	 * Calls init21_configFactory(), init2_config() then init2(config)
 	 * @param args
 	 */
 	protected final void init(String[] args) {
 		main = this;
-		init2a_configFactory();
+		init2a_configFactory(args);
 		config = init2_config(args);
 		init2(config);		
 	}
 	
-	private void init2a_configFactory() {
+	private ConfigFactory init2a_configFactory(String[] args) {
+		// make the ConfigFactory
 		ConfigFactory cf = ConfigFactory.get();
 		cf.setAppName(appName);
+		if (args!=null) {
+			cf.setArgs(args);
+		}
 		KServerType serverType = AppUtils.getServerType(null);
 		cf.setServerType(serverType.toString());
+		return cf;
 	}
 	
 	/**
@@ -386,7 +392,7 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 		}
 		// make it
 		ConfigFactory cf = ConfigFactory.get();
-		if (args!=null) {
+		if (args!=null) { // TODO remove this (its already been done)
 			cf.setArgs(args);
 		}
 		Ref<List> rremainderArgs = new Mutable.Ref();
