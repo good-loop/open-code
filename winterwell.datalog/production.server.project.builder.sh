@@ -362,9 +362,15 @@ function start_service {
 ###                         chance to back out if this was executed accidentally.
 ################
 function get_branch_and_print_warning {
-    printf "\n\e[34;107mWhat branch would you like to use for this production build?\033[0m\n"
+    # git incantation for "What's the current branch?"
+    cbranch=`git symbolic-ref --short HEAD`
+    printf "\n\e[34;107mWhat branch would you like to use for this production build? (return for current branch $cbranch)\033[0m\n"
     read branch
     BRANCH_NAME=$branch
+    if [[ -z "$BRANCH_NAME" ]]; then
+        BRANCH_NAME=$cbranch
+    fi
+
     printf "\n\e[34;107mAre you absolutely certain that you want to build and release $PROJECT_NAME on this Production Server\033[0m\n\e[34;107mBased on your specified branch of $BRANCH_NAME ?\033[0m"
     if [[ $PROJECT_USES_WWAPPBASE_SYMLINK = 'yes' ]]; then
         printf "\n\t\e[34;107mFurther, are you certain that the branch $BRANCH_NAME exists in the wwappbase.js repo?\033[0m\n"
