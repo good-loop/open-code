@@ -942,7 +942,9 @@ public abstract class CrudServlet<T> implements IServlet {
 			Log.d(LOGTAG(), gt3.getOutput());
 			Log.d(LOGTAG(), "...doSave2_file_and_git "+fd+" done");
 		} catch(Throwable ex) {
-			state.addMessage(new AjaxMsg(KNoteType.warning, "Error while saving to Git", ex.toString()));
+			state.addMessage(new AjaxMsg(KNoteType.warning, 
+					"Error while saving to Git", 
+					"Your save worked, but the audit trail in git did not update. Ask sysadmin@good-loop.com to do a git pull/push."));
 		}
 	}
 
