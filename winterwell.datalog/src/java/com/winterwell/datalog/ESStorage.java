@@ -377,6 +377,7 @@ public class ESStorage implements IDataLogStorage {
 		}		
 				
 		pm.setMapping(simpleEvent);
+		pm.setDebug(true);
 		IESResponse res = pm.get();
 		res.check();
 	}
@@ -604,9 +605,12 @@ public class ESStorage implements IDataLogStorage {
 	 * Repeated calls are fast and harmless
 	 * @param dataspace
 	 */
-//	@Override TODO
 	public boolean registerDataspace(Dataspace dataspace) {
-		return registerDataspace2(dataspace, new Time());
+		boolean regd = registerDataspace2(dataspace, new Time());
+		// Also pre-register the next month, to avoid issues at the switch-over
+		// (Bug seen Nov 2021: at the monthly switch-over, an auto-generated mapping was made with text fields instead of keyword)
+		registerDataspace2(dataspace, new Time().plus(TUnit.MONTH));
+		return regd;
 	}
 	
 	/**
