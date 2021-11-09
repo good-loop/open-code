@@ -255,6 +255,9 @@ public class LgServlet {
 			params.put("invalid", userType);
 		}
 		
+		TODO Convert Currency
+		if params[dntn] then param.dntnusd = currencyconvert(dntn)
+		
 		// write to log file
 		doLogToFile(dataspace, tag, count, params, trckId, state);
 				
