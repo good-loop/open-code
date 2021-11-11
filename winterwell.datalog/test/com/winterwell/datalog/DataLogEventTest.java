@@ -5,9 +5,22 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.winterwell.maths.stats.distributions.d1.MeanVar1D;
+import com.winterwell.utils.Printer;
+import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.web.XStreamUtils;
 
 public class DataLogEventTest {
+
+	@Test
+	public void testToJson2_parsingProblem() {
+		DataLogEvent de = new DataLogEvent("test", 2, "testTag", new ArrayMap(
+				"w", "foo",
+				"width", "bar",
+				"h", "17"));
+		Map<String, ?> json = de.toJson2();
+		Printer.out(json);
+		assert ((Number)json.get("h")).doubleValue() == 17;
+	}
 
 	@Test
 	public void testToJson2_simple() {
