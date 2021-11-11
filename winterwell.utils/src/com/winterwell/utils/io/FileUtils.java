@@ -1154,6 +1154,10 @@ public class FileUtils {
 			return false;
 		if (filename.contains("$"))
 			return false;
+		if (filename.contains("`"))
+			return false;
+		if (filename.contains("\n"))
+			return false;
 		return true;
 	}
 
