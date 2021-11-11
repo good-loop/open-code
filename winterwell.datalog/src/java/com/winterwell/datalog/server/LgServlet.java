@@ -1,6 +1,9 @@
 package com.winterwell.datalog.server;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -207,6 +210,38 @@ public class LgServlet {
 	static List<Map> userTypeForIPorXId;
 	static volatile Time userTypeForIPorXIdFetched;
 	
+	// TODO fetch currRate and write it to ES
+	// Where should I place this to? This should run once everyday
+	public static void fetchCurrRate() throws IOException {
+		// TODO Read ES and see the latest currRate is today or not
+		Boolean currOutdated = false; 
+		if (currOutdated) {
+			// TODO fetch API
+			URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key=81dd51bbdbf39740e59cfa5ae3835537&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY");
+			HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
+			con.setRequestMethod("GET");
+			
+			// TODO write into ES
+			con.disconnect();
+		} 
+	}
+	
+	
+	// TODO currConvert	
+	public static Double currConvert(Object curr, String amount) {
+		// TODO Fetch event currRate from ES with the latest date
+		
+		Double currRate = 1.00;
+		if (curr == "GBP") {
+			currRate = 1.34;
+		} else if (curr == "EUR") {
+			currRate = 1.15;
+		}
+		Double amountusd =  Double.valueOf(curr.toString()).doubleValue() * currRate;
+		
+		return amountusd;
+	}
+	
 	/**
 	 * 
 	 * @param state
@@ -255,9 +290,13 @@ public class LgServlet {
 			params.put("invalid", userType);
 		}
 		
-		TODO Convert Currency
-		if params[dntn] then param.dntnusd = currencyconvert(dntn)
-		
+		// TODO Currency Converter
+		if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
+			Double dntnusd = currConvert(params.get("curr"), params.get("dntn").toString());
+			params.put("dntnusd", dntnusd);
+			Double priceusd = currConvert(params.get("curr"), params.get("price").toString());
+			params.put("priceusd", priceusd);
+		}
 		
 		// write to log file
 		doLogToFile(dataspace, tag, count, params, trckId, state);
