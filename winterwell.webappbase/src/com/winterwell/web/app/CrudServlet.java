@@ -944,7 +944,8 @@ public abstract class CrudServlet<T> implements IServlet {
 		} catch(Throwable ex) {
 			state.addMessage(new AjaxMsg(KNoteType.warning, 
 					"Error while saving to Git", 
-					"Your save worked, but the audit trail did not update. Ask sysadmin@good-loop.com to do `cd "+fd.getParentFile()+"; git pull`"));
+					"Your save worked, but the audit trail did not update. Ask sysadmin@good-loop.com to do `cd "
+							+(fd==null? "null?!" : fd.getParentFile())+"; git pull`"));
 		}
 	}
 
