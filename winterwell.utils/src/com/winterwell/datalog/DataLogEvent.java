@@ -32,7 +32,11 @@ import com.winterwell.utils.web.SimpleJson;
  *  - Use count, or a {@link #COMMON_PROPS} numerical field.
  *  - Create multiple events, which can be selected via a shared COMMON_PROPS key=value,
  *  and use count for each event.
- *   
+ * 
+ * Remote logging into lg.gl?
+ * By API - just call lg.good-loop.com/lg
+ * From Java - DataLogRemoteStorage.hackRemoteDataLog(e);
+
  * 
  * Use uncommon props for "audit trail" details -- stored but not easily
  * searchable.

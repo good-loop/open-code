@@ -1152,6 +1152,8 @@ public class FileUtils {
 			return false;
 		if (filename.contains("<"))
 			return false;
+		if (filename.contains("$"))
+			return false;
 		return true;
 	}
 
