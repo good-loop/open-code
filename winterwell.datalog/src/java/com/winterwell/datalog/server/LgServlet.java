@@ -248,11 +248,11 @@ public class LgServlet {
 			
 			JSONObject ESObj = new JSONObject();
 			
-			ESObj.put("event", "currRate");
+			ESObj.put("evt", "currRate");
 			ESObj.put("date", obj.get("date"));
 			ESObj.put("timestamp", obj.get("timestamp"));
 			ESObj.put("EUR2USD", EUR2USD);
-			ESObj.put("GBP2USD", EUR2USD);
+			ESObj.put("GBP2USD", GBP2USD);
 			
 			// TODO write ESObj into ES
 			
