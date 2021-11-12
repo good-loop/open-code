@@ -19,6 +19,7 @@ import org.eclipse.jetty.util.ajax.JSON;
 import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.DataLogEvent;
+import com.winterwell.datalog.DataLogRemoteStorage;
 import com.winterwell.datalog.Dataspace;
 import com.winterwell.json.JSONObject;
 import com.winterwell.utils.Dep;
@@ -246,15 +247,17 @@ public class LgServlet {
 			Double CNY2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("CNY").toString()) * EUR2USD;
 			Double HKD2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("HKD").toString()) * EUR2USD;
 			
-			JSONObject ESObj = new JSONObject();
-			
-			ESObj.put("evt", "currRate");
-			ESObj.put("date", obj.get("date"));
-			ESObj.put("timestamp", obj.get("timestamp"));
-			ESObj.put("EUR2USD", EUR2USD);
-			ESObj.put("GBP2USD", GBP2USD);
+//			JSONObject ESObj = new JSONObject();
+//			
+//			ESObj.put("evt", "currRate");
+//			ESObj.put("date", obj.get("date"));
+//			ESObj.put("timestamp", obj.get("timestamp"));
+//			ESObj.put("EUR2USD", EUR2USD);
+//			ESObj.put("GBP2USD", GBP2USD);
 			
 			// TODO write ESObj into ES
+			Map objMap = new ArrayMap("EUR2USD", EUR2USD, "GBP2USD", GBP2USD);
+			DataLogRemoteStorage.saveToRemoteServer("https://lg.good-loop.com", new DataLogEvent("fx", 1, "currRate", objMap));
 			
 			con.disconnect();
 		} 
@@ -264,7 +267,6 @@ public class LgServlet {
 	// TODO currConvert	
 	public static Double currConvert(Object curr, String amount) {
 		// TODO Fetch event currRate from ES with the latest date
-		
 		Double currRate = 1.00;
 		if (curr == "GBP") {
 			currRate = 1.34;
