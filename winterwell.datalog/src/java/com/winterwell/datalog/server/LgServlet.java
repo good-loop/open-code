@@ -1,6 +1,8 @@
 package com.winterwell.datalog.server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -18,6 +20,7 @@ import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.DataLogEvent;
 import com.winterwell.datalog.Dataspace;
+import com.winterwell.json.JSONObject;
 import com.winterwell.utils.Dep;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.StrUtils;
@@ -212,16 +215,47 @@ public class LgServlet {
 	
 	// TODO fetch currRate and write it to ES
 	// Where should I place this to? This should run once everyday
-	public static void fetchCurrRate() throws IOException {
+	public void fetchCurrRate() throws IOException {
 		// TODO Read ES and see the latest currRate is today or not
-		Boolean currOutdated = false; 
+		Boolean currOutdated = true; 
 		if (currOutdated) {
 			// TODO fetch API
+			// We can only fetch rate in base currency of EUR due to using free tier API Key
 			URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key=81dd51bbdbf39740e59cfa5ae3835537&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY");
 			HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
 			con.setRequestMethod("GET");
 			
-			// TODO write into ES
+			String orgRate = new String();
+			try(BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "utf-8"))) {
+			    StringBuilder response = new StringBuilder();
+			    String responseLine = null;
+			    while ((responseLine = br.readLine()) != null) {
+			        response.append(responseLine.trim());
+			    }
+			    orgRate = response.toString();
+			}
+			
+			JSONObject obj = new JSONObject(orgRate);
+			
+			// Doing Math
+			Double EUR2USD = Double.parseDouble(obj.getJSONObject("rates").get("USD").toString());
+			Double GBP2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("GBP").toString()) * EUR2USD;
+			Double AUD2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("AUD").toString()) * EUR2USD;
+			Double MXN2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("MXN").toString()) * EUR2USD;
+			Double JPY2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("JPY").toString()) * EUR2USD;
+			Double CNY2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("CNY").toString()) * EUR2USD;
+			Double HKD2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("HKD").toString()) * EUR2USD;
+			
+			JSONObject ESObj = new JSONObject();
+			
+			ESObj.put("event", "currRate");
+			ESObj.put("date", obj.get("date"));
+			ESObj.put("timestamp", obj.get("timestamp"));
+			ESObj.put("EUR2USD", EUR2USD);
+			ESObj.put("GBP2USD", EUR2USD);
+			
+			// TODO write ESObj into ES
+			
 			con.disconnect();
 		} 
 	}
