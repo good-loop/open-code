@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Properties;
 
 import com.winterwell.utils.Dep;
+import com.winterwell.utils.ReflectionUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.web.WebUtils;
 import com.winterwell.web.app.ISiteConfig;
@@ -19,7 +20,10 @@ public class BuildHacks {
 		// cache the answer
 		if (_serverType!=null) return _serverType;
 		_serverType = getServerType2();
-		Log.d("BuildHacks", "Using serverType "+_serverType);		
+		Log.d("BuildHacks", "Using serverType "+_serverType);
+		if (_serverType == null) { // paranoia, nov 2021
+			Log.e("BuildHacks", "null serverType! "+ReflectionUtils.getSomeStack(8));
+		}
 		return _serverType;		
 	}
 	
