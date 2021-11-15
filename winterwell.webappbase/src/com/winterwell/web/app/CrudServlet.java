@@ -845,7 +845,6 @@ public abstract class CrudServlet<T> implements IServlet {
 	}
 	
 	protected void securityHack_teamGoodLoop(WebRequest state) {
-		if (true) return;
 		YouAgainClient yac = Dep.get(YouAgainClient.class);
 		List<AuthToken> tokens = yac.getAuthTokens(state);
 		for (AuthToken authToken : tokens) {
