@@ -104,12 +104,8 @@ public final class XId implements Serializable, IHasJson, CharSequence, Comparab
 	 * {@link #XId(String, String)}.
 	 */
 	public XId(String name, String service, boolean checkName) {
-		this.service = service;
-		this.name = name;
-		assert notNullNameCheck() : name+"@"+service;
-		assert ! checkName : "Wrong constructor! This one is for checkName=false "+this;
+		this(name+"@"+service, checkName);
 		assert ! service.contains("@") : "Bad service: "+service+" for "+this;
-		return;
 	}
 
 	/**
@@ -166,7 +162,7 @@ public final class XId implements Serializable, IHasJson, CharSequence, Comparab
 	 * the name.
 	 */
 	public XId(String id, boolean canonicaliseName) {
-		assert ! canonicaliseName;
+		assert ! canonicaliseName : "Wrong constructor! This one is for checkName=false "+this;
 		int i = id.lastIndexOf('@');
 		// handle unescaped web inputs -- with some log noise 'cos we don't want this
 		if (i==-1 && id.contains("%40")) {
@@ -178,11 +174,13 @@ public final class XId implements Serializable, IHasJson, CharSequence, Comparab
 			Log.e("xid.format", new Warning("No @ in XId: "+id));
 			this.service="unknown";
 			this.name=id;
-			return;
+		} else {
+			this.service = id.substring(i+1);
+			this.name = id.substring(0, i);
 		}
-		this.service = id.substring(i+1);
-		this.name = id.substring(0, i);
-		assert notNullNameCheck() : "null name in XId: "+id;
+		if ( ! notNullNameCheck()) {
+			Log.e(service, "(ignoring) null name in XId: "+id);
+		}
 	}
 
 	/**
