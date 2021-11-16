@@ -106,9 +106,18 @@ public class ChatRoundabout  {
 		List<Event> allEvents = client().getEvents(email, start, end);
 
 		for (Event event : allEvents) {
+			String summary = event.getSummary();
+			if (summary != null && summary.contains("SM")) {
+				Log.d(summary);
+			}
 			Boolean attending = client().isAttending(event, email);
 			if (Boolean.FALSE.equals(attending)) {
-				// ignore cancelled
+				// ignore user not going
+				continue;
+			}
+			// ignore event cancelled
+			String eStatus = event.getStatus();
+			if ("cancelled".equals(eStatus)) {
 				continue;
 			}
 			String eventItem = event.toString().toLowerCase();
@@ -118,9 +127,11 @@ public class ChatRoundabout  {
 			if (period==null) {
 				continue; // non-event - skip
 			}
-			
+			if (period.first.isBefore(start)) {
+				Log.e(LOGTAG, period+" "+event);
+			}
 			if (period.intersects(slot)) {
-				Log.d(LOGTAG, email+" has a Clash: "+event.getSummary()+" "+period+" vs "+slot);
+				Log.d(LOGTAG, email+" has a Clash: "+summary+" "+period+" vs "+slot);
 				return false;
 			}
 			

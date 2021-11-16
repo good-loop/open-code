@@ -3,23 +3,22 @@ Amy Williams ,1,London,The Board,Employee,Sales
 Daniel Winterstein ,2,Edinburgh,The Board,Employee,Tech
 Ryan Cochrane,3,London,Amy,Employee,CS
 Roscoe McInerney,4,Edinburgh,Dan,Employee,Tech
-Daniel Appel,5,Edinburgh,Dan,Employee,Tech
 Julia Hitchman,6,London,Amy,Employee,Sales
 Stuart Hands-Bellion,7,London,Jules,Employee,Sales
 Charley Tunnicliffe,8,London,Jules,Employee,Marketing
 Eve Hannah,9,Edinburgh,Dan,Employee,CS
-Emilia Buggins,10,London,Amy,Contractor
-Trudi Harris,11,,Amy,Contractor
-Amanda Shields,12,,Dan,Contractor
+Emilia Buggins,10,London,Amy,Contractor,
+Trudi Harris,11,,Amy,Contractor,
+Amanda Shields,12,,Dan,Contractor,
 Tom Kerslake,13,London,Ryan,Employee,CS
 Nick Rainey,14,London,Jules,Employee,Sales
 Claire Gleeson-Landry,15,London,Jules,Employee,Sales
-Pete Freeman,16,,Amy / Dan,Contractor
-Barbara Liss,19,US,Amy,Associate
-John O'Brien,21,,Amy,Advisor
-Eamonn Store,22,,Amy,Advisor
-Jim Kite,23,,Amy,Advisor
-Donia Baddou,24,,Jules,Contractor
+Pete Freeman,16,,Amy / Dan,Contractor,
+Barbara Liss,19,US,Amy,Associate,
+John O'Brien,21,,Amy,Advisor,
+Eamonn Store,22,,Amy,Advisor,
+Jim Kite,23,,Amy,Advisor,
+Donia Baddou,24,,Jules,Contractor,
 Natasha Taylor,26,London,Jules,Employee,Sales
 Hannah Williams,27,Remote,Dan,Employee,Tech
 Soraya Yumi,28,,Kati,Contractor,CS
@@ -27,8 +26,11 @@ Alexander Baxter,29,London,Jules,Employee,CS
 Abdikarim Mohamed,30,London,Nick,Employee,Sales
 Laura Carpenter,31,Edinburgh,Charley / Dan,Employee,Tech
 Georgia Richardson,32,London,Ryan,Employee,CS
-David Waterhouse,33,,Amy,Contractor
-Natasha Whitfield-Niven,34,,Ryan,Contractor
-Colin Grant,35,London,Dan,Contractor
+David Waterhouse,33,,Amy,Contractor,
+Natasha Whitfield-Niven,34,,Ryan,Contractor,
+Colin Grant,35,London,Dan,Contractor,
 Wing Sang Wong,36,Edinburgh,Dan,Employee,Tech
-Alexander Scurlock,37,Remote,The Board,Investor
+Alexander Scurlock,37,Remote,The Board,Investor,
+Fiona Cowie,38,04/10/2021,Dan,Employee,Tech
+Zoe Stephen,39,01/11/2021,Dan,Employee,Tech
+Aidan Thomson,40,08/11/2021,Dan,Employee,Tech
