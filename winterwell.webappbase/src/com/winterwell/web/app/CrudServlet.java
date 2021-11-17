@@ -654,7 +654,7 @@ public abstract class CrudServlet<T> implements IServlet {
 	}
 	
 
-	private Gson prettyPrinter() {
+	protected Gson prettyPrinter() {
 		if (_prettyPrinter==null) {
 			_prettyPrinter = AMain.main.init4_gsonBuilder().setPrettyPrinting().create();
 		}
