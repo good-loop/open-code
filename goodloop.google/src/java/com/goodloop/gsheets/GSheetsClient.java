@@ -24,6 +24,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
+import com.google.api.services.sheets.v4.Sheets.Spreadsheets.Values.Get;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetResponse;
@@ -49,7 +50,10 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.web.app.Logins;
 
+
 /**
+ * Google's docs - see https://developers.google.com/sheets/api
+ ?? * 
  * @testedby GSheetsClientTest
  * 
  * @author Google, daniel
@@ -235,6 +239,12 @@ public class GSheetsClient {
 			cleanedValues.add(row);
 		}
 		return cleanedValues;
+	}
+
+	public List<List<Object>> getData(String spreadsheetId, String a1Range, String TODOoptionalSheetId) throws IOException {
+		Sheets service = getService();
+		ValueRange d = service.spreadsheets().values().get(spreadsheetId, a1Range).execute();
+		return d.getValues();
 	}	
 
 }

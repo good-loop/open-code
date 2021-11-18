@@ -96,7 +96,7 @@ public class AST<X> extends Tree<Slice> {
 	}
 
 	private boolean getNode2_yes(Parser a, Parser b) {
-		assert a != null && b != null;
+		assert a != null && b != null : "null parser "+a+" "+b;
 		if (a == b)
 			return true;
 		String na = a.getName();
