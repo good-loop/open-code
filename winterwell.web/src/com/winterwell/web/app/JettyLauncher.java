@@ -2,6 +2,7 @@ package com.winterwell.web.app;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,8 +16,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.http.UriCompliance;
+import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SessionIdManager;
@@ -382,12 +386,16 @@ public class JettyLauncher {
 			org.eclipse.jetty.util.log.Log.setLog(new DummyLogger());
 		}
 		server = new Server();
+
+		// TODO support encoded / in slugs, e.g. https://calstat.good-loop.com/task/task_%3Cgood-loop%2Fopen-code%2Fpull%2F13%40github.com%3E		
+		HttpConfiguration config = new HttpConfiguration();
+		UriCompliance uc = UriCompliance.from("0,AMBIGUOUS_PATH_SEPARATOR");
+		config.setUriCompliance(uc);		
+		HttpConnectionFactory hcf = new HttpConnectionFactory(config);
 		
-		// TODO support encoded / in slugs, e.g. https://calstat.good-loop.com/task/task_%3Cgood-loop%2Fopen-code%2Fpull%2F13%40github.com%3E
-//		UriCompliance uc = UriCompliance.from("0,AMBIGUOUS_PATH_SEPARATOR");
-				
-		ServerConnector connector = new ServerConnector(server);
+		ServerConnector connector = new ServerConnector(server, hcf);
 		connector.setPort(port);
+		
 		server.setConnectors(new Connector[] { connector });
 		
 		if (oneThread) {

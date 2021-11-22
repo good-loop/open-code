@@ -703,7 +703,7 @@ public abstract class CrudServlet<T> implements IServlet {
 		// Beware if ID can have a / in it!
 		String slug = state.getSlug();
 		String[] slugBits = state.getSlugBits();
-		
+		// FIXME handle if the ID has a / encoded within it
 		String sid = slugBits[slugBits.length - 1]; 
 		// NB: slug-bit-0 is the servlet, slug-bit-1 might be the ID - or the dataspace for e.g. SegmentServlet
 		_id = getId2(state, sid);
