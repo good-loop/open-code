@@ -71,6 +71,7 @@ public class GSheetsClient {
 	private int sheet = 0;
 
 	public Spreadsheet getSheet(String id) throws Exception {
+		Log.i(LOGTAG, "getSheet... spreadsheet: "+id);
 		Sheets service = getService();
 		Spreadsheet ss = service.spreadsheets().get(id).execute();
 		return ss;
@@ -142,7 +143,7 @@ public class GSheetsClient {
 			Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
 					.setApplicationName(APPLICATION_NAME).build();
 			return service;
-		} catch(Exception ex) {
+		} catch(Throwable ex) {
 			Log.i(LOGTAG, "getService :( "+ex); // make sure its logged
 			throw Utils.runtime(ex);
 		}
@@ -155,7 +156,8 @@ public class GSheetsClient {
 	 * @throws GeneralSecurityException
 	 */
 	public Object updateValues(String spreadsheetId, List<List<Object>> values)
-			throws GeneralSecurityException, IOException {
+			throws GeneralSecurityException, IOException 
+	{
 		Log.i(LOGTAG, "updateValues... spreadsheet: "+spreadsheetId);
 		Sheets service = getService();
 		

@@ -18,7 +18,7 @@ public class BuildWeb2 extends BuildWinterwellProject {
 	 */
 	public BuildWeb2() {
 		super("winterwell.web");
-		setVersion("1.1.1"); // 23 Aug 2021
+		setVersion("1.1.2"); // 22 Nov 2021
 	}	
 
 	@Override
@@ -32,7 +32,7 @@ public class BuildWeb2 extends BuildWinterwellProject {
 		MavenDependencyTask mdt = new MavenDependencyTask();
 		// see https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-server
 		String jettyVersion = 
-				"10.0.2";
+				"10.0.7"; // hopefully fix Ambiguous segment error for slugs with an encoded "/"
 		// NB: v11 is the same as v10 but switches s/javax/jakarta/
 //				"9.4.24.v20191120"; 
 		mdt.addDependency("org.eclipse.jetty", "jetty-server", jettyVersion);
