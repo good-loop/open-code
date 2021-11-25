@@ -35,6 +35,7 @@ import com.google.api.services.sheets.v4.model.ExtendedValue;
 import com.google.api.services.sheets.v4.model.GridCoordinate;
 import com.google.api.services.sheets.v4.model.GridProperties;
 import com.google.api.services.sheets.v4.model.GridRange;
+import com.google.api.services.sheets.v4.model.RepeatCellRequest;
 import com.google.api.services.sheets.v4.model.Request;
 import com.google.api.services.sheets.v4.model.Response;
 import com.google.api.services.sheets.v4.model.RowData;
@@ -47,6 +48,8 @@ import com.google.api.services.sheets.v4.model.UpdateSheetPropertiesRequest;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.containers.IntRange;
+import com.winterwell.utils.containers.Pair;
 import com.winterwell.utils.log.Log;
 import com.winterwell.web.app.Logins;
 
@@ -177,6 +180,68 @@ public class GSheetsClient {
 		Log.i(LOGTAG, "updated spreadsheet: "+getUrl(spreadsheetId));
 		return result.toPrettyString();
 	}
+	
+
+	/**
+	 * See https://developers.google.com/sheets/api/samples/formatting
+	 * @param spreadsheetId
+	 * @param rows 0 indexed, inclusive
+	 * @param cols
+	 * @param fg
+	 * @param bg
+	 * @return 
+	 * @return
+	 * @throws GeneralSecurityException
+	 * @throws IOException
+	 */
+	public Request setStyleRequest(int sheetId, IntRange rows, IntRange cols, java.awt.Color fg, java.awt.Color bg)
+			throws GeneralSecurityException, IOException 
+	{
+		Log.i(LOGTAG, "setStyle...");
+		GridRange gr = new GridRange();
+		gr.setSheetId(sheetId);
+		if (rows != null) gr.setStartRowIndex(rows.low).setEndRowIndex(rows.high+1);
+		if (cols != null) gr.setStartColumnIndex(cols.low).setEndColumnIndex(cols.high+1);
+		float[] rgba = fg.getRGBComponents(null);
+		Color blu = new Color().setBlue(rgba[2]).setGreen(rgba[1]).setRed(rgba[0]).setAlpha(rgba[3]);
+		CellData cd = new CellData().setUserEnteredFormat(
+				new CellFormat().setTextFormat(
+				new TextFormat().setForegroundColor(blu)));
+		Request req = new Request().setRepeatCell(
+				new RepeatCellRequest()
+				.setCell(cd)
+				.setRange(gr)
+				.setFields("userEnteredFormat(textFormat)")
+				);
+		return req;
+	}
+	
+	public Object doBatchUpdate(String spreadsheetId, List<Request> reqs)
+			throws GeneralSecurityException, IOException 
+	{
+		Sheets service = getService();
+		BatchUpdateSpreadsheetRequest busr = new BatchUpdateSpreadsheetRequest()
+				.setRequests(reqs);
+		//		
+//		ValueRange body = new ValueRange().setValues(values);
+//
+//		String valueInputOption = "USER_ENTERED";
+//		int w = values.get(0).size();
+//		String c = getBase26(w - 1); // w base 26
+//		String range = "A1:" + c + values.size();
+//		// TODO sheet number 
+		BatchUpdateSpreadsheetResponse result = service.spreadsheets().batchUpdate(
+				spreadsheetId, busr
+				)
+//				.setFields()
+//				.setValueInputOption(valueInputOption)
+				.execute();
+		String ps = result.toPrettyString();
+////			System.out.println(ps);
+		Log.i(LOGTAG, "styled spreadsheet: "+getUrl(spreadsheetId));
+		return result.toPrettyString();
+	}
+	
 	
 
 	public String getUrl(String spreadsheetId) {

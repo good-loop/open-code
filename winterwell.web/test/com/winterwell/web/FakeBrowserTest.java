@@ -11,6 +11,16 @@ import com.winterwell.utils.log.Log;
 public class FakeBrowserTest {
 
 	@Test
+	public void testISBN() {
+		FakeBrowser fb = new FakeBrowser();
+		String p = fb.getPage("https://isbnsearch.org/search?s=time+travellers");
+		assert p.contains("egency") : p;
+		
+		String p2 = fb.getPage("https://isbndb.com/search/books/time%2Btravellers%2Bwife");
+		assert p2.contains("Wife") : p2;
+	}
+	
+	@Test
 	public void testMethodHead() {
 		{
 			FakeBrowser fb = new FakeBrowser();
