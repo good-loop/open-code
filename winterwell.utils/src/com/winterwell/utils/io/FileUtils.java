@@ -117,11 +117,20 @@ public class FileUtils {
 	 * http://www.rgagnon.com/javadetails/java-handle-utf8-file-with-bom.html
 	 */
 	private static final char UTF8_BOM = '\uFEFF';
-	/**
-	 * e.g. "png"
-	 * lowercase
-	 */
+
+	/** Common image file extensions, e.g. "jpg", "png". Lower-case. */
 	public static final List<String> IMAGE_TYPES = Arrays.asList("png", "jpg", "jpeg", "gif", "bmp", "tiff", "svg");
+
+	/**
+	 * Common video file extensions
+	 * NB: Facebook supports a longer list: https://developers.facebook.com/docs/graph-api/video-uploads
+	 * mp4 is ambiguous (may contain only audio stream) :(
+	 */
+	public static final List<String> VIDEO_TYPES = Arrays.asList("mpg", "mpeg", "mpeg4", "divx", "mov", "wmv", "m4v", "mp4", "avi");
+
+	/** Common font formats. EOT intentionally omitted as it's a proprietary MS format that's intentionally hard to work with. */
+	public static final List<String> FONT_TYPES = Arrays.asList("ttf", "otf", "woff", "woff2");
+
 	private static File wwdir;
 
 	/**
@@ -1161,26 +1170,27 @@ public class FileUtils {
 		return true;
 	}
 
-	/**
-	 * Covers the most common video file types -- but this is NOT a complete list or a rigourous test.
-	 * @param attachment
-	 * @return
-	 */
-	public static boolean isVideo(File attachment) {		
-		String ftype = getType(attachment);
-		// NB: Facebook supports a longer list: https://developers.facebook.com/docs/graph-api/video-uploads
-		// np4 is ambiguous :(
-		return Arrays.asList("mpg", "mpeg", "mpeg4", "divx", "mov", "wmv", "m4v", "mp4", "avi").contains(ftype);
-	}	
-
-	/**
-	 * Covers the most common image file types -- but this is NOT a complete list or a rigourous test.
-	 */
-	public static boolean isImage(File file) {
-		String ftype = getType(file);
-		return IMAGE_TYPES.contains(ftype);
+	/** Check if file extension matches common video types. NOT a complete list or a rigorous test. */
+	public static boolean isVideo(File file) {
+		return isType(file, VIDEO_TYPES);
 	}
-	
+
+	/** Check if file extension matches common image types. NOT a complete list or a rigorous test. */
+	public static boolean isImage(File file) {
+		return isType(file, IMAGE_TYPES);
+	}
+
+	/** Check if file extension matches common font types. NOT a complete list or a rigorous test. */
+	public static boolean isFont(File file) {
+		return isType(file, FONT_TYPES);
+	}
+
+	/** Compare file extension to a list of common ones for a type (eg image, video, font). */
+	private static boolean isType(File file, List<String> extensions) {
+		String ftype = getType(file);
+		return extensions.contains(ftype);
+	}
+
 	/**
 	 * @param f
 	 * @return true if f is a sym-link. Note: returns false if f is not itself a
