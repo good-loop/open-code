@@ -75,6 +75,10 @@ public class GSheetsClient {
 	 */
 	private Integer sheet;
 
+	public void setSheet(Integer sheet) {
+		this.sheet = sheet;
+	}
+	
 	public Spreadsheet getSheet(String id) throws Exception {
 		Log.i(LOGTAG, "getSheet... spreadsheet: "+id);
 		Sheets service = getService();
