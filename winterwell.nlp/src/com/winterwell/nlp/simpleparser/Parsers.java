@@ -252,7 +252,7 @@ public class Parsers {
 	 * 
 	 * @param name
 	 */
-	public static Parser ref(String name) {
+	public static Ref ref(String name) {
 		return new Ref(name);
 	}
 

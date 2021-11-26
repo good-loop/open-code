@@ -71,7 +71,7 @@ public class GSheetsClient {
 	/**
 	 * The sheet tab within the overall (spread)sheet
 	 */
-	private int sheet = 0;
+	private Integer sheet;
 
 	public Spreadsheet getSheet(String id) throws Exception {
 		Log.i(LOGTAG, "getSheet... spreadsheet: "+id);
@@ -105,6 +105,11 @@ public class GSheetsClient {
 	 * scopes, delete your previously saved tokens/ folder.
 	 */
 	private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS);
+	/**
+	 * hack to avoid upsetting gsheets Nov 2021
+	 */
+	private static final int MAX_ROW = 10000;
+	private static final int MAX_COL = 10000;
 //	    private static final String CREDENTIALS_FILE_PATH = "config/credentials.json";
 
 	/**
@@ -194,14 +199,22 @@ public class GSheetsClient {
 	 * @throws GeneralSecurityException
 	 * @throws IOException
 	 */
-	public Request setStyleRequest(int sheetId, IntRange rows, IntRange cols, java.awt.Color fg, java.awt.Color bg)
+	public Request setStyleRequest(IntRange rows, IntRange cols, java.awt.Color fg, java.awt.Color bg)
 			throws GeneralSecurityException, IOException 
 	{
 		Log.i(LOGTAG, "setStyle...");
 		GridRange gr = new GridRange();
-		gr.setSheetId(sheetId);
-		if (rows != null) gr.setStartRowIndex(rows.low).setEndRowIndex(rows.high+1);
-		if (cols != null) gr.setStartColumnIndex(cols.low).setEndColumnIndex(cols.high+1);
+		if (sheet!=null) {
+			gr.setSheetId(sheet);
+		}
+		if (rows != null) {
+			gr.setStartRowIndex(rows.low);
+			if (rows.high<MAX_ROW) gr.setEndRowIndex(rows.high+1);
+		}
+		if (cols != null) {
+			gr.setStartColumnIndex(cols.low);
+			if (cols.high<MAX_COL) gr.setEndColumnIndex(cols.high+1);
+		}
 		float[] rgba = fg.getRGBComponents(null);
 		Color blu = new Color().setBlue(rgba[2]).setGreen(rgba[1]).setRed(rgba[0]).setAlpha(rgba[3]);
 		CellData cd = new CellData().setUserEnteredFormat(
@@ -244,7 +257,7 @@ public class GSheetsClient {
 	
 	
 
-	public String getUrl(String spreadsheetId) {
+	public static String getUrl(String spreadsheetId) {
 		return "https://docs.google.com/spreadsheets/d/"+spreadsheetId;
 	}
 	
@@ -281,11 +294,13 @@ public class GSheetsClient {
 		Sheets service = getService();
 		List<Request> requests = new ArrayList<>();
 
+		GridRange gr = new GridRange();
+		if (sheet !=null ) gr.setSheetId(sheet);
+		UpdateCellsRequest updateCellsReq = new UpdateCellsRequest()
+				.setRange(gr)
+				.setFields("*");
 		requests.add(new Request()
-				.setUpdateCells(new UpdateCellsRequest()
-						.setRange(new GridRange()
-								.setSheetId(sheet))
-						.setFields("*")));
+				.setUpdateCells(updateCellsReq));
 		
 		BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
 		BatchUpdateSpreadsheetResponse response = service.spreadsheets().batchUpdate(sid, body).execute();

@@ -28,6 +28,7 @@ public class AST<X> extends Tree<Slice> {
 	public AST(Parser<X> parser, Slice value) {
 		this.name = parser.name;
 		this.parser = parser;
+		assert parser != null : value;
 		setValue(value);
 	}
 
@@ -55,6 +56,7 @@ public class AST<X> extends Tree<Slice> {
 	 */
 	@Deprecated
 	public <Y> AST<Y> getNode(Parser<Y> p) {
+		assert p != null;
 		if (getNode2_yes(p, parser))
 			return (AST<Y>) this;
 		for (ITree ast : getChildren()) {
@@ -62,7 +64,7 @@ public class AST<X> extends Tree<Slice> {
 			Parser kp = kid.parser;
 			while (kp instanceof Ref) {
 				// Can this happen? Don't Ref's never appear in the parse tree?
-				kp = ((Ref) kp).p;
+				kp = ((Ref) kp).lookup();
 			}
 			if (getNode2_yes(p, kp))
 				return kid;
