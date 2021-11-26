@@ -39,6 +39,7 @@ import com.google.api.services.sheets.v4.model.RepeatCellRequest;
 import com.google.api.services.sheets.v4.model.Request;
 import com.google.api.services.sheets.v4.model.Response;
 import com.google.api.services.sheets.v4.model.RowData;
+import com.google.api.services.sheets.v4.model.Sheet;
 import com.google.api.services.sheets.v4.model.SheetProperties;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.SpreadsheetProperties;
@@ -48,6 +49,7 @@ import com.google.api.services.sheets.v4.model.UpdateSheetPropertiesRequest;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.containers.IntRange;
 import com.winterwell.utils.containers.Pair;
 import com.winterwell.utils.log.Log;
@@ -186,6 +188,18 @@ public class GSheetsClient {
 		return result.toPrettyString();
 	}
 	
+	/**
+	 * https://developers.google.com/sheets/api/samples/sheet
+	 * @throws IOException 
+	 */
+	public List<SheetProperties> getSheetProperties(String spreadsheetId) throws IOException {
+		Sheets service = getService();
+		com.google.api.services.sheets.v4.Sheets.Spreadsheets.Get gotr = service.spreadsheets().get(spreadsheetId);
+		Spreadsheet s = gotr.execute();
+		List<Sheet> sheets = s.getSheets();
+		List<SheetProperties> sprops = Containers.apply(sheets, Sheet::getProperties);
+		return sprops;		
+	}
 
 	/**
 	 * See https://developers.google.com/sheets/api/samples/formatting
