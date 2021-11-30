@@ -55,6 +55,7 @@ public class JWTDecoder {
 		this.app = app;
 	}
 	
+	boolean debug;
 
 	public DecodedJWT decryptJWT(String jwt) {
 		verify(jwt, app);
@@ -80,11 +81,11 @@ public class JWTDecoder {
 		}
 		try {
 			DecodedJWT decoded = verifier.verify(jwt);
-			Log.d(LOGTAG, "verified "+jwt+" -> "+decoded.getSubject());
-
-			// debugging
-			if ( ! Utils.equals(issuer, decoded.getIssuer())) {
-				Log.w(LOGTAG, "verify - issuer mismatch! expected: "+issuer+" got: "+decoded.getIssuer()+" from "+jwt+" "+ReflectionUtils.getSomeStack(12));
+			if (debug) {
+				Log.d(LOGTAG, "verified "+jwt+" -> "+decoded.getSubject());
+				if ( ! Utils.equals(issuer, decoded.getIssuer())) {
+					Log.w(LOGTAG, "verify - issuer mismatch! expected: "+issuer+" got: "+decoded.getIssuer()+" from "+jwt+" "+ReflectionUtils.getSomeStack(12));
+				}
 			}
 		} catch(Throwable ex) {
 			Object token = "";

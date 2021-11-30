@@ -316,7 +316,8 @@ public final class YouAgainClient {
 				// TODO a better appraoch would be for the browser to make a proper JWT for @temp
 
 				// decode the token
-				JWTDecoder dec = getDecoder(); //"local".equals(state.get("login")));
+				JWTDecoder dec = getDecoder();
+				dec.debug = state.debug;
 				DecodedJWT decd = dec.decryptJWT(jt);
 				token.xid = new XId(decd.getSubject(), false);
 				token.verified = true;
@@ -338,7 +339,7 @@ public final class YouAgainClient {
 	}
 
 
-	JWTDecoder dec;
+	JWTDecoder _decoder;
 	
 	/**
 	 * NB: the signing key is the youagain key, shared by all apps
@@ -346,8 +347,8 @@ public final class YouAgainClient {
 	static PublicKey yaPubKey;
 	
 	public JWTDecoder getDecoder() throws Exception {
-		if (dec!=null) return dec;		
-		dec = new JWTDecoder(iss);
+		if (_decoder!=null) return _decoder;		
+		_decoder = new JWTDecoder(iss);
 		if (yaPubKey==null) {
 			String publickeyendpoint = yac.endpoint.replace("youagain.json", "publickey");
 			// load from the server, so we could change keys			
@@ -355,8 +356,8 @@ public final class YouAgainClient {
 			yaPubKey = JWTDecoder.keyFromString(skey);
 			Log.d(LOGTAG, "GOT key "+yaPubKey+" from "+publickeyendpoint);	
 		}
-		dec.setPublicKey(yaPubKey);
-		return dec;
+		_decoder.setPublicKey(yaPubKey);
+		return _decoder;
 	}
 
 	/**
@@ -598,7 +599,7 @@ public final class YouAgainClient {
 		List<String> roles = Containers.filterNulls(
 				Containers.apply(shares, s -> s.startsWith("role:")? s.substring(5) : null)
 				);
-		roles = new ArrayList(new HashSet(roles)); // de dupe		
+		roles = new ArrayList(new HashSet(roles)); // de dupe
 		return roles;
 	}
 
