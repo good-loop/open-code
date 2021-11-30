@@ -982,7 +982,6 @@ public final class Containers  {
 	}
 
 	/**
-	 * Identical to {@link #removeNulls(Iterable)}! This is just an aide-memoire.
 	 * @param list
 	 * @return list without any nulls
 	 */
