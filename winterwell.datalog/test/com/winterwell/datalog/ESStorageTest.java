@@ -66,7 +66,7 @@ public class ESStorageTest {
 		boolean ier = indices.indexExists(readIndex);
 		String writeIndex = ess.writeIndexFromDataspace(ds);
 		final Time now = new Time();
-		String baseIndex = ess.baseIndexFromDataspace(ds, now);
+		String baseIndex = ess.esdim.baseIndexFromDataspace(ds, now);
 		boolean iew = indices.indexExists(writeIndex);
 		assert ier && iew;
 		IESResponse isw = indices.indexSettings(writeIndex).get();
@@ -91,9 +91,9 @@ public class ESStorageTest {
 				
 		// progress a month
 		Time nextMon = now.plus(TUnit.MONTH);
-		boolean op = ess.registerDataspace2(ds, nextMon);
+		boolean op = ess.esdim.registerDataspace2(ds, nextMon);
 		assert op;
-		String newBaseIndex = ess.baseIndexFromDataspace(ds, nextMon);
+		String newBaseIndex = ess.esdim.baseIndexFromDataspace(ds, nextMon);
 		
 		// TODO the underlying base for write should have moved, and read should have two bases
 		IESResponse isw3 = indices.indexSettings(writeIndex).get();
