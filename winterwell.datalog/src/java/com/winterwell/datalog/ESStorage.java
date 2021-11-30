@@ -317,7 +317,7 @@ public class ESStorage implements IDataLogStorage {
 		ESHttpClient client = client(dataspace);
 		
 		String index = writeIndexFromDataspace(dataspace);
-		esdim.prepWriteIndex(index);
+		esdim.prepWriteIndex(client, dataspace);
 		// save -- update for grouped events, index otherwise
 		ESPath path = new ESPath(index, id);
 		Future<ESHttpResponse> f;

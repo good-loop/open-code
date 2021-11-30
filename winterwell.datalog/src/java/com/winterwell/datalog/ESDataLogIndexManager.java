@@ -1,7 +1,9 @@
 package com.winterwell.datalog;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -48,25 +50,16 @@ public class ESDataLogIndexManager {
 		this.ess = esStorage;
 	}
 
-
-
-	public boolean registerDataspace(Dataspace dataspace) {
-		boolean regd = registerDataspace2(dataspace, new Time());
-		// Also pre-register the next month, to avoid issues at the switch-over
-		// (Bug seen Nov 2021: at the monthly switch-over, an auto-generated mapping was made with text fields instead of keyword)
-		registerDataspace2(dataspace, new Time().plus(TUnit.MONTH));
-		return regd;
-	}
-
-	
-
 	/**
-	 * Make a base index and set aliases
+	 * Make a base index and set read alias.
+	 * 
+	 * NB: Write alias is checked and set on-save by {@link #prepWriteIndex(Dataspace)}
 	 * @param dataspace
 	 * @param now
 	 * @return
 	 */
-	boolean registerDataspace2(Dataspace dataspace, Time now) {
+	boolean registerDataspace(Dataspace dataspace) {
+		Time now = new Time();
 		String baseIndex = baseIndexFromDataspace(dataspace, now);
 		// fast check of cache
 		if (knownBaseIndexes.contains(baseIndex)) {
@@ -82,61 +75,7 @@ public class ESDataLogIndexManager {
 		// make it, with a base and an alias
 		return registerDataspace3_doIt(dataspace, baseIndex, _client, now);
 	}
-
-	private void registerDataspace3_patchAliases(ESHttpClient _client, Dataspace dataspace, String baseIndex, Time now) {
-		hm
-		String readIndex = ESStorage.readIndexFromDataspace(dataspace);
-		String writeIndex = ESStorage.writeIndexFromDataspace(dataspace);
-		
-		IndicesAdminClient indices = _client.admin().indices();
-		IESResponse ra = indices.getAliases(readIndex).get();
-		Set<String> readIndices = GetAliasesRequest.getBaseIndices(ra);
-		IESResponse wa = indices.getAliases(writeIndex).get();
-		Set<String> writeIndices = GetAliasesRequest.getBaseIndices(wa);
-		
-		IndicesAliasesRequest aliasEdit = indices.prepareAliases();
-		if ( ! readIndices.contains(baseIndex)) {
-			aliasEdit.addAlias(baseIndex, readIndex);
-		}
-		if ( ! writeIndices.contains(baseIndex)) {
-			aliasEdit.addAlias(baseIndex, writeIndex);
-		}
-		ArrayList<String> otherWriters = new ArrayList(writeIndices);
-		otherWriters.remove(baseIndex);
-		for (String ow : otherWriters) {
-			aliasEdit.removeAlias(ow, writeIndex);
-		}
-		if ( ! aliasEdit.isEmpty()) {		
-			aliasEdit.setDebug(true);
-			IESResponse ok = aliasEdit.get().check();
-			Log.d(LOGTAG, "registerDataspace - patchAliases for "+dataspace+" = "+baseIndex+": "+aliasEdit.getBodyJson());
-		} else {
-			Log.d(LOGTAG, "registerDataspace - patchAliases - no action for "+dataspace+" = "+baseIndex);
-		}
-		return;
-	}
 	
-	private void registerDataspace4_swapWriteIndexAlias(Dataspace dataspace, String baseIndex, ESHttpClient _client, Time now) 
-	{
-		hm
-		// swap the write index over			
-		IndicesAliasesRequest aliasSwap = _client.admin().indices().prepareAliases();
-		aliasSwap.setDebug(true);
-		aliasSwap.setRetries(10); // really try again!
-		String writeIndex = ESStorage.writeIndexFromDataspace(dataspace);
-		aliasSwap.addAlias(baseIndex, writeIndex);			
-		// remove the write alias for the previous month
-		Time prevMonth = now.minus(TUnit.MONTH);
-		assert prevMonth.getMonth() % 12 == (now.getMonth() - 1) % 12 : prevMonth;
-		String prevBaseIndex = baseIndexFromDataspace(dataspace, prevMonth);
-		// does it exist?
-		boolean prevExists = _client.admin().indices().indexExists(prevBaseIndex);
-		if (prevExists) {
-			aliasSwap.removeAlias(prevBaseIndex, writeIndex);
-		}
-		aliasSwap.get().check(); // What happens if we fail here??		
-	}
-
 	/**
 	 * per-month index blocks
 	 * @param time
@@ -152,7 +91,7 @@ public class ESDataLogIndexManager {
 
 	
 	final Set<String> knownBaseIndexes = new HashSet();
-	
+	final Map<Dataspace,String> activeBase4dataspace = new HashMap();
 	
 
 	/**
@@ -185,8 +124,6 @@ public class ESDataLogIndexManager {
 			// register some standard event types??
 			registerDataspace4_mapping(_client, dataspace, now);
 			
-			// swap the right index -- but not ahead of time!
-			registerDataspace4_swapWriteIndexAlias(dataspace, baseIndex, _client, now);
 			return true;
 			
 		} catch (ESIndexAlreadyExistsException ex) {
@@ -260,7 +197,43 @@ public class ESDataLogIndexManager {
 
 
 
-	public void prepWriteIndex(String index) {
-		foo
+	public void prepWriteIndex(ESHttpClient client, Dataspace dataspace) {
+		String ab = activeBase4dataspace.get(dataspace);
+		Time now = new Time();
+		String baseIndex = baseIndexFromDataspace(dataspace, now);
+		if (baseIndex.equals(ab)) {
+			return; // all good already :) <-- This should happen 99.9% of the time
+		}
+		// Do we need to make the base index for this month?
+		registerDataspace(dataspace);
+		
+		// What is active for writing? 
+		String writeIndex = ESStorage.writeIndexFromDataspace(dataspace);
+		IndicesAdminClient clientIndices = client.admin().indices();
+		IESResponse wa = clientIndices.getAliases(writeIndex).get();
+		Set<String> writeIndices = GetAliasesRequest.getBaseIndices(wa);
+
+		if (writeIndices.contains(baseIndex)) {
+			Log.d(LOGTAG, "Write index already correct: "+baseIndex+" <- "+writeIndex);
+			activeBase4dataspace.put(dataspace, baseIndex);
+			return;
+		}
+		// swap the write index over
+		IndicesAliasesRequest aliasSwap = clientIndices.prepareAliases();
+		aliasSwap.setDebug(true);
+		aliasSwap.setRetries(10); // really try again!
+		// our new base
+		aliasSwap.addAlias(baseIndex, writeIndex);			
+		// remove the old ones
+		for (String ow : writeIndices) {
+			aliasSwap.removeAlias(ow, writeIndex);
+		}
+		
+		aliasSwap.get().check(); //What happens if we fail here??
+		
+		activeBase4dataspace.put(dataspace, baseIndex);
 	}
+
+
+
 }
