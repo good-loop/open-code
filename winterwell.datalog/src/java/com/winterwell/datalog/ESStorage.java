@@ -296,7 +296,6 @@ public class ESStorage implements IDataLogStorage {
 		}
 		// init?
 		registerDataspace(dataspace);
-		String type = ESTYPE;
 		
 		// ID
 		String id;
@@ -317,11 +316,10 @@ public class ESStorage implements IDataLogStorage {
 		
 		ESHttpClient client = client(dataspace);
 		
-//		client.debug = true;
-		
 		String index = writeIndexFromDataspace(dataspace);
+		esdim.prepWriteIndex(index);
 		// save -- update for grouped events, index otherwise
-		ESPath path = new ESPath(index, type, id);
+		ESPath path = new ESPath(index, id);
 		Future<ESHttpResponse> f;
 		if (grpById) {
 			UpdateRequest saveReq = client.prepareUpdate(path);
@@ -352,7 +350,6 @@ public class ESStorage implements IDataLogStorage {
 				try {
 					ESHttpResponse response = f.get();
 					response.check();
-	//				Log.d("datalog.es", "...saveEvent done :) event: "+event);
 				} catch(Throwable ex) {
 					Log.e(DataLog.LOGTAG, "...saveEvent FAIL :( "+ex+" from event: "+event);
 				}
@@ -471,7 +468,7 @@ public class ESStorage implements IDataLogStorage {
 		}
 	}
 	
-	ESDataLogIndexManager esdim = new ESDataLogIndexManager();
+	ESDataLogIndexManager esdim = new ESDataLogIndexManager(this);
 
 	public ESDataLogIndexManager getESDataLogIndexManager() {
 		return esdim;

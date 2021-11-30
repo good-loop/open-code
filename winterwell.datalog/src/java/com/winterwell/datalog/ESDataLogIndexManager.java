@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.winterwell.datalog.server.CompressDataLogIndexMain;
 import com.winterwell.es.ESType;
 import com.winterwell.es.client.ESHttpClient;
 import com.winterwell.es.client.IESResponse;
@@ -20,7 +21,34 @@ import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 
+/**
+ * Manage the indices and aliases underneath ESStorage for DataLog
+ * 
+ * Suppose you have the dataspace "foo"
+ * That reads from datalog.foo.all and writes events to datalog.foo -- both of which are aliases. 
+ * datalog.foo -> datalog.foo_{month}{year}
+ * datalog.foo.all -> datalog.foo.{all the months...}
+ * 
+ * This class will create the monthly indices and manage aliases.
+ * It is invoked automatically by ESStorage.
+ * 
+ * @see CompressDataLogIndexMain which compresses a month index when the month is over.
+ * 
+ * @author daniel
+ *
+ */
 public class ESDataLogIndexManager {
+
+	private static final String LOGTAG = "ESDIM";
+	private ESStorage ess;
+
+
+
+	public ESDataLogIndexManager(ESStorage esStorage) {
+		this.ess = esStorage;
+	}
+
+
 
 	public boolean registerDataspace(Dataspace dataspace) {
 		boolean regd = registerDataspace2(dataspace, new Time());
@@ -33,26 +61,21 @@ public class ESDataLogIndexManager {
 	
 
 	/**
-	 * NB: split out for testing reasons, so we can poke at older dataspaces
+	 * Make a base index and set aliases
 	 * @param dataspace
 	 * @param now
 	 * @return
 	 */
 	boolean registerDataspace2(Dataspace dataspace, Time now) {
 		String baseIndex = baseIndexFromDataspace(dataspace, now);
-		read vs write
-		handling special indexes??
 		// fast check of cache
 		if (knownBaseIndexes.contains(baseIndex)) {
 			return false;
 		}
-		ESHttpClient _client = client(dataspace);
+		ESHttpClient _client = ess.client(dataspace);
 		if (_client.admin().indices().indexExists(baseIndex)) {
 			knownBaseIndexes.add(baseIndex);
 			assert knownBaseIndexes.size() < 100000;
-			
-			// HACK: patch old setups which might not have aliases
-			registerDataspace3_patchAliases(_client, dataspace, baseIndex, now);			
 			
 			return false;
 		}
@@ -62,8 +85,8 @@ public class ESDataLogIndexManager {
 
 	private void registerDataspace3_patchAliases(ESHttpClient _client, Dataspace dataspace, String baseIndex, Time now) {
 		hm
-		String readIndex = readIndexFromDataspace(dataspace);
-		String writeIndex = writeIndexFromDataspace(dataspace);
+		String readIndex = ESStorage.readIndexFromDataspace(dataspace);
+		String writeIndex = ESStorage.writeIndexFromDataspace(dataspace);
 		
 		IndicesAdminClient indices = _client.admin().indices();
 		IESResponse ra = indices.getAliases(readIndex).get();
@@ -100,7 +123,7 @@ public class ESDataLogIndexManager {
 		IndicesAliasesRequest aliasSwap = _client.admin().indices().prepareAliases();
 		aliasSwap.setDebug(true);
 		aliasSwap.setRetries(10); // really try again!
-		String writeIndex = writeIndexFromDataspace(dataspace);
+		String writeIndex = ESStorage.writeIndexFromDataspace(dataspace);
 		aliasSwap.addAlias(baseIndex, writeIndex);			
 		// remove the write alias for the previous month
 		Time prevMonth = now.minus(TUnit.MONTH);
@@ -122,7 +145,7 @@ public class ESDataLogIndexManager {
 	public String baseIndexFromDataspace(Dataspace dataspace, Time time) {
 		// replaces _client.getConfig().getIndexAliasVersion()
 		String v = time.format("MMMyy").toLowerCase();
-		String index = writeIndexFromDataspace(dataspace);
+		String index = ESStorage.writeIndexFromDataspace(dataspace);
 		return index+"_"+v;
 	}
 	
@@ -182,7 +205,7 @@ public class ESDataLogIndexManager {
 
 	private void registerDataspace4_mapping(ESHttpClient _client, Dataspace dataspace, Time now) 
 	{
-		String esType = ESTYPE;
+		String esType = ESStorage.ESTYPE;
 //		String v = _client.getConfig().getIndexAliasVersion();
 		String index = baseIndexFromDataspace(dataspace, now);
 		PutMappingRequest pm = _client.admin().indices().preparePutMapping(index, esType);
@@ -198,7 +221,7 @@ public class ESDataLogIndexManager {
 		ESType simpleEvent = new ESType()
 				.property(DataLogEvent.EVT, keywordy.copy()) // ?? should we set fielddata=true??
 				.property("time", new ESType().date())
-				.property(count, new ESType().DOUBLE())
+				.property(ESStorage.count, new ESType().DOUBLE())
 				.property("props", props);		
 		// common probs...
 		for(Entry<String, Class> cp : DataLogEvent.COMMON_PROPS.entrySet()) {
@@ -233,5 +256,11 @@ public class ESDataLogIndexManager {
 		pm.setDebug(true);
 		IESResponse res = pm.get();
 		res.check();
+	}
+
+
+
+	public void prepWriteIndex(String index) {
+		foo
 	}
 }
