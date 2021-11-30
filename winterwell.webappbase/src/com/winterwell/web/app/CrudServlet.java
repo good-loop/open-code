@@ -345,8 +345,8 @@ public abstract class CrudServlet<T> implements IServlet {
 			return;
 		}
 		String ckey = doAction2_blockRepeats2_actionId(state);
-		Log.d(LOGTAG(), "2 second Anti overlap key: "+ckey);
 		if (ANTI_OVERLAPPING_EDITS_CACHE.getIfPresent(ckey)!=null) {
+			Log.d(LOGTAG(), "Hit 2 second Anti overlap key: "+ckey);
 			throw new WebEx.E409Conflict("Duplicate request within 2 seconds. Blocked for edit safety. "+state
 					+" Note: this behaviour could be switched off via "+ALLOW_OVERLAPPING_EDITS);
 		}		
