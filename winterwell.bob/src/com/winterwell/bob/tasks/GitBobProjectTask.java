@@ -81,24 +81,25 @@ public class GitBobProjectTask extends BuildTask {
 				gc.run();
 				gc.close();
 				// Pull hashes from git server -- regardless of the cleanliness of this pull task, it is 100% necessary before a reset can be accomplished
-				Log.d(LOGTAG, "git pull origin master (because not a local dev box)");
+				Log.d(LOGTAG, "git pull origin (because not a local dev box)");
 				GitTask gt = new GitTask(GitTask.PULL, dir);
-				gt.addArg("origin master");
+				gt.addArg("origin");
 				gt.run();
 				gt.close();
 				// Reset: Inform the local repository that it should only care about the files/hashes/changes which exist on the canonical git server
-				Log.d(LOGTAG, "git reset --hard (because not a local dev box)");
+				Log.d(LOGTAG, "git reset --hard FETCH_HEAD (because not a local dev box)");
 				GitTask gr = new GitTask(GitTask.RESET, dir);
 				gr.addArg("--hard FETCH_HEAD");
 				gr.run();
 				gr.close();
-				// Perform what seem to be arbitrary or inert 'checkout' and 'pull' commands, but actually, these help reset a local repository for future incoming commands. Weird, right?
-				Log.d(LOGTAG, "git checkout -f master (because not a local dev box)");
-				GitTask gco = new GitTask(GitTask.CHECKOUT, dir);
-				gco.addArg("-f master");
-				gco.run();
-				gco.close();
-				Log.d(LOGTAG, "git pull (because not a local dev box)");
+				// Weird git bugs seen Nov 21 with the server somehow merging master into the branch
+//				// Perform what seem to be arbitrary or inert 'checkout' and 'pull' commands, but actually, these help reset a local repository for future incoming commands. Weird, right?
+//				Log.d(LOGTAG, "git checkout -f master (because not a local dev box)");
+//				GitTask gco = new GitTask(GitTask.CHECKOUT, dir);
+//				gco.addArg("-f master");
+//				gco.run();
+//				gco.close();
+				Log.d(LOGTAG, "git pull (because not a local dev box)"); // is this needed??
 				GitTask gp = new GitTask(GitTask.PULL, dir);
 				gp.run();
 				gp.close();

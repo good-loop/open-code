@@ -37,6 +37,10 @@ public class DataLogHttpClient {
 	
 	String ENDPOINT = Dep.get(DataLogConfig.class).dataEndpoint;
 	
+	public String getEndPoint() {
+		return ENDPOINT;
+	}
+	
 	private List<AuthToken> auth;
 	
 	/**

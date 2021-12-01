@@ -117,7 +117,7 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 				Time tMonth = getConfig().getMonth();
 				ESStorage ess = new ESStorage();
 				Dataspace ds = new Dataspace("gl");
-				sourceIndex = ess.baseIndexFromDataspace(ds, tMonth);
+				sourceIndex = ess.getESDataLogIndexManager().baseIndexFromDataspace(ds, tMonth);
 			} else {
 				showHelp();
 				throw new IllegalArgumentException("Pass in a source index.");
