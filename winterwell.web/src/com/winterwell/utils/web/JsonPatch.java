@@ -158,7 +158,6 @@ public class JsonPatch implements IHasJson {
 				} else {
 					// object -- null out
 					((Map)parent).remove(lastBit);
-//					SimpleJson.set(jobj, null, bits);
 				}
 				break;			
 			case move:
