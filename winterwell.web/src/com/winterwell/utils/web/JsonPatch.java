@@ -138,12 +138,28 @@ public class JsonPatch implements IHasJson {
 			// NB: drop the leading / on path
 			String[] bits = diff.path.substring(1).split("/");			
 			Object value = diff.value;
+			String[] ppath;
+			String lastBit;
 			switch(diff.op) {
 			case add: case replace:
 				SimpleJson.set(jobj, value, bits);
 				break;
 			case remove:
-				SimpleJson.set(jobj, null, bits);
+				// remove from array or object?
+				ppath = Arrays.copyOf(bits, bits.length-1);
+				lastBit = bits[bits.length-1];
+				Object parent = SimpleJson.get(jobj, ppath);
+				if (parent instanceof List || parent.getClass().isArray()) {
+					// NB: copy 'cos some lists can't be edited
+					List<Object> list = new ArrayList(Containers.asList(parent));
+					int i = Integer.valueOf(lastBit);
+					list.remove(i);
+					SimpleJson.set(jobj, list, ppath);
+				} else {
+					// object -- null out
+					((Map)parent).remove(lastBit);
+//					SimpleJson.set(jobj, null, bits);
+				}
 				break;			
 			case move:
 			case copy:

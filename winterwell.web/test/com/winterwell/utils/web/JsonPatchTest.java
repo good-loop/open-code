@@ -14,6 +14,41 @@ import com.winterwell.utils.containers.Containers;
 
 public class JsonPatchTest {
 
+
+	@Test
+	public void testArrayNull() {
+		Map before = new ArrayMap("a", Arrays.asList("Apple","Avocado"));
+		JsonPatch ops = JsonPatch.fromJson(Arrays.asList(new ArrayMap(
+					"op","remove",
+					"path","/a/1")
+				));
+		JsonPatchOp jop = ops.diffs.get(0);
+		
+		Map after2 = new ArrayMap(before);
+		ops.apply(after2);
+		System.out.println(after2);
+		Map after = new ArrayMap("a", Arrays.asList("Apple"));
+		assert Containers.same(after2, after);
+	}
+
+
+
+	@Test
+	public void testRemoveTopLevel() {
+		Map before = new ArrayMap("a", Arrays.asList("Apple","Avocado"), "b", "banana");
+		JsonPatch ops = JsonPatch.fromJson(Arrays.asList(new ArrayMap(
+					"op","remove",
+					"path","/b")
+				));
+		JsonPatchOp jop = ops.diffs.get(0);
+		
+		Map after2 = new ArrayMap(before);
+		ops.apply(after2);
+		System.out.println(after2);
+		Map after = new ArrayMap("a", Arrays.asList("Apple","Avocado"));
+		assert Containers.same(after2, after);
+	}
+
 	@Test
 	public void testSimple() {
 		Map before = new ArrayMap("a", "Apple");
