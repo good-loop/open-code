@@ -16,6 +16,8 @@ import java.util.regex.Matcher;
 
 import org.eclipse.jetty.util.ajax.JSON;
 
+import com.goodloop.data.CurrencyConvertor;
+import com.goodloop.data.KCurrency;
 import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.DataLogEvent;
@@ -213,21 +215,7 @@ public class LgServlet {
 	 */
 	static List<Map> userTypeForIPorXId;
 	static volatile Time userTypeForIPorXIdFetched;
-	
-	// TODO currConvert	
-	static Double currConvert(Object curr, String amount) {
-		// TODO Fetch event currRate from ES with the latest date
-		Double currRate = 1.00;
-		if (curr == "GBP") {
-			currRate = 1.34;
-		} else if (curr == "EUR") {
-			currRate = 1.15;
-		}
-		Double amountusd =  Double.valueOf(curr.toString()).doubleValue() * currRate;
-		
-		return amountusd;
-	}
-	
+
 	/**
 	 * 
 	 * @param state
@@ -277,10 +265,14 @@ public class LgServlet {
 		}
 		
 		// TODO Currency Converter
+		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
+		
 		if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
-			Double dntnusd = currConvert(params.get("curr"), params.get("dntn").toString());
+			Double dntn = new Double(params.get("dntn").toString());
+			Double dntnusd = cc.convertES(dntn);
 			params.put("dntnusd", dntnusd);
-			Double priceusd = currConvert(params.get("curr"), params.get("price").toString());
+			Double price = new Double(params.get("price").toString());
+			Double priceusd = cc.convertES(price);
 			params.put("priceusd", priceusd);
 		}
 		

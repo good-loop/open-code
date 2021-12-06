@@ -40,10 +40,27 @@ public class CurrencyConvertor {
 		return "CurrencyConvertor[from=" + from + ", to=" + to + ", date=" + date + "]";
 	}
 
+	/**
+	 * Old convertion class, hard coded currency rate
+	 * @param cidDntn
+	 * @return
+	 */
 	public double convert(double cidDntn) {
 		String currencyConversion = from + "_" + to;
 		Double conversionVal = CURRENCY_CONVERSION.get(currencyConversion);
 		return cidDntn*conversionVal;
+	}
+	
+	/**
+	 * New convertion class, fetch currency rate in ES
+	 * @param amount
+	 * @return
+	 */
+	public double convertES(double amount) {
+		DataLogEvent rate = loadCurrDataFromES();
+		String currencyConversion = from + "2" + to;
+		Double conversionVal = new Double(rate.getProp(currencyConversion).toString());
+		return amount*conversionVal;
 	}
 	
 	
@@ -74,9 +91,10 @@ public class CurrencyConvertor {
 		if ( ! currOutdated) {
 			return null;
 		}
-		// TODO fetch API
+		
 		// We can only fetch rate in base currency of EUR due to using free tier API Key
-		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key=81dd51bbdbf39740e59cfa5ae3835537&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY");
+//		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key=81dd51bbdbf39740e59cfa5ae3835537&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY");
+		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key=5ddbce9daf299ed4b46804a0101c5046&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY");
 		HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
 		con.setRequestMethod("GET");
 		
