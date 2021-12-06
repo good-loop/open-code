@@ -214,58 +214,8 @@ public class LgServlet {
 	static List<Map> userTypeForIPorXId;
 	static volatile Time userTypeForIPorXIdFetched;
 	
-	// TODO fetch currRate and write it to ES
-	// Where should I place this to? This should run once everyday
-	public void fetchCurrRate() throws IOException {
-		// TODO Read ES and see the latest currRate is today or not
-		Boolean currOutdated = true; 
-		if (currOutdated) {
-			// TODO fetch API
-			// We can only fetch rate in base currency of EUR due to using free tier API Key
-			URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key=81dd51bbdbf39740e59cfa5ae3835537&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY");
-			HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
-			con.setRequestMethod("GET");
-			
-			String orgRate = new String();
-			try(BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "utf-8"))) {
-			    StringBuilder response = new StringBuilder();
-			    String responseLine = null;
-			    while ((responseLine = br.readLine()) != null) {
-			        response.append(responseLine.trim());
-			    }
-			    orgRate = response.toString();
-			}
-			
-			JSONObject obj = new JSONObject(orgRate);
-			
-			// Doing Math
-			Double EUR2USD = Double.parseDouble(obj.getJSONObject("rates").get("USD").toString());
-			Double GBP2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("GBP").toString()) * EUR2USD;
-			Double AUD2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("AUD").toString()) * EUR2USD;
-			Double MXN2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("MXN").toString()) * EUR2USD;
-			Double JPY2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("JPY").toString()) * EUR2USD;
-			Double CNY2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("CNY").toString()) * EUR2USD;
-			Double HKD2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("HKD").toString()) * EUR2USD;
-			
-//			JSONObject ESObj = new JSONObject();
-//			
-//			ESObj.put("evt", "currRate");
-//			ESObj.put("date", obj.get("date"));
-//			ESObj.put("timestamp", obj.get("timestamp"));
-//			ESObj.put("EUR2USD", EUR2USD);
-//			ESObj.put("GBP2USD", GBP2USD);
-			
-			// TODO write ESObj into ES
-			Map objMap = new ArrayMap("EUR2USD", EUR2USD, "GBP2USD", GBP2USD);
-			DataLogRemoteStorage.saveToRemoteServer("https://lg.good-loop.com", new DataLogEvent("fx", 1, "currRate", objMap));
-			
-			con.disconnect();
-		} 
-	}
-	
-	
 	// TODO currConvert	
-	public static Double currConvert(Object curr, String amount) {
+	static Double currConvert(Object curr, String amount) {
 		// TODO Fetch event currRate from ES with the latest date
 		Double currRate = 1.00;
 		if (curr == "GBP") {
