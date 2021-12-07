@@ -99,6 +99,7 @@ public class CurrencyConvertor {
 		HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
 		con.setRequestMethod("GET");
 		
+		// Minor: FakeBrowser handles http connections nicely
 		String orgRate = new String();
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "utf-8"))) {
 		    StringBuilder response = new StringBuilder();
@@ -120,13 +121,11 @@ public class CurrencyConvertor {
 		Double CNY2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("CNY").toString()) * EUR2USD;
 		Double HKD2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("HKD").toString()) * EUR2USD;
 		
-		JSONObject ESObj = new JSONObject();
-		
 		long timestamp = Instant.now().getEpochSecond();
 		
 		Map objMap = new ArrayMap("timestamp", timestamp, "EUR2USD", EUR2USD, "GBP2USD", GBP2USD);
 		DataLogEvent event = new DataLogEvent("fx", 1, currrate, objMap);
-		DataLogRemoteStorage.saveToRemoteServer("https://lg.good-loop.com", event);
+		DataLogRemoteStorage.saveToRemoteServer(event);
 		
 		con.disconnect();
 		return event;
