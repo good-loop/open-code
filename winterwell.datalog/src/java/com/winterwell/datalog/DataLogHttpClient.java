@@ -1,6 +1,7 @@
 package com.winterwell.datalog;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -19,11 +20,18 @@ import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.time.TimeUtils;
 import com.winterwell.utils.web.SimpleJson;
+import com.winterwell.utils.web.WebUtils;
 import com.winterwell.utils.web.WebUtils2;
+import com.winterwell.web.ConfigException;
 import com.winterwell.web.FakeBrowser;
-import com.winterwell.web.ajax.JSend;
-import com.winterwell.youagain.client.AuthToken;
 import com.winterwell.web.WebEx;
+import com.winterwell.web.ajax.JSend;
+import com.winterwell.web.app.Logins;
+import com.winterwell.web.data.XId;
+import com.winterwell.youagain.client.App2AppAuthClient;
+import com.winterwell.youagain.client.AuthToken;
+import com.winterwell.youagain.client.LoginFailedException;
+import com.winterwell.youagain.client.YouAgainClient;
 
 /**
  * Get data via the DataLog web service (i.e. call DataServlet)
@@ -36,13 +44,42 @@ public class DataLogHttpClient {
 
 	public final Dataspace dataspace;
 	
-	String ENDPOINT = Dep.get(DataLogConfig.class).dataEndpoint;
-	
-	public String getEndPoint() {
-		return ENDPOINT;
-	}
+	final DataLogConfig config;
 	
 	private List<AuthToken> auth;
+	
+	public DataLogHttpClient initAuth(String thisAppName) {
+		YouAgainClient yac = new YouAgainClient("lg.good-loop", thisAppName);
+		App2AppAuthClient a2a = yac.appAuth();
+		XId appXid = App2AppAuthClient.getAppXId(thisAppName);
+		AuthToken at = yac.loadLocal(appXid);
+		if (at!=null) {
+			auth = Arrays.asList(at);			
+			return this;
+		}
+		// try to init!
+		Log.d(LOGTAG, "No stored auth token for "+appXid);
+		String thisAppPassword = config.endpointPassword;
+		if (Utils.isBlank(thisAppPassword)) {
+			throw new ConfigException("No DataLog endpointPassword for "+appXid, "lg.good-loop.com");
+		}
+		try {
+			at = a2a.getIdentityTokenFromYA(thisAppName, thisAppPassword);
+		} catch(LoginFailedException ex) {
+			// This may be a 404
+			at = a2a.registerIdentityTokenWithYA(thisAppName, thisAppPassword);
+			Log.d(LOGTAG, "Registered auth token for "+appXid);
+		}
+		assert at != null;
+		Log.d(LOGTAG, "Success! Storing auth token for "+appXid);
+		yac.storeLocal(at);
+		setAuth(Arrays.asList(at));			
+		return this;
+	}
+	
+	public DataLogConfig getConfig() {
+		return config;
+	}
 	
 	/**
 	 * @deprecated count of docs -- NOT the sum of values
@@ -64,12 +101,23 @@ public class DataLogHttpClient {
 	
 	@Override
 	public String toString() {
-		return "DataLogHttpClient [namespace=" + dataspace + ", ENDPOINT=" + ENDPOINT + "]";
+		return "DataLogHttpClient[dataspace=" + dataspace+"]";
 	}
 
 	public DataLogHttpClient(Dataspace namespace) {
-		this(null, namespace);
+		this(namespace, Dep.getWithDefault(DataLogConfig.class, new DataLogConfig()));
 	}
+	
+	public DataLogHttpClient(Dataspace namespace, DataLogConfig config) {
+		this.config = config;
+		assert config != null;
+		assert config.logEndpoint.startsWith("http") : config.logEndpoint;
+		assert config.logEndpoint.contains("/lg") : config.logEndpoint;
+		this.dataspace = namespace;
+		Utils.check4null(namespace);
+		assert ! namespace.toString().contains(".") : "server / namespace mixup? "+namespace;
+	}
+	
 	
 	/**
 	 * Save to remote lg server
@@ -77,24 +125,7 @@ public class DataLogHttpClient {
 	 * @return
 	 */
 	public Object save(DataLogEvent event) {
-		String server = WebUtils2.getHost(ENDPOINT);
-		// HACK: preserve (local testing) http protocol
-		if (ENDPOINT.startsWith("http://")) server = "http://"+server;
-		return DataLogRemoteStorage.saveToRemoteServer(server, event);
-	}
-	/**null
-	 * 
-	 * @param endpoint Can be null (uses the default {@link #ENDPOINT})
-	 * @param namespace
-	 */
-	public DataLogHttpClient(String endpoint, Dataspace namespace) {
-		if (endpoint!=null) {			
-			assert endpoint.contains("://") && endpoint.contains("/data") : endpoint;
-			ENDPOINT = endpoint;
-		}
-		this.dataspace = namespace;
-		Utils.check4null(namespace);
-		assert ! namespace.toString().contains(".") : "server / namespace mixup? "+namespace;
+		return DataLogRemoteStorage.saveToRemoteServer(event);
 	}
 	
 	public List<DataLogEvent> getEvents(SearchQuery q, int maxResults) {
@@ -114,7 +145,7 @@ public class DataLogHttpClient {
 				DataLogFields.END.name, end==null? null : end.toISOString()
 				);
 		// call
-		String json = fb.getPage(ENDPOINT, vars);
+		String json = fb.getPage(config.dataEndpoint, vars);
 		
 		Map jobj = WebUtils2.parseJSON(json);
 		JSend jsend = JSend.parse(json);
@@ -148,6 +179,7 @@ public class DataLogHttpClient {
 	}	
 
 	public DataLogHttpClient setAuth(List<AuthToken> auth) {
+		assert auth==null || ! auth.contains(null) : auth;
 		this.auth = auth;
 		return this;
 	}
@@ -242,7 +274,7 @@ public class DataLogHttpClient {
 	Map<String,Double> totalFor = new ArrayMap();
 
 	/**
-	 * Call DataLog!
+	 * Call DataLog for data!
 	 * NB: Can be over-ridden to implement a cache
 	 * @param vars
 	 * @return
@@ -254,7 +286,7 @@ public class DataLogHttpClient {
 		if (auth!=null) {
 			AuthToken.setAuth(fb, auth);
 		}		
-		String json = fb.getPage(ENDPOINT, vars);		
+		String json = fb.getPage(config.dataEndpoint, vars);		
 		lastCall = fb.getLocation();
 		
 		JSend jobj = JSend.parse(json);
@@ -313,6 +345,10 @@ public class DataLogHttpClient {
 	// Set whether the client's FakeBrowsers should run in debug mode
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+
+	public boolean isAuthorised() {
+		return auth != null && ! auth.isEmpty();
 	}
 
 }

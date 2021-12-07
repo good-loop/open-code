@@ -174,7 +174,9 @@ public class AuthToken implements IHasXId, IProperties {
 	 * @param auth
 	 */
 	public static void setAuth(FakeBrowser fb, List<AuthToken> auth) {
-		if (auth==null || auth.isEmpty()) return;
+		if (auth==null || auth.isEmpty()) {
+			return;
+		}
 		// see https://stackoverflow.com/questions/29282578/multiple-http-authorization-headers
 		StringBuilder tokens = new StringBuilder();		
 		for (AuthToken authToken : auth) {

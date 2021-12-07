@@ -5,6 +5,7 @@ public class DBOptions {
 	public String dbUrl;
 	@Option
 	public String dbUser;
+	
 	@Option
 	public String dbPassword;		
 	

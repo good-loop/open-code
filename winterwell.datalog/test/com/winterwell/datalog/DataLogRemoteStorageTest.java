@@ -7,6 +7,9 @@ import java.util.List;
 import org.junit.Test;
 
 import com.winterwell.nlp.query.SearchQuery;
+import com.winterwell.utils.Dep;
+import com.winterwell.utils.DepContext;
+import com.winterwell.utils.Printer;
 import com.winterwell.utils.containers.ArrayMap;
 
 public class DataLogRemoteStorageTest {
@@ -24,8 +27,16 @@ public class DataLogRemoteStorageTest {
 			double count = 2.1;
 			DataLogEvent event = new DataLogEvent(dataspace, count, "woot", 
 					new ArrayMap("n", 7, "w", 100));
-			boolean ok = DataLogRemoteStorage.saveToRemoteServer("http://locallg.good-loop.com", event);
-			assert ok;
+			DepContext c = Dep.setContext("testlocal");
+			try (c) {
+				DataLogConfig dlc = new DataLogConfig();
+				dlc.logEndpoint = "http://locallg.good-loop.com";
+				Dep.set(DataLogConfig.class, dlc);
+				boolean ok = DataLogRemoteStorage.saveToRemoteServer(event);
+				assert ok;
+			}
+			DataLogConfig dlc2 = Dep.getWithDefault(DataLogConfig.class, null);
+			Printer.out(dlc2.logEndpoint);
 		}
 	}
 
@@ -54,17 +65,26 @@ public class DataLogRemoteStorageTest {
 		dc.dataEndpoint = "https://testlg.good-loop.com/data";
 		dc.logEndpoint = "http://locallg.good-loop.com/lg";
 		dc.dataEndpoint = "http://locallg.good-loop.com/data";
-		DataLog.init(dc);
-		
-		DataLog.count(1, "testsaveevent");
-		DataLog.flush();
 
-		DataLogHttpClient dlc = new DataLogHttpClient(dc.dataEndpoint, new Dataspace(DataLog.getDataspace()));
-		SearchQuery q = new SearchQuery("evt:testsaveevent");
-		//		DataLogRemoteStorage storage = (DataLogRemoteStorage) DataLog.getImplementation().getStorage();
-//		StatReq<IDataStream> data = storage.getData("testSaveEvent", new Time().minus(TUnit.MINUTE), new Time(), null, null);
-		List<DataLogEvent> data = dlc.getEvents(q, 10);
-		System.out.println(data);
+		DepContext c = Dep.setContext("testlocal");
+		try (c) {
+			DataLogConfig dlc = new DataLogConfig();
+			dlc.logEndpoint = "http://locallg.good-loop.com";
+			Dep.set(DataLogConfig.class, dlc);
+	
+			DataLog.init(dc);
+			
+			DataLog.count(1, "testsaveevent");
+			DataLog.flush();
+	
+	
+			DataLogHttpClient dlhc = new DataLogHttpClient(new Dataspace(DataLog.getDataspace()));
+			SearchQuery q = new SearchQuery("evt:testsaveevent");
+			//		DataLogRemoteStorage storage = (DataLogRemoteStorage) DataLog.getImplementation().getStorage();
+	//		StatReq<IDataStream> data = storage.getData("testSaveEvent", new Time().minus(TUnit.MINUTE), new Time(), null, null);
+			List<DataLogEvent> data = dlhc.getEvents(q, 10);
+			System.out.println(data);
+		}
 	}
 
 }
