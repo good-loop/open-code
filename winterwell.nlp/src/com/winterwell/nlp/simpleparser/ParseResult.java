@@ -44,8 +44,11 @@ public class ParseResult<X> {
 	}
 
 	public <X> AST<X> getNode(Parser<X> p) {
+		assert p != null;
 		if (p instanceof Ref) {
-			p = ((Ref) p).p;
+			Parser rp = ((Ref) p).lookup();
+			if (rp==null) throw new IllegalStateException(p+" refs null");
+			p = rp;
 		}
 		return ast.getNode(p);
 	}

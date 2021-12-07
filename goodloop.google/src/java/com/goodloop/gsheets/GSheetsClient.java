@@ -24,6 +24,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
+import com.google.api.services.sheets.v4.Sheets.Spreadsheets.Values.Get;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetResponse;
@@ -34,9 +35,11 @@ import com.google.api.services.sheets.v4.model.ExtendedValue;
 import com.google.api.services.sheets.v4.model.GridCoordinate;
 import com.google.api.services.sheets.v4.model.GridProperties;
 import com.google.api.services.sheets.v4.model.GridRange;
+import com.google.api.services.sheets.v4.model.RepeatCellRequest;
 import com.google.api.services.sheets.v4.model.Request;
 import com.google.api.services.sheets.v4.model.Response;
 import com.google.api.services.sheets.v4.model.RowData;
+import com.google.api.services.sheets.v4.model.Sheet;
 import com.google.api.services.sheets.v4.model.SheetProperties;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.SpreadsheetProperties;
@@ -46,10 +49,16 @@ import com.google.api.services.sheets.v4.model.UpdateSheetPropertiesRequest;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.containers.IntRange;
+import com.winterwell.utils.containers.Pair;
 import com.winterwell.utils.log.Log;
 import com.winterwell.web.app.Logins;
 
+
 /**
+ * Google's docs - see https://developers.google.com/sheets/api
+ ?? * 
  * @testedby GSheetsClientTest
  * 
  * @author Google, daniel
@@ -64,9 +73,14 @@ public class GSheetsClient {
 	/**
 	 * The sheet tab within the overall (spread)sheet
 	 */
-	private int sheet = 0;
+	private Integer sheet;
 
+	public void setSheet(Integer sheet) {
+		this.sheet = sheet;
+	}
+	
 	public Spreadsheet getSheet(String id) throws Exception {
+		Log.i(LOGTAG, "getSheet... spreadsheet: "+id);
 		Sheets service = getService();
 		Spreadsheet ss = service.spreadsheets().get(id).execute();
 		return ss;
@@ -97,6 +111,11 @@ public class GSheetsClient {
 	 * scopes, delete your previously saved tokens/ folder.
 	 */
 	private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS);
+	/**
+	 * hack to avoid upsetting gsheets Nov 2021
+	 */
+	private static final int MAX_ROW = 10000;
+	private static final int MAX_COL = 10000;
 //	    private static final String CREDENTIALS_FILE_PATH = "config/credentials.json";
 
 	/**
@@ -138,7 +157,7 @@ public class GSheetsClient {
 			Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
 					.setApplicationName(APPLICATION_NAME).build();
 			return service;
-		} catch(Exception ex) {
+		} catch(Throwable ex) {
 			Log.i(LOGTAG, "getService :( "+ex); // make sure its logged
 			throw Utils.runtime(ex);
 		}
@@ -151,7 +170,8 @@ public class GSheetsClient {
 	 * @throws GeneralSecurityException
 	 */
 	public Object updateValues(String spreadsheetId, List<List<Object>> values)
-			throws GeneralSecurityException, IOException {
+			throws GeneralSecurityException, IOException 
+	{
 		Log.i(LOGTAG, "updateValues... spreadsheet: "+spreadsheetId);
 		Sheets service = getService();
 		
@@ -172,8 +192,90 @@ public class GSheetsClient {
 		return result.toPrettyString();
 	}
 	
+	/**
+	 * https://developers.google.com/sheets/api/samples/sheet
+	 * @throws IOException 
+	 */
+	public List<SheetProperties> getSheetProperties(String spreadsheetId) throws IOException {
+		Sheets service = getService();
+		com.google.api.services.sheets.v4.Sheets.Spreadsheets.Get gotr = service.spreadsheets().get(spreadsheetId);
+		Spreadsheet s = gotr.execute();
+		List<Sheet> sheets = s.getSheets();
+		List<SheetProperties> sprops = Containers.apply(sheets, Sheet::getProperties);
+		return sprops;		
+	}
 
-	public String getUrl(String spreadsheetId) {
+	/**
+	 * See https://developers.google.com/sheets/api/samples/formatting
+	 * @param spreadsheetId
+	 * @param rows 0 indexed, inclusive
+	 * @param cols
+	 * @param fg
+	 * @param bg
+	 * @return 
+	 * @return
+	 * @throws GeneralSecurityException
+	 * @throws IOException
+	 */
+	public Request setStyleRequest(IntRange rows, IntRange cols, java.awt.Color fg, java.awt.Color bg)
+			throws GeneralSecurityException, IOException 
+	{
+		Log.i(LOGTAG, "setStyle...");
+		GridRange gr = new GridRange();
+		if (sheet!=null) {
+			gr.setSheetId(sheet);
+		}
+		if (rows != null) {
+			gr.setStartRowIndex(rows.low);
+			if (rows.high<MAX_ROW) gr.setEndRowIndex(rows.high+1);
+		}
+		if (cols != null) {
+			gr.setStartColumnIndex(cols.low);
+			if (cols.high<MAX_COL) gr.setEndColumnIndex(cols.high+1);
+		}
+		float[] rgba = fg.getRGBComponents(null);
+		Color blu = new Color().setBlue(rgba[2]).setGreen(rgba[1]).setRed(rgba[0]).setAlpha(rgba[3]);
+		CellData cd = new CellData().setUserEnteredFormat(
+				new CellFormat().setTextFormat(
+				new TextFormat().setForegroundColor(blu)));
+		Request req = new Request().setRepeatCell(
+				new RepeatCellRequest()
+				.setCell(cd)
+				.setRange(gr)
+				.setFields("userEnteredFormat(textFormat)")
+				);
+		return req;
+	}
+	
+	public Object doBatchUpdate(String spreadsheetId, List<Request> reqs)
+			throws GeneralSecurityException, IOException 
+	{
+		Sheets service = getService();
+		BatchUpdateSpreadsheetRequest busr = new BatchUpdateSpreadsheetRequest()
+				.setRequests(reqs);
+		//		
+//		ValueRange body = new ValueRange().setValues(values);
+//
+//		String valueInputOption = "USER_ENTERED";
+//		int w = values.get(0).size();
+//		String c = getBase26(w - 1); // w base 26
+//		String range = "A1:" + c + values.size();
+//		// TODO sheet number 
+		BatchUpdateSpreadsheetResponse result = service.spreadsheets().batchUpdate(
+				spreadsheetId, busr
+				)
+//				.setFields()
+//				.setValueInputOption(valueInputOption)
+				.execute();
+		String ps = result.toPrettyString();
+////			System.out.println(ps);
+		Log.i(LOGTAG, "styled spreadsheet: "+getUrl(spreadsheetId));
+		return result.toPrettyString();
+	}
+	
+	
+
+	public static String getUrl(String spreadsheetId) {
 		return "https://docs.google.com/spreadsheets/d/"+spreadsheetId;
 	}
 	
@@ -210,11 +312,13 @@ public class GSheetsClient {
 		Sheets service = getService();
 		List<Request> requests = new ArrayList<>();
 
+		GridRange gr = new GridRange();
+		if (sheet !=null ) gr.setSheetId(sheet);
+		UpdateCellsRequest updateCellsReq = new UpdateCellsRequest()
+				.setRange(gr)
+				.setFields("*");
 		requests.add(new Request()
-				.setUpdateCells(new UpdateCellsRequest()
-						.setRange(new GridRange()
-								.setSheetId(sheet))
-						.setFields("*")));
+				.setUpdateCells(updateCellsReq));
 		
 		BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
 		BatchUpdateSpreadsheetResponse response = service.spreadsheets().batchUpdate(sid, body).execute();
@@ -235,6 +339,12 @@ public class GSheetsClient {
 			cleanedValues.add(row);
 		}
 		return cleanedValues;
+	}
+
+	public List<List<Object>> getData(String spreadsheetId, String a1Range, String TODOoptionalSheetId) throws IOException {
+		Sheets service = getService();
+		ValueRange d = service.spreadsheets().values().get(spreadsheetId, a1Range).execute();
+		return d.getValues();
 	}	
 
 }

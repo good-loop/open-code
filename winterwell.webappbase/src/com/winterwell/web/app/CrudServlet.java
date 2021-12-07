@@ -345,8 +345,8 @@ public abstract class CrudServlet<T> implements IServlet {
 			return;
 		}
 		String ckey = doAction2_blockRepeats2_actionId(state);
-		Log.d(LOGTAG(), "2 second Anti overlap key: "+ckey);
 		if (ANTI_OVERLAPPING_EDITS_CACHE.getIfPresent(ckey)!=null) {
+			Log.d(LOGTAG(), "Hit 2 second Anti overlap key: "+ckey);
 			throw new WebEx.E409Conflict("Duplicate request within 2 seconds. Blocked for edit safety. "+state
 					+" Note: this behaviour could be switched off via "+ALLOW_OVERLAPPING_EDITS);
 		}		
@@ -654,7 +654,7 @@ public abstract class CrudServlet<T> implements IServlet {
 	}
 	
 
-	private Gson prettyPrinter() {
+	protected Gson prettyPrinter() {
 		if (_prettyPrinter==null) {
 			_prettyPrinter = AMain.main.init4_gsonBuilder().setPrettyPrinting().create();
 		}
@@ -703,7 +703,7 @@ public abstract class CrudServlet<T> implements IServlet {
 		// Beware if ID can have a / in it!
 		String slug = state.getSlug();
 		String[] slugBits = state.getSlugBits();
-		
+		// FIXME handle if the ID has a / encoded within it
 		String sid = slugBits[slugBits.length - 1]; 
 		// NB: slug-bit-0 is the servlet, slug-bit-1 might be the ID - or the dataspace for e.g. SegmentServlet
 		_id = getId2(state, sid);
@@ -845,7 +845,6 @@ public abstract class CrudServlet<T> implements IServlet {
 	}
 	
 	protected void securityHack_teamGoodLoop(WebRequest state) {
-		if (true) return;
 		YouAgainClient yac = Dep.get(YouAgainClient.class);
 		List<AuthToken> tokens = yac.getAuthTokens(state);
 		for (AuthToken authToken : tokens) {
@@ -944,7 +943,8 @@ public abstract class CrudServlet<T> implements IServlet {
 		} catch(Throwable ex) {
 			state.addMessage(new AjaxMsg(KNoteType.warning, 
 					"Error while saving to Git", 
-					"Your save worked, but the audit trail did not update. Ask sysadmin@good-loop.com to do `cd "+fd.getParentFile()+"; git pull`"));
+					"Your save worked, but the audit trail did not update. Ask sysadmin@good-loop.com to do `cd "
+							+(fd==null? "null?!" : fd.getParentFile())+"; git pull`"));
 		}
 	}
 

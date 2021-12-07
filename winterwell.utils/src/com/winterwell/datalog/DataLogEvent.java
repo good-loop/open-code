@@ -32,7 +32,11 @@ import com.winterwell.utils.web.SimpleJson;
  *  - Use count, or a {@link #COMMON_PROPS} numerical field.
  *  - Create multiple events, which can be selected via a shared COMMON_PROPS key=value,
  *  and use count for each event.
- *   
+ * 
+ * Remote logging into lg.gl?
+ * By API - just call lg.good-loop.com/lg
+ * From Java - DataLogRemoteStorage.hackRemoteDataLog(e);
+
  * 
  * Use uncommon props for "audit trail" details -- stored but not easily
  * searchable.
@@ -371,8 +375,25 @@ public final class DataLogEvent implements Serializable, IHasJson
 			Object v = pv.getValue();
 			if ( ! Utils.truthy(v)) continue;
 			Class proptype = COMMON_PROPS.get(pv.getKey());
-			if (proptype!=null) {				
-				// privileged props
+			if (proptype==null) {
+				// not common - use key-value
+				ArrayMap<String,Object> prop;
+				if (v instanceof Number) {
+					prop = new ArrayMap(
+							"k", pv.getKey(),
+							"n", v
+							);		
+				} else {				
+					prop = new ArrayMap(
+							"k", pv.getKey(),
+							"v", v.toString()
+							);
+				}
+				propslist.add(prop);
+				continue;
+			}
+			// common props - privileged to be indexed
+			try {
 				if (v instanceof Map && proptype!=Object.class) {
 					// no objects here (otherwise ES will throw an error)
 					// NB: this will catch xtra (no-index props) which have proptype Null.class
@@ -391,25 +412,16 @@ public final class DataLogEvent implements Serializable, IHasJson
 							// ?? log a separate error event?
 							continue;
 						}
+						v = nv;
 					}
 				}
-				// store the common prop
+				// store the common (which is privileged here to be indexed) prop
 				map.put(pv.getKey(), v);
-			} else {
-				// not common - use key-value
-				ArrayMap<String,Object> prop;
-				if (v instanceof Number) {
-					prop = new ArrayMap(
-							"k", pv.getKey(),
-							"n", v
-							);		
-				} else {				
-					prop = new ArrayMap(
-							"k", pv.getKey(),
-							"v", v.toString()
-							);
-				}
-				propslist.add(prop);
+			} catch(NumberFormatException ex) {
+				Log.w("DataLogEvent", pv.getKey()+" = "+v+" caused "+ex);
+			} catch(Throwable es) {
+				// paranoia
+				Log.e("DataLogEvent", es+" from "+v);
 			}
 		}
 		map.put("props", propslist);

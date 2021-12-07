@@ -43,7 +43,6 @@ public class DataLogRemoteStorage implements IDataLogStorage
 {
 
 	/**
-	 * @deprecated This is inefficient
 	 * HACK a direct call to the remote server
 	 * @param server e.g. lg.good-loop.com NB: https or /lg are optional but can be provided
 	 * @param event

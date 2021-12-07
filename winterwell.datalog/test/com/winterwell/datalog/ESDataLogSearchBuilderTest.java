@@ -88,14 +88,14 @@ public class ESDataLogSearchBuilderTest {
 		assert aggs.size() == 2;
 		Aggregation a0 = aggs.get(0);
 		Printer.out(a0.toJson2());
-		assert Containers.same(a0.toJson2(), 
-				new ArrayMap("terms", new ArrayMap("field", "evt", "missing", "unset"))
-				);
+		assert Containers.same((Map)a0.toJson2().get("terms"), 
+				new ArrayMap("field", "evt", "missing", "unset")
+				) : a0.toJson2();
 		Aggregation a1 = aggs.get(1);
 		Printer.out(a1.toJson2());
 		assert Containers.same(a1.toJson2(), 
-				new ArrayMap("stats", new ArrayMap("field", "count"))
-				);
+				new ArrayMap("sum", new ArrayMap("field", "count"))
+				) : a1.toJson2();
 	}
 
 	@Test

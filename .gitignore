@@ -40,3 +40,4 @@ winterwell.datalog/logs
 *.zip
 *RSA*xml
 goodloop.google/tokens
+goodloop.google/logs

@@ -7,7 +7,7 @@ package com.winterwell.nlp.simpleparser;
  * @param <PT>
  */
 public final class Ref<PT> extends Parser<PT> {
-	Parser<PT> p;
+	private Parser<PT> p;
 
 	public Ref(String name) {
 		super();
@@ -18,6 +18,7 @@ public final class Ref<PT> extends Parser<PT> {
 	}
 
 	public final Parser lookup() {
+		if (p != null) return p;
 		return Parser.parsers.get(name);
 	}
 

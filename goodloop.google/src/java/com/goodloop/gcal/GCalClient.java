@@ -29,6 +29,7 @@ import com.google.api.services.calendar.Calendar.CalendarList;
 import com.google.api.services.calendar.Calendar.Calendars;
 import com.google.api.services.calendar.Calendar.Calendars.Get;
 import com.google.api.services.calendar.Calendar.Events.Insert;
+import com.google.api.services.calendar.Calendar.Events.Instances;
 import com.google.api.services.calendar.Calendar.Events.Patch;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.CalendarListEntry;
@@ -199,11 +200,46 @@ public class GCalClient {
         try {
             Calendar service = getService();
             Calendar.Events.List listReq = service.events().list(calendarId);
+            Period period = new Period(start, end);
             if (start != null) listReq.setTimeMin(new DateTime(start.getTime()));
             if (end != null) listReq.setTimeMax(new DateTime(end.getTime()));
             Events events = listReq.execute();
             List<Event> items = events.getItems();
-            return items;
+            
+            // WTF? Google handling of recurring events is odd and inefficient
+            List<Event> itemsInPeriod = new ArrayList();
+            for (Event event : items) {
+            	String s = event.getSummary();
+				if (Utils.isEmpty(event.getRecurrence())) {
+					// a one off event
+					Period ePeriod = getPeriod(event);
+					if (ePeriod!=null && period.intersects(ePeriod)) {
+						itemsInPeriod.add(event);	
+					} else {
+						// Not in the period! skip
+						Log.d(LOGTAG, "Skip "+s+" not in "+period);
+					}
+					continue;
+				}
+				// recurring
+//				List<String> recur = event.getRecurrence(); // TODO use this instead of an http call
+				Instances ris = service.events().instances(calendarId, event.getId());
+	            if (start != null) ris.setTimeMin(new DateTime(start.getTime()));
+	            if (end != null) ris.setTimeMax(new DateTime(end.getTime()));
+	            Events rEvents = ris.execute();
+	            List<Event> items2 = rEvents.getItems();
+	            for(Event e2 : items2) {
+	            	Period ePeriod = getPeriod(e2);
+	            	if (ePeriod!=null && period.intersects(ePeriod)) {
+						itemsInPeriod.add(e2);	
+					} else {
+						// Not in the period! skip
+						Log.d(LOGTAG, "Skip recurring "+s+" not in "+period);
+					}
+	            }
+			}
+            // done
+            return itemsInPeriod;
         } catch(Exception ex) {
             throw Utils.runtime(ex);
         }
@@ -283,8 +319,9 @@ public class GCalClient {
 	public Period getPeriod(Event event) {
 		assert event != null;
 		// NB: I _think_ this will get the specific time of this instance for recurring events. ^Dan
-		EventDateTime s = event.getOriginalStartTime();
-		if (s==null) s = event.getStart();
+		EventDateTime os = event.getOriginalStartTime();
+		EventDateTime s = event.getStart();
+//		if (s==null) s = event.getStart();
 		if (s==null) {
 			// a non-event?! They do seem to exist
 			return null;
