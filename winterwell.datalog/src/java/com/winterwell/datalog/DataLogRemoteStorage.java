@@ -218,9 +218,10 @@ public class DataLogRemoteStorage implements IDataLogStorage
 	/**
 	 * @deprecated old code
 	 * @param event
+	 * @return 
 	 */
-	public static void hackRemoteDataLog(DataLogEvent event) {
-		saveToRemoteServer(event);
+	public static boolean hackRemoteDataLog(DataLogEvent event) {
+		return saveToRemoteServer(event);
 	}
 
 }
