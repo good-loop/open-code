@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.io.ConfigFactory;
 import com.winterwell.utils.log.Log;
 
 /**
@@ -58,7 +60,7 @@ public final class Dep {
 	 * @return
 	 */
 	public static <X> DepContext with(Class<X> klass, X value) {
-		DepContext context = Dep.setContext(Utils.getRandom().nextInt());
+		DepContext context = Dep.setContext(Utils.getRandomString(6));
 		Dep.set(klass, value);		
 		return context;
 	}
@@ -96,6 +98,28 @@ public final class Dep {
 		}
 		return defaultValue;
 	}
+	
+
+	/**
+	 * Convenience for using Dep.get() with {@link ConfigFactory} to load if unset
+	 * @param <X>
+	 * @param klass
+	 * @return config
+	 */
+	public static <X> X getWithConfigFactory(Class<X> klass) {
+		if (has(klass)) {
+			X got = get(klass);
+			// NB: race condition
+			if (got != null) return got;	
+		}
+		ConfigFactory cf = ConfigFactory.get();
+		X config = cf.getConfig(klass);
+		assert config != null;
+		assert has(klass) : klass;
+		return config;
+	}
+
+
 
 	/**
 	 * Set - can override
@@ -189,10 +213,10 @@ public final class Dep {
 	 * Create a new context for this thread. The context must be closed when finished.
 	 * The new context has get() access to parent key/values as a fallback.
 	 *  
-	 * @param contextKey A non-null identifier for this context. E.g. a String name.
+	 * @param contextKey A non-null identifier for this context. E.g. a name.
 	 * @return the new context (which can be passed between threads).
 	 */
-	public static DepContext setContext(Object contextKey) {
+	public static DepContext setContext(String contextKey) {
 		assert contextKey != null;
 		DepContext ctxt = getContext();
 		DepContext newContext = new DepContext(ctxt, contextKey);

@@ -755,6 +755,7 @@ public class WebUtils {
 	 * @param url
 	 * @return E.g. "soda.sh" from "http://blah.soda.sh/foo", or null on fail
 	 * (which should only happen if url is a relative or bogus url).
+	 * @see #getHost(String)
 	 */
 	public static String getDomain(String url) {
 		if (url==null) return null;

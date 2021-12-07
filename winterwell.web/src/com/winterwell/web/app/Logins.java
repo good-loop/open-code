@@ -5,7 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.winterwell.gson.Gson;
+import com.winterwell.utils.Dep;
 import com.winterwell.utils.ReflectionUtils;
+import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.ConfigBuilder;
@@ -19,6 +22,9 @@ import com.winterwell.web.LoginDetails;
  * Good-Loop specific convenience for managing login details.
  * This looks up login details from logins/logins.misc.properties
  *  -- which is NOT in a public git repo.
+ *  
+ *  
+ * YouAgain auth tokens: Use YouAgainClient.loadLocal()
  *  
  * Status: Low coverage. Most of our logins are NOT in here.
  *  
@@ -85,6 +91,5 @@ public class Logins {
 		}		
 		return (LoginDetails) ld;
 	}
-	
 	
 }

@@ -49,7 +49,7 @@ public class App2AppAuthClient {
 		this.yac = yac;
 	}
 
-	private String LOGTAG = "A2A";
+	private static String LOGTAG = "A2A";
 
 	/**
 	 * 
@@ -93,7 +93,7 @@ public class App2AppAuthClient {
 	 * @param appAuthName e.g. "my.good-loop.com"
 	 * @return e.g. my.good-loop.com@app
 	 */
-	private XId getAppXId(String appAuthName) {
+	public static XId getAppXId(String appAuthName) {
 		if (appAuthName.endsWith("@app")) {
 			Log.w(LOGTAG, "Already an XId (which is bad practice): "+appAuthName);
 			return new XId(appAuthName);

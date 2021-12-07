@@ -94,10 +94,13 @@ public class DataLogConfig extends DBOptions implements IInit, ISiteConfig {
 	public boolean CORS = true;
 
 	@Option(description="Used for logging to a remote server (provided storageClass has been set to use one)")
-	public String logEndpoint;
-
-	@Option
+	public String logEndpoint = "https://lg.good-loop.com/lg";
+	
+	@Option(description="Used for fetching from a remote server (provided storageClass has been set to use one)")
 	public String dataEndpoint="https://lg.good-loop.com/data";
+	
+	@Option
+	public String endpointPassword = "guogeeJ8-eush6eaV";
 
 	Map<String, Object> tagHandlers = new HashMap();
 

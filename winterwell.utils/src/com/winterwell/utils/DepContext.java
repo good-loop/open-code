@@ -33,9 +33,9 @@ public final class DepContext implements Closeable {
 	
 	volatile boolean closed;
 	final DepContext parent;
-	final private Object ckey;
+	final private String ckey;
 
-	public DepContext(DepContext parent, Object contextKey) {
+	public DepContext(DepContext parent, String contextKey) {
 		this.ckey = contextKey;
 		this.parent = parent;
 	}
