@@ -34,7 +34,7 @@ public class DataLogLatencyTest {
 
 	public static void main(String[] args) {
 		DataLogLatencyTest dlt = new DataLogLatencyTest();
-		gby = true;
+//		gby = true; // still slow and no logs
 		dlt.saveEventLatency_liveServer(); // SLOW :(
 //		dlt.saveEventLatency_testServer(); // FAST
 //		dlt.saveEventLatency_localServer(); // FAST
