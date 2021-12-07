@@ -35,7 +35,14 @@ public class DataLogLatencyTest {
 	public static void main(String[] args) {
 		DataLogLatencyTest dlt = new DataLogLatencyTest();
 //		gby = true; // still slow and no logs
+		
 		dlt.saveEventLatency_liveServer(); // SLOW :(
+//		113.76797 minutes
+//		SUCCESS! :(
+		// wtf? 
+//		0.47901666 minutes
+//		SUCCESS!
+		
 //		dlt.saveEventLatency_testServer(); // FAST
 //		dlt.saveEventLatency_localServer(); // FAST
 		Printer.out("SUCCESS!");
@@ -116,7 +123,7 @@ public class DataLogLatencyTest {
 			dlhc.save(en);
 
 			System.out.println(time.dt(new Time()).convertTo(TUnit.MINUTE));
-			Utils.sleep(20000);
+			Utils.sleep(5000);
 		}			
 	}
 	
