@@ -10,7 +10,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.goodloop.data.CurrencyConvertor;
+import com.winterwell.datalog.server.CurrencyConvertor;
 import com.goodloop.data.KCurrency;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.DataLogEvent;
