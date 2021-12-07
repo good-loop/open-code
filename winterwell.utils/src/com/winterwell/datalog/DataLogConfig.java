@@ -100,7 +100,7 @@ public class DataLogConfig extends DBOptions implements IInit, ISiteConfig {
 	public String dataEndpoint="https://lg.good-loop.com/data";
 	
 	@Option
-	public String endpointPassword = "guogeeJ8-eush6eaV";
+	public String endpointPassword;
 
 	Map<String, Object> tagHandlers = new HashMap();
 
