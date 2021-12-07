@@ -16,7 +16,6 @@ import java.util.regex.Matcher;
 
 import org.eclipse.jetty.util.ajax.JSON;
 
-import com.goodloop.data.CurrencyConvertor;
 import com.goodloop.data.KCurrency;
 import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;

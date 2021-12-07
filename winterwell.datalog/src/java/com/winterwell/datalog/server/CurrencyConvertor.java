@@ -1,4 +1,4 @@
-package com.goodloop.data;
+package com.winterwell.datalog.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import com.goodloop.data.KCurrency;
 import com.winterwell.datalog.DataLogEvent;
 import com.winterwell.datalog.DataLogHttpClient;
 import com.winterwell.datalog.DataLogRemoteStorage;
