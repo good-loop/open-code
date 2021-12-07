@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jetty.util.ajax.JSON;
-
+import com.winterwell.web.ajax.KAjaxStatus;
 import com.winterwell.datalog.server.DataLogFields;
 import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.Dep;
@@ -125,7 +125,7 @@ public class DataLogHttpClient {
 	 * @return
 	 */
 	public Object save(DataLogEvent event) {
-		return DataLogRemoteStorage.saveToRemoteServer(event);
+		return DataLogRemoteStorage.saveToRemoteServer(event, config);
 	}
 	
 	public List<DataLogEvent> getEvents(SearchQuery q, int maxResults) {
@@ -147,21 +147,30 @@ public class DataLogHttpClient {
 		// call
 		String json = fb.getPage(config.dataEndpoint, vars);
 		
-		Map jobj = WebUtils2.parseJSON(json);
+		JSend jsend = JSend.parse(json);
+
+		if (jsend.getStatus()==KAjaxStatus.error || jsend.getStatus()==KAjaxStatus.fail) {
+			throw new FailureException(jsend.getMessage());
+		}
 		
-		List<Map> egs = Containers.asList((Object)SimpleJson.get(jobj, "cargo", "examples"));
+		Map jobj = jsend.getDataMap();
+		
+		List<Map> egs = Containers.asList(jobj.get("examples"));
+		if (egs==null || egs.isEmpty()) {
+			String m = jsend.getMessage();
+			// HACK
+			if (m !=null && m.contains("text=Not logged in => no examples")) {
+				throw new WebEx.E401(fb.getLocation(), "Call DataLogHttpClient.setAuth() first "+m);
+			}
+			return null;
+		}
+
 		List<DataLogEvent> des = new ArrayList();
 		// Convert into DataLogEvents
 		for (Map eg : egs) {
 			DataLogEvent de = DataLogEvent.fromESHit(dataspace, (Map)eg.get("_source"));
 			des.add(de);
 		}
-		
-		Boolean success = (Boolean) jobj.get("success");
-		if (success == false) {
-			Log.e(new FailureException(Printer.toString(jobj.get("errors")))); // TODO throw
-		}
-		
 		return des;
 	}
 

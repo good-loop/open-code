@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 
 import org.eclipse.jetty.util.ajax.JSON;
 
+import com.goodloop.data.CurrencyConvertor;
 import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.DataLogEvent;
@@ -253,6 +254,19 @@ public class LgServlet {
 		String userType = getInvalidType(ips);
 		if (userType!=null) {
 			params.put("invalid", userType);
+		}
+		
+		// TODO Currency Converter
+		if (false) {
+			if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
+//				CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
+//				Double dntn = new Double(params.get("dntn").toString());
+//				Double dntnusd = cc.convertES(dntn);
+//				params.put("dntnusd", dntnusd);
+//				Double price = new Double(params.get("price").toString());
+//				Double priceusd = cc.convertES(price);
+//				params.put("priceusd", priceusd);
+			}
 		}
 		
 		// write to log file

@@ -108,7 +108,7 @@ public class SearchQuery implements Serializable, IHasJson {
 	private boolean strict = true;
 
 	/**
-	 * just for deserialisat
+	 * just for deserialisation. Use {@link #SearchQuery(String)} instead.
 	 */
 	private SearchQuery() {
 		parse();

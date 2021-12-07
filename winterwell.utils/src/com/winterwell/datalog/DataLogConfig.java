@@ -43,6 +43,15 @@ server=localhost
  */
 public class DataLogConfig extends DBOptions implements IInit, ISiteConfig { 
 
+
+	@Option
+	public boolean debug;
+	
+	public boolean isDebug() {
+		return debug;
+	}
+	
+	
 	public DataLogConfig() {
 		Log.d("DataLogConfig");
 	}
@@ -164,5 +173,5 @@ public class DataLogConfig extends DBOptions implements IInit, ISiteConfig {
 					+"cid via invalid mbl browser os currency user"
 					).split(" ")
 			);
-	
+
 }
