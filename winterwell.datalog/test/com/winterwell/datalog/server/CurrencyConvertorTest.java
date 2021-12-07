@@ -29,7 +29,7 @@ import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.ConfigFactory;
 import com.winterwell.utils.time.Time;
 
-public class CurrencyConvertTest {
+public class CurrencyConvertorTest {
 	
 	@Test
 	public void testFetchSaveLoad() throws IOException {

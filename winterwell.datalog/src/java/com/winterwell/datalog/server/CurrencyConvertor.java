@@ -14,7 +14,7 @@ import com.winterwell.datalog.DataLogEvent;
 import com.winterwell.datalog.DataLogHttpClient;
 import com.winterwell.datalog.DataLogRemoteStorage;
 import com.winterwell.datalog.Dataspace;
-import com.winterwell.datalog.server.CurrencyConvertTest;
+import com.winterwell.datalog.server.CurrencyConvertorTest;
 import com.winterwell.json.JSONObject;
 import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.containers.ArrayMap;
@@ -23,7 +23,7 @@ import com.winterwell.utils.time.Time;
 /**
  * FIXME load and stash data
  * @author Wing, daniel
- * @tesedby {@link CurrencyConvertTest}
+ * @tesedby {@link CurrencyConvertorTest}
  */
 public class CurrencyConvertor {
 
@@ -134,6 +134,7 @@ public class CurrencyConvertor {
 
 	public DataLogEvent loadCurrDataFromES() {
 		DataLogHttpClient dlc = new DataLogHttpClient(new Dataspace("fx"));
+		dlc.initAuth("good-loop.com");
 		SearchQuery sq = new SearchQuery("evt:"+currrate);
 		dlc.setDebug(true);
 		List<DataLogEvent> rate = dlc.getEvents(sq , 1);
