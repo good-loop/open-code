@@ -23,6 +23,7 @@ import com.winterwell.es.client.GetRequest;
 import com.winterwell.json.JSONObject;
 import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.Dep;
+import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.ConfigFactory;
@@ -31,14 +32,12 @@ import com.winterwell.utils.time.Time;
 public class CurrencyConvertTest {
 	
 	@Test
-	public void testCurrObject() throws IOException {
+	public void testFetchSaveLoad() throws IOException {
 		init();
-//		DataLogHttpClient d = new DataLogHttpClient(new Dataspace("fx"));
-//		SearchQuery sq = new SearchQuery("evt:currrate");
-//		System.out.println(d.getEvents(sq , 1));
-		
+
 		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.USD, new Time());
 		DataLogEvent e = cc.fetchCurrRate();
+		Printer.out(e);
 		Utils.sleep(1500);
 		
 		DataLogEvent e2 = cc.loadCurrDataFromES();
@@ -47,6 +46,16 @@ public class CurrencyConvertTest {
 		assert e.getProp("GBP2USD").equals(e2.getProp("GBP2USD")) : e2;
 	}
 
+	@Test
+	public void testLoad() throws IOException {
+		init();
+
+		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.USD, new Time());
+		
+		DataLogEvent e2 = cc.loadCurrDataFromES();
+		assert e2 != null;
+	}
+	
 	private void init() {
 //		DataLogConfig dlc = ConfigFactory.get().getConfig(DataLogConfig.class);
 		

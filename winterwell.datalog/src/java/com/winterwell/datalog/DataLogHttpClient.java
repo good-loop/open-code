@@ -23,6 +23,7 @@ import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.ajax.JSend;
 import com.winterwell.youagain.client.AuthToken;
+import com.winterwell.web.WebEx;
 
 /**
  * Get data via the DataLog web service (i.e. call DataServlet)
@@ -105,15 +106,23 @@ public class DataLogHttpClient {
 				"dataspace", dataspace, 
 				"q", q==null? null : q.getRaw(), 
 				"size", maxResults,
-				DataLogFields.START.name, startParam(),
+				DataLogFields.START.name, startParam(), // ?? why not use null if unset? Wouldnt that be a bit faster in ES
 				DataLogFields.END.name, end==null? null : end.toISOString()
 				);
 		// call
 		String json = fb.getPage(ENDPOINT, vars);
 		
 		Map jobj = WebUtils2.parseJSON(json);
+		JSend jsend = JSend.parse(json);
 		
 		List<Map> egs = Containers.asList((Object)SimpleJson.get(jobj, "cargo", "examples"));
+		if (egs==null || egs.isEmpty()) {
+			String m = jsend.getMessage();
+			// HACK
+			if (m.contains("text=Not logged in => no examples")) {
+				throw new WebEx.E401(fb.getLocation(), "Call DataLogHttpClient.setAuth() first "+m);
+			}
+		}
 		List<DataLogEvent> des = new ArrayList();
 		// Convert into DataLogEvents
 		for (Map eg : egs) {
@@ -130,7 +139,7 @@ public class DataLogHttpClient {
 	}
 
 	private String startParam() {
-		// /data sedaults to start=1 month ago
+		// NB: the /data endpoint defaults to start=1 month ago
 		return start==null? TimeUtils.WELL_OLD.toISOString() : start.toISOString();
 	}	
 
