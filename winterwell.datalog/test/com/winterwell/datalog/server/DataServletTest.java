@@ -5,6 +5,7 @@ import java.util.Map;
 import org.junit.AfterClass;
 import org.junit.Test;
 
+import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.DataLogEvent;
 import com.winterwell.datalog.DataLogRemoteStorage;
 import com.winterwell.datalog.Dataspace;
@@ -18,10 +19,11 @@ public class DataServletTest {
 
 	private static final CharSequence DATASPACE = new Dataspace("testspace");
 	private static DataLogServer server;
-	private static String ENDPOINT;
+	private static DataLogConfig config;
+	private String ENDPOINT;
 
 	public void initDataTest() {
-		if (ENDPOINT!=null) return;
+		if (config!=null) return;
 		// spin up a server
 		server = new DataLogServer();
 		server.doMain(new String[0]);
@@ -36,7 +38,7 @@ public class DataServletTest {
 			"stage", "init",
 			"host", "localhost"
 		));
-		DataLogRemoteStorage.saveToRemoteServer(ENDPOINT, event);
+		DataLogRemoteStorage.saveToRemoteServer(event);
 		// pause for ES to save
 		Utils.sleep(1000);
 	}

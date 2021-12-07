@@ -13,6 +13,7 @@ import com.winterwell.datalog.DataLog.KInterpolate;
 import com.winterwell.datalog.server.DataLogFields;
 import com.winterwell.maths.stats.distributions.d1.IDistribution1D;
 import com.winterwell.maths.timeseries.IDataStream;
+import com.winterwell.utils.Dep;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
@@ -44,22 +45,16 @@ public class DataLogRemoteStorage implements IDataLogStorage
 
 	/**
 	 * HACK a direct call to the remote server
-	 * @param server e.g. lg.good-loop.com NB: https or /lg are optional but can be provided
 	 * @param event
 	 * @return
 	 */
-	public static boolean saveToRemoteServer(String server, DataLogEvent event) {
-		Utils.check4null(server, event);
+	public static boolean saveToRemoteServer(DataLogEvent event) {
+		assert event != null;
 		// TODO via Dep
 		DataLogRemoteStorage dlrs = new DataLogRemoteStorage();
-		DataLogConfig remote = new DataLogConfig();
+		DataLogConfig remote = getConfig();
 		// add https and endpoint
-		if ( ! server.startsWith("http")) {
-			server = "https://"+server;
-		}
-		if ( ! server.endsWith("/lg")) server += "/lg";
-		
-		remote.logEndpoint = server;
+		assert remote.logEndpoint.contains("/lg") : remote.logEndpoint;
 		dlrs.init(remote);
 		
 		// DEBUG July 2018
@@ -72,33 +67,17 @@ public class DataLogRemoteStorage implements IDataLogStorage
 		Dataspace ds = new Dataspace(eds);
 		// save
 		Object ok = dlrs.saveEvent(ds, event, new Period(event.time));
-		Log.d("datalog.remote", "Save to "+server+" "+event+" response: "+ok);
+		Log.d("datalog.remote", "Save to "+remote.logEndpoint+" "+event+" response: "+ok);
 		return true;
 	}
 	
 	
-	/**
-	 * // HACK log to lg (this should really be done by altering the DataLog settings)
-	 * @param event
-	 * @param state
-	 * @return 
-	 */
-	public static boolean hackRemoteDataLog(DataLogEvent event) {
-		try {
-			// TODO replace with use of DatalogConfig
-			KServerType st = AppUtils.getServerType(null);
-			StringBuilder su = AppUtils.getServerUrl(st, "lg.good-loop.com");			
-			String LG_SERVER = su.toString();
-			
-			return DataLogRemoteStorage.saveToRemoteServer(LG_SERVER, event);
-		} catch(Throwable ex) {
-			// remote server call failed :(
-			Log.e("datalog.hack (swallowed)", Printer.toString(ex, true));
-			return false;
-		}
+	private static DataLogConfig getConfig() {
+		DataLogConfig config = Dep.getWithConfigFactory(DataLogConfig.class);
+		return config;
 	}
 
-	
+
 	private String logEndpoint;
 	private String getDataEndpoint;
 
@@ -233,6 +212,16 @@ public class DataLogRemoteStorage implements IDataLogStorage
 		for (DataLogEvent e : events) {
 			saveEvent(new Dataspace(e.dataspace), e, period);
 		}
+	}
+
+
+	/**
+	 * @deprecated old code
+	 * @param event
+	 * @return 
+	 */
+	public static boolean hackRemoteDataLog(DataLogEvent event) {
+		return saveToRemoteServer(event);
 	}
 
 }

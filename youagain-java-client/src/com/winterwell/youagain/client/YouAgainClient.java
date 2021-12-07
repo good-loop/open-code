@@ -40,6 +40,7 @@ import com.winterwell.web.WebEx;
 import com.winterwell.web.ajax.AjaxMsg;
 import com.winterwell.web.ajax.AjaxMsg.KNoteType;
 import com.winterwell.web.ajax.JSend;
+import com.winterwell.web.app.Logins;
 import com.winterwell.web.app.WebRequest;
 import com.winterwell.web.data.XId;
 import com.winterwell.web.fields.XIdField;
@@ -128,6 +129,7 @@ public final class YouAgainClient {
 	 * 
 	 * @param issuer e.g. `good-loop`
 	 * @param product e.g. `profiler.good-loop.com` -- not an XId. Can be null.
+	 * This is the product that is using this client object to make requests.
 	 */
 	public YouAgainClient(String issuer, String product) {
 		assert ! Utils.isBlank(issuer);
@@ -565,6 +567,8 @@ public final class YouAgainClient {
 		XId xid = token.getXId();
 		File out = storeLocal2(xid);		
 		FileUtils.write(out, xml);
+		// for GL engineers
+		Log.d(LOGTAG,"token stored in "+out+". You may wish to copy it to "+Logins.getLoginFile("youagain", out.getName()));
 	}
 	
 	private File storeLocal2(XId xid) {
@@ -583,7 +587,14 @@ public final class YouAgainClient {
 	 */
 	public AuthToken loadLocal(XId xid) {
 		File out = storeLocal2(xid);		
-		if ( ! out.isFile()) return null;
+		if (! out.isFile()) {
+			// HACK try Logins
+			File out2 = Logins.getLoginFile("youagain", out.getName());
+			if ( ! out2.isFile()) {
+				return null;
+			}
+			out = out2;
+		}
 		String xml = FileUtils.read(out);
 		if (Utils.isBlank(xml)) return null;
 		AuthToken at = XStreamUtils.serialiseFromXml(xml);

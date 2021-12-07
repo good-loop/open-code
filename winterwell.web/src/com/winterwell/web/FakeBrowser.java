@@ -368,9 +368,9 @@ public class FakeBrowser {
 						Object v = reqHeaders.get(h);
 						return v==null? "" : " -H '"+h+": "+v+"'";
 					}), " ");										
-					String curl = StrUtils.compactWhitespace("curl -X"+Utils.or(requestMethod,"GET")+" "
+					String curl = StrUtils.compactWhitespace("curl -X"+Utils.or(requestMethod,"GET")+" '"+uri+"' "
 							+(password==null? "" : "--user "+name+":"+password+" ") // Warning: may not work for all chars TODO give the base64 encoded header instead
-							+sheaders+" '"+uri+"'");
+							+sheaders);
 					Log.d(LOGTAG, curl);
 				}
 				
