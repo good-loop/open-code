@@ -21,22 +21,20 @@ public class DataLogRemoteStorageTest {
 	
 	
 	@Test
-	public void testHackUse() {
-		{
-			String dataspace = "test";
-			double count = 2.1;
-			DataLogEvent event = new DataLogEvent(dataspace, count, "woot", 
-					new ArrayMap("n", 7, "w", 100));
-			DepContext c = Dep.setContext("testlocal");
-			try (c) {
-				DataLogConfig dlc = new DataLogConfig();
-				dlc.logEndpoint = "http://locallg.good-loop.com";
-				Dep.set(DataLogConfig.class, dlc);
-				boolean ok = DataLogRemoteStorage.saveToRemoteServer(event);
-				assert ok;
-			}
-			DataLogConfig dlc2 = Dep.getWithDefault(DataLogConfig.class, null);
-			Printer.out(dlc2.logEndpoint);
+	public void testLocalSmokeTest() {
+		String dataspace = "test";
+		double count = 2.1;
+		DataLogEvent event = new DataLogEvent(dataspace, count, "woot", 
+				new ArrayMap("n", 7, "w", 100));
+		DepContext c = Dep.setContext("testlocal");
+		try (c) {
+			DataLogConfig dlc = new DataLogConfig();
+			dlc.debug = true;
+			dlc.logEndpoint = "http://locallg.good-loop.com/lg";
+			Dep.set(DataLogConfig.class, dlc);
+			
+			boolean ok = DataLogRemoteStorage.saveToRemoteServer(event);
+			assert ok;
 		}
 	}
 
@@ -60,17 +58,18 @@ public class DataLogRemoteStorageTest {
 	@Test
 	public void testSaveEvent() {				
 		DataLogConfig dc = new DataLogConfig();
+		dc.debug = true;
 		dc.storageClass = DataLogRemoteStorage.class;
+		
 		dc.logEndpoint = "https://testlg.good-loop.com/lg";
 		dc.dataEndpoint = "https://testlg.good-loop.com/data";
+		
 		dc.logEndpoint = "http://locallg.good-loop.com/lg";
 		dc.dataEndpoint = "http://locallg.good-loop.com/data";
 
 		DepContext c = Dep.setContext("testlocal");
 		try (c) {
-			DataLogConfig dlc = new DataLogConfig();
-			dlc.logEndpoint = "http://locallg.good-loop.com";
-			Dep.set(DataLogConfig.class, dlc);
+			Dep.set(DataLogConfig.class, dc);
 	
 			DataLog.init(dc);
 			
@@ -79,6 +78,8 @@ public class DataLogRemoteStorageTest {
 	
 	
 			DataLogHttpClient dlhc = new DataLogHttpClient(new Dataspace(DataLog.getDataspace()));
+			dlhc.initAuth("good-loop.com");
+			
 			SearchQuery q = new SearchQuery("evt:testsaveevent");
 			//		DataLogRemoteStorage storage = (DataLogRemoteStorage) DataLog.getImplementation().getStorage();
 	//		StatReq<IDataStream> data = storage.getData("testSaveEvent", new Time().minus(TUnit.MINUTE), new Time(), null, null);

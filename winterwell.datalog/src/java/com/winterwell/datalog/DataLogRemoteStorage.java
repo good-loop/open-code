@@ -49,10 +49,19 @@ public class DataLogRemoteStorage implements IDataLogStorage
 	 * @return
 	 */
 	public static boolean saveToRemoteServer(DataLogEvent event) {
+		return saveToRemoteServer(event, getConfig());
+	}
+	
+
+	/**
+	 * a direct call to the remote server
+	 * @param event
+	 * @return
+	 */
+	public static boolean saveToRemoteServer(DataLogEvent event, DataLogConfig remote) {
 		assert event != null;
 		// TODO via Dep
 		DataLogRemoteStorage dlrs = new DataLogRemoteStorage();
-		DataLogConfig remote = getConfig();
 		// add https and endpoint
 		assert remote.logEndpoint.contains("/lg") : remote.logEndpoint;
 		dlrs.init(remote);
@@ -148,7 +157,7 @@ public class DataLogRemoteStorage implements IDataLogStorage
 
 	private FakeBrowser fb() {
 		FakeBrowser fb = new FakeBrowser();
-		fb.setDebug(true);
+		fb.setDebug(getConfig().isDebug());
 		fb.setUserAgent(FakeBrowser.HONEST_USER_AGENT);
 		return fb;
 	}
@@ -205,6 +214,8 @@ public class DataLogRemoteStorage implements IDataLogStorage
 		Log.d("datalog.remote", "called "+fb.getLocation()+" return: "+res);
 		return res;
 	}
+	
+	
 
 	@Override
 	public void saveEvents(Collection<DataLogEvent> events, Period period) {

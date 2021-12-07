@@ -264,15 +264,16 @@ public class LgServlet {
 		}
 		
 		// TODO Currency Converter
-		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
-		
-		if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
-			Double dntn = new Double(params.get("dntn").toString());
-			Double dntnusd = cc.convertES(dntn);
-			params.put("dntnusd", dntnusd);
-			Double price = new Double(params.get("price").toString());
-			Double priceusd = cc.convertES(price);
-			params.put("priceusd", priceusd);
+		if (false) {
+			if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
+				CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
+				Double dntn = new Double(params.get("dntn").toString());
+				Double dntnusd = cc.convertES(dntn);
+				params.put("dntnusd", dntnusd);
+				Double price = new Double(params.get("price").toString());
+				Double priceusd = cc.convertES(price);
+				params.put("priceusd", priceusd);
+			}
 		}
 		
 		// write to log file
