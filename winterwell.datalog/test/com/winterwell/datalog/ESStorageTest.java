@@ -60,6 +60,7 @@ public class ESStorageTest {
 		// register ds
 		boolean yes = ess.registerDataspace(ds);
 		assert yes;
+		ess.esdim.prepWriteIndex(esjc, ds);
 		
 		// we should have read & write indices		
 		String readIndex = ess.readIndexFromDataspace(ds);		
@@ -68,7 +69,8 @@ public class ESStorageTest {
 		final Time now = new Time();
 		String baseIndex = ess.esdim.baseIndexFromDataspace(ds, now);
 		boolean iew = indices.indexExists(writeIndex);
-		assert ier && iew;
+		assert ier : readIndex;
+		assert iew : writeIndex;
 		IESResponse isw = indices.indexSettings(writeIndex).get();
 		IESResponse isr = indices.indexSettings(readIndex).get();
 				
