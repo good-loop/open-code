@@ -278,6 +278,9 @@ public class LgServlet {
 		// -- he estimated one server per 4k ES indexes. c.f. #5403
 		DataLogEvent event = new DataLogEvent(dataspace, gby, count, new String[] { tag}, params);
 		if (time != null) event.setTime(time);
+		if (state.debug) {
+			event.debug = state.debug;
+		}
 		DataLog.count(event);
 
 		return event;

@@ -291,6 +291,7 @@ public class ESStorage implements IDataLogStorage {
 	 */
 	@Override
 	public Future<ESHttpResponse> saveEvent(Dataspace dataspace, DataLogEvent event, Period bucketPeriod) {
+		Log.d(LOGTAG, "saveEvent "+event);
 		if (event.dataspace!=null && ! event.dataspace.equals(dataspace.name)) {
 			Log.e(LOGTAG, new WeirdException("(swallowing) Dataspace mismatch: "+dataspace+" vs "+event.dataspace+" in "+event));
 		}
@@ -314,9 +315,10 @@ public class ESStorage implements IDataLogStorage {
 			event.time = bucketPeriod.getEnd();
 		}
 		
-		ESHttpClient client = client(dataspace);
+		ESHttpClient client = client(dataspace);		
 		
 		String index = writeIndexFromDataspace(dataspace);
+		Log.d(LOGTAG, "saveEvent to index "+index+" "+event);
 		esdim.prepWriteIndex(client, dataspace);
 		// save -- update for grouped events, index otherwise
 		ESPath path = new ESPath(index, id);
@@ -332,10 +334,10 @@ public class ESStorage implements IDataLogStorage {
 			saveReq.setScript(psb);
 			// upsert		
 			saveReq.setUpsert(doc);
-			saveReq.setDebug(true); 
 			f = saveReq.execute();
 		} else {
 			IndexRequest saveReq = client.prepareIndex(path);
+			saveReq.setDebug(true); // Debugging Dec 2021 (this will be noisy)
 			if (event.time==null) event.time = bucketPeriod.getEnd();
 			// set doc
 			Map<String, Object> doc = event.toJson2();			
@@ -457,7 +459,9 @@ public class ESStorage implements IDataLogStorage {
 	public ESHttpClient client(Dataspace dataspace) {		
 		ESConfig _config = Utils.or(config4dataspace.get(dataspace), esConfig);
 		assert _config != null : dataspace+" "+esConfig;
-		return new ESHttpClient(_config);
+		ESHttpClient esjc = new ESHttpClient(_config);
+		esjc.debug = true; // slow datalog DEBUG Dec 2021 - please remove when fixed
+		return esjc;
 	}
 
 	@Override

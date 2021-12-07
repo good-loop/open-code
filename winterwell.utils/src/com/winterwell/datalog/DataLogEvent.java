@@ -50,6 +50,8 @@ public final class DataLogEvent implements Serializable, IHasJson
 {
 	private static final long serialVersionUID = 1L;
 
+	public transient boolean debug;
+	
 	/**
 	 * event-type -- can be an array to combine several events from a single session.
 	 */

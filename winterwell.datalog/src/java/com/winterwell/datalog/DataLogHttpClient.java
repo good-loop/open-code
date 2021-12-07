@@ -142,7 +142,8 @@ public class DataLogHttpClient {
 				"q", q==null? null : q.getRaw(), 
 				"size", maxResults,
 				DataLogFields.START.name, startParam(),
-				DataLogFields.END.name, end==null? null : end.toISOString()
+				DataLogFields.END.name, end==null? null : end.toISOString(),
+				"debug", debug
 				);
 		// call
 		String json = fb.getPage(config.dataEndpoint, vars);
@@ -162,7 +163,7 @@ public class DataLogHttpClient {
 			if (m !=null && m.contains("text=Not logged in => no examples")) {
 				throw new WebEx.E401(fb.getLocation(), "Call DataLogHttpClient.setAuth() first "+m);
 			}
-			return null;
+			return (List) egs;
 		}
 
 		List<DataLogEvent> des = new ArrayList();

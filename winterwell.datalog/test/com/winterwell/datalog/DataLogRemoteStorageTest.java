@@ -33,8 +33,8 @@ public class DataLogRemoteStorageTest {
 			dlc.logEndpoint = "http://locallg.good-loop.com/lg";
 			Dep.set(DataLogConfig.class, dlc);
 			
-			boolean ok = DataLogRemoteStorage.saveToRemoteServer(event);
-			assert ok;
+			String ok = DataLogRemoteStorage.saveToRemoteServer(event);
+			assert ok!=null;
 		}
 	}
 

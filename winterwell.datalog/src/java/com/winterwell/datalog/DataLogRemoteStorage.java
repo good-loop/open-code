@@ -48,7 +48,7 @@ public class DataLogRemoteStorage implements IDataLogStorage
 	 * @param event
 	 * @return
 	 */
-	public static boolean saveToRemoteServer(DataLogEvent event) {
+	public static String saveToRemoteServer(DataLogEvent event) {
 		return saveToRemoteServer(event, getConfig());
 	}
 	
@@ -58,13 +58,13 @@ public class DataLogRemoteStorage implements IDataLogStorage
 	 * @param event
 	 * @return
 	 */
-	public static boolean saveToRemoteServer(DataLogEvent event, DataLogConfig remote) {
+	public static String saveToRemoteServer(DataLogEvent event, DataLogConfig configForRemote) {
 		assert event != null;
 		// TODO via Dep
 		DataLogRemoteStorage dlrs = new DataLogRemoteStorage();
 		// add https and endpoint
-		assert remote.logEndpoint.contains("/lg") : remote.logEndpoint;
-		dlrs.init(remote);
+		assert configForRemote.logEndpoint.contains("/lg") : configForRemote.logEndpoint;
+		dlrs.init(configForRemote);
 		
 		// DEBUG July 2018
 		String eds = event.dataspace; 
@@ -76,8 +76,8 @@ public class DataLogRemoteStorage implements IDataLogStorage
 		Dataspace ds = new Dataspace(eds);
 		// save
 		Object ok = dlrs.saveEvent(ds, event, new Period(event.time));
-		Log.d("datalog.remote", "Save to "+remote.logEndpoint+" "+event+" response: "+ok);
-		return true;
+		Log.d("datalog.remote", "Save to "+configForRemote.logEndpoint+" "+event+" response: "+ok);
+		return (String) ok;
 	}
 	
 	
@@ -89,12 +89,14 @@ public class DataLogRemoteStorage implements IDataLogStorage
 
 	private String logEndpoint;
 	private String getDataEndpoint;
+	private boolean debug;
 
 
 	@Override
 	public IDataLogStorage init(DataLogConfig settings) {
 		logEndpoint = settings.logEndpoint;
 		getDataEndpoint = settings.dataEndpoint;
+		debug = settings.debug;
 		return this;
 	}
 
@@ -157,7 +159,7 @@ public class DataLogRemoteStorage implements IDataLogStorage
 
 	private FakeBrowser fb() {
 		FakeBrowser fb = new FakeBrowser();
-		fb.setDebug(getConfig().isDebug());
+		fb.setDebug(debug);
 		fb.setUserAgent(FakeBrowser.HONEST_USER_AGENT);
 		return fb;
 	}
@@ -195,7 +197,7 @@ public class DataLogRemoteStorage implements IDataLogStorage
 	}
 
 	@Override
-	public Object saveEvent(Dataspace dataspace, DataLogEvent event, Period periodIsNotUsedHere) {
+	public String saveEvent(Dataspace dataspace, DataLogEvent event, Period periodIsNotUsedHere) {
 		// See LgServlet which reads these		
 		FakeBrowser fb = fb();
 		fb.setRetryOnError(5); // try a few times to get through. Can block for 2 seconds.
@@ -206,6 +208,10 @@ public class DataLogRemoteStorage implements IDataLogStorage
 		vars.put(DataLogFields.t.name, 	event.getEventType0()); // type
 		vars.put("count", event.count);
 		vars.put("time", event.getTime());
+		// debug?
+		if (debug) {
+			vars.put("debug", debug);
+		}
 		// props
 		String p = WebUtils2.generateJSON(event.getProps());
 		vars.put("p", p);		
@@ -231,7 +237,7 @@ public class DataLogRemoteStorage implements IDataLogStorage
 	 * @param event
 	 * @return 
 	 */
-	public static boolean hackRemoteDataLog(DataLogEvent event) {
+	public static String hackRemoteDataLog(DataLogEvent event) {
 		return saveToRemoteServer(event);
 	}
 
