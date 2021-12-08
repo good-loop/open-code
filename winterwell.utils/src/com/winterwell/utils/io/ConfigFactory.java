@@ -20,6 +20,7 @@ import com.winterwell.utils.web.WebUtils;
  * ConfigBuilder is library-like (you can use it with any setup), 
  * whilst this is framework-like (it will do more for you, but it expects your project to follow the structure here).
  * 
+ * See {@link #getPropFileOptions(Class)} for which config files are checked
  * 
  * @author daniel
  *
@@ -157,8 +158,8 @@ public class ConfigFactory {
 	 * E.g. for StripeConfig in SoGive, we'd check for the following config/X.properties files:
 <pre>
 config/
-   stripe.properties
-   sogive.properties
+   {thingy e.g. stripe}.properties
+   {appName e.g. portal}.properties
    serverType i.e. production / test / local .properties
    appName.serverType.properties, e.g. this would resolve to config/sogive.production.properties
    logins.properties

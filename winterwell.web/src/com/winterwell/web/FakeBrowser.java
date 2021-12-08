@@ -522,7 +522,7 @@ public class FakeBrowser {
 			if (debugVars==null) debugVars = new ArrayMap("encodedBody", encodedPostBody);
 		}
 		try {
-			connection = setupConnection(uri, DEFAULT_TIMEOUT);
+			connection = setupConnection(uri, timeOutMilliSecs);
 			// Post out
 			connection.setDoOutput(true);
 			if (requestMethod==null) {
@@ -909,6 +909,7 @@ public class FakeBrowser {
 			connection.setRequestProperty(h, v.toString());
 		}
 		connection.setDoInput(true); // we always want input?
+		connection.setConnectTimeout(timeOutMilliSecs);
 		connection.setReadTimeout(timeOutMilliSecs);
 		connection.setInstanceFollowRedirects(false); // See bug 8293 -- our own handling seems to be better
 		// Set cookies!
