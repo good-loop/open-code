@@ -142,6 +142,7 @@ public class DataLogRemoteStorage implements IDataLogStorage {
 	@Override
 	public StatReq<IDataStream> getData(String tag, Time start, Time end, KInterpolate fn, Dt bucketSize) {
 		FakeBrowser fb = fb();
+		fb.setDebug(debug);
 //		fb.setAuthentication("daniel@local.com", "1234");		// FIXME remove this into options!
 		Map<String, String> vars = new ArrayMap("q", "evt:" + tag, "breakdown", "time");
 		vars.put("d", DataLog.getDataspace());
@@ -151,9 +152,8 @@ public class DataLogRemoteStorage implements IDataLogStorage {
 		throw new TodoException(jobj);
 	}
 
-	private FakeBrowser fb() {
+	static private FakeBrowser fb() {
 		FakeBrowser fb = new FakeBrowser();
-		fb.setDebug(debug);
 		fb.setUserAgent(FakeBrowser.HONEST_USER_AGENT);
 		return fb;
 	}
@@ -193,40 +193,48 @@ public class DataLogRemoteStorage implements IDataLogStorage {
 	@Override
 	public String saveEvent(Dataspace dataspace, DataLogEvent event, Period periodIsNotUsedHere) {
 		assert dataspace.equiv(event.dataspace) : dataspace + " v " + event;
-		saveActor.send(event);
+		saveActor.send(new SaveDataLogEvent(this, event));
 		return "queued";
 	}
 
-	final Actor<DataLogEvent> saveActor = new DataLogRemoteStorageActor();
+	static final Actor<SaveDataLogEvent> saveActor = new DataLogRemoteStorageActor();
 
+	final static class SaveDataLogEvent {
+		private DataLogRemoteStorage dlrs;
+		public SaveDataLogEvent(DataLogRemoteStorage dataLogRemoteStorage, DataLogEvent event2) {
+			this.dlrs = dataLogRemoteStorage;
+			this.event = event2;
+		}
+		DataLogEvent event;
+	}
 	/**
 	 * Use an actor thread for low latency to the caller
 	 * @author daniel
 	 *
 	 */
-	class DataLogRemoteStorageActor extends Actor<DataLogEvent> {
+	static class DataLogRemoteStorageActor extends Actor<SaveDataLogEvent> {
 		@Override
-		protected void consume(DataLogEvent event, Actor from) throws Exception {
+		protected void consume(SaveDataLogEvent se, Actor from) throws Exception {
 			// See LgServlet which reads these
 			FakeBrowser fb = fb();
 			fb.setTimeOut(10000); // log should be quick
 			fb.setRetryOnError(5); // try a few times to get through. Can block for 2 seconds.
 			Map<String, Object> vars = new ArrayMap();
 			// core fields
-			vars.put(DataLogFields.d.name, event.dataspace);
-			vars.put("gby"/* LgServlet.GBY.name */, event.groupById); // group it?
-			vars.put(DataLogFields.t.name, event.getEventType0()); // type
-			vars.put("count", event.count);
-			vars.put("time", event.getTime());
+			vars.put(DataLogFields.d.name, se.event.dataspace);
+			vars.put("gby"/* LgServlet.GBY.name */, se.event.groupById); // group it?
+			vars.put(DataLogFields.t.name, se.event.getEventType0()); // type
+			vars.put("count", se.event.count);
+			vars.put("time", se.event.getTime());
 			// debug?
 			if (debug) {
 				vars.put("debug", debug);
 			}
 			// props
-			String p = WebUtils2.generateJSON(event.getProps());
+			String p = WebUtils2.generateJSON(se.event.getProps());
 			vars.put("p", p);
 			// TODO String r = referer
-			String res = fb.getPage(logEndpoint, (Map) vars);
+			String res = fb.getPage(se.dlrs.logEndpoint, (Map) vars);
 			Log.d("datalog.remote", "called " + fb.getLocation() + " return: " + res);
 		}
 	}

@@ -21,6 +21,7 @@ import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FakeBrowser;
+import com.winterwell.web.WebEx;
 
 /**
  * NB: not using junit cos we dont want to autorun this slow thing
@@ -101,29 +102,34 @@ public class DataLogLatencyTest {
 		// wait and see...
 		Time time = new Time();
 		while(true) {
-			Utils.sleep(1000);
-			SearchQuery q = new SearchQuery("evt:"+tag);
-			List<DataLogEvent> es = dlhc.getEvents(q, 5);
-			if (es!=null && ! es.isEmpty()) {
-				Printer.out(es);
-				Printer.out(time.dt(new Time()).convertTo(TUnit.MINUTE));
-				break;
+			try {
+				Utils.sleep(1000);
+				SearchQuery q = new SearchQuery("evt:"+tag);
+				List<DataLogEvent> es = dlhc.getEvents(q, 5);
+				if (es!=null && ! es.isEmpty()) {
+					Printer.out(es);
+					Printer.out(time.dt(new Time()).convertTo(TUnit.MINUTE));
+					break;
+				}
+				
+				SearchQuery q2 = new SearchQuery("oxid:latencytester");
+				List<DataLogEvent> es2 = dlhc.getEvents(q2, 5);
+				if (es2!=null && ! es2.isEmpty()) {
+					Printer.out(es2);
+				}
+				
+				String _gby2 = gby? "gby_id_"+time.getMinutes()+tag : null;
+				DataLogEvent en = new DataLogEvent(ds, _gby2, 1, new String[] {tag}, new ArrayMap(
+						"oxid","latencytester",
+						"cause","worry"));
+				dlhc.save(en);
+	
+				System.out.println(time.dt(new Time()).convertTo(TUnit.MINUTE));
+				Utils.sleep(20000);
+			} catch (WebEx.E50X e50x) {
+				Log.w(e50x);
+				Utils.sleep(20000);
 			}
-			
-			SearchQuery q2 = new SearchQuery("oxid:latencytester");
-			List<DataLogEvent> es2 = dlhc.getEvents(q2, 5);
-			if (es2!=null && ! es2.isEmpty()) {
-				Printer.out(es2);
-			}
-			
-			String _gby2 = gby? "gby_id_"+time.getMinutes()+tag : null;
-			DataLogEvent en = new DataLogEvent(ds, _gby2, 1, new String[] {tag}, new ArrayMap(
-					"oxid","latencytester",
-					"cause","worry"));
-			dlhc.save(en);
-
-			System.out.println(time.dt(new Time()).convertTo(TUnit.MINUTE));
-			Utils.sleep(5000);
 		}			
 	}
 	

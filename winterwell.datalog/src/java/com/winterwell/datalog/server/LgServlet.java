@@ -136,7 +136,7 @@ public class LgServlet {
 		ICallable<Time> ctime = state.get(DataLogFields.time);
 		Time time = ctime==null? null : ctime.call();
 		// log it!
-		DataLogEvent logged = doLog(state, ds, gby, tag, count, time, params, stdTrackerParams);
+		DataLogEvent logged = doLog(state, ds, gby, tag, count, time, params, stdTrackerParams, true);
 				
 		// also fire a callback?
 		String cb = state.get(JsonResponse.CALLBACK);
@@ -217,10 +217,11 @@ public class LgServlet {
 	 * @param time Optional set the event time 
 	 * @param params can be null
 	 * @param stdTrackerParams
+	 * @param saveIt If true, use DataLog.count() to pass it into the save queue. If false, just return the event.
 	 * @return event, or null if this was screened out (eg our own IPs)
 	 */
 	public static DataLogEvent doLog(WebRequest state, Dataspace dataspace, String gby, String tag, double count, 
-			Time time, Map params, boolean stdTrackerParams) 
+			Time time, Map params, boolean stdTrackerParams, boolean saveIt) 
 	{
 		assert dataspace != null;		
 		assert tag != null : state;
@@ -281,8 +282,10 @@ public class LgServlet {
 		if (state.debug) {
 			event.debug = state.debug;
 		}
-		DataLog.count(event);
-
+		if (saveIt) {
+			DataLog.count(event);
+		}
+		
 		return event;
 	}
 	
