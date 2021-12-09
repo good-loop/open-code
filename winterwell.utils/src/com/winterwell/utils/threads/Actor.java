@@ -99,7 +99,7 @@ public class Actor<Msg> {
 
 	boolean noDuplicates;
 
-	protected Actor() {
+	public Actor() {
 		this(new ConcurrentLinkedQueue());
 	}
 

@@ -3,6 +3,7 @@ package com.winterwell.datalog.server;
 import com.winterwell.datalog.Callback;
 import com.winterwell.datalog.CallbackManager;
 import com.winterwell.datalog.DataLogEvent;
+import com.winterwell.datalog.Dataspace;
 import com.winterwell.es.FixedESRouter;
 import com.winterwell.utils.Utils;
 import com.winterwell.web.ajax.JThing;
@@ -30,7 +31,7 @@ public class CallbackServlet extends CrudServlet<Callback> implements IServlet {
 		String dataspace = state.getRequired(DataServlet.DATASPACE);
 		String url = state.getRequired(new UrlField("callback"));
 		String eventType = state.get(DataLogEvent.EVT);
-		Callback cb = new Callback(dataspace, eventType, url); 
+		Callback cb = new Callback(new Dataspace(dataspace), eventType, url); 
 		// OK				
 		return new JThing().setJava(cb);
 	}

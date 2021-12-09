@@ -73,9 +73,8 @@ public final class Dep {
 	 * @return the value held/set
 	 */
 	public static <X> X setIfAbsent(Class<X> klass, X value) {
-		if (has(klass)) {
-			X got = get(klass);
-			assert got != null : klass;
+		X got = get2(klass);
+		if (got!=null) {
 			return got;	
 		}
 		set(klass, value);
@@ -91,10 +90,9 @@ public final class Dep {
 	 * @return the value held / the default
 	 */
 	public static <X> X getWithDefault(Class<X> klass, X defaultValue) {
-		if (has(klass)) {
-			X got = get(klass);
-			// NB: race condition
-			if (got != null) return got;	
+		X got = get2(klass);
+		if (got != null) {
+			return got;	
 		}
 		return defaultValue;
 	}
@@ -107,10 +105,9 @@ public final class Dep {
 	 * @return config
 	 */
 	public static <X> X getWithConfigFactory(Class<X> klass) {
-		if (has(klass)) {
-			X got = get(klass);
-			// NB: race condition
-			if (got != null) return got;	
+		X got = get2(klass);
+		if (got != null) {
+			return got;	
 		}
 		ConfigFactory cf = ConfigFactory.get();
 		X config = cf.getConfig(klass);
@@ -149,7 +146,7 @@ public final class Dep {
 	
 
 	/**
-	 * This can create a new instance! Use #contains() to test for whether we have one.
+	 * This can create a new instance! Use #has() to test for whether we have one.
 	 * @param class1
 	 * @return
 	 */
@@ -158,6 +155,12 @@ public final class Dep {
 		return get(class1, ctxt);
 	}
 
+	
+	static <X> X get2(Class<X> class1) throws DepNotSetException {
+		DepContext ctxt = getContext();
+		return get2(class1, ctxt);
+	}
+	
 	/**
 	 * What bit of code made this object?
 	 * @param class1
@@ -181,6 +184,23 @@ public final class Dep {
 	}
 	
 	public static <X> X get(Class<X> class1, DepContext ctxt) throws DepNotSetException {
+		X x = get2(class1, ctxt);
+		if (x != null) {
+			return x;
+		}
+		// try a vanilla constructor? - no someone should knowingly set the value		
+		// should we return null? Typical use case is for key config objects where a null might be problematic.
+		throw new DepNotSetException("No value set for "+class1+". Note: you can use Dep.has() to check.");
+	}
+	
+	/**
+	 * Unlike {@link #get(Class, DepContext)} this CAN return null
+	 * @param <X>
+	 * @param class1
+	 * @param ctxt
+	 * @return
+	 */
+	static <X> X get2(Class<X> class1, DepContext ctxt) {
 		assert ! ctxt.closed;
 		while(ctxt!=null) {			
 			X x = (X) stash.get(key(class1, ctxt));
@@ -193,9 +213,7 @@ public final class Dep {
 			}
 			ctxt = ctxt.parent;
 		}
-		// try a vanilla constructor? - no someone should knowingly set the value		
-		// should we return null? Typical use case is for key config objects where a null might be problematic.
-		throw new DepNotSetException("No value set for "+class1+". Note: you can use Dep.has() to check.");
+		return null;
 	}
 	
 	public static final class DepNotSetException extends IllegalStateException {

@@ -16,6 +16,7 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.Warning;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.ConfigBuilder;
+import com.winterwell.utils.io.ConfigFactory;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.threads.IFuture;
@@ -54,7 +55,7 @@ import com.winterwell.utils.web.XStreamUtils;
 public class DataLog {
 
 	/**
-	 * Default init: load config from config/datalog.properties then init.
+	 * Default init: load config from config/datalog.properties then init. ??why do we have to load the config twice?
 	 * @throws RuntimeException
 	 */
 	public static void init() throws RuntimeException {
@@ -64,10 +65,11 @@ public class DataLog {
 	
 
 	public static DataLogConfig init2_getDefaultConfig() {
-		DataLogConfig dlConfig = new ConfigBuilder(new DataLogConfig())
-				.setDebug(true)
-				.set(new File("config/datalog.properties"))
-				.get();
+		DataLogConfig dlConfig = ConfigFactory.get().getConfig(DataLogConfig.class);
+//		DataLogConfig dlConfig = new ConfigBuilder(new DataLogConfig())
+//				.setDebug(true)
+//				.set(new File("config/datalog.properties"))
+//				.get();
 		return dlConfig;
 	}
 
@@ -130,27 +132,27 @@ public class DataLog {
 	}
 
 	static IDataLog dflt = new DummyDataLog(new IllegalStateException("DataLog has not been initialised. Call init()"));
-
-	/**
-	 * @deprecated Let's move to an explicit init() call setup.
-	 * No init -> DummyDataLog
-	 * @return
-	 */
-	private static IDataLog initDflt() {
-		try {
-			init();
-			assert dflt != null;
-			return dflt;
-		} catch (Throwable e) {
-			// Bad!
-			Log.e(LOGTAG, e);
-			// Let stuff continue without exceptions elsewhere
-			return new DummyDataLog(e);
-		}
-	}
-	static { // TODO remove
-		initDflt();
-	}
+//
+//	/**
+//	 * @deprecated Let's move to an explicit init() call setup.
+//	 * No init -> DummyDataLog
+//	 * @return
+//	 */
+//	private static IDataLog initDflt() {
+//		try {
+//			init();
+//			assert dflt != null;
+//			return dflt;
+//		} catch (Throwable e) {
+//			// Bad!
+//			Log.e(LOGTAG, e);
+//			// Let stuff continue without exceptions elsewhere
+//			return new DummyDataLog(e);
+//		}
+//	}
+//	static { // TODO remove
+//		initDflt();
+//	}
 
 	/**
 	 * Set a value for now.
