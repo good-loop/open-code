@@ -41,7 +41,6 @@ public class DepotConfig {
 		} catch(Exception ex) {
 			dir = new File("depot");
 		}
-		System.out.println(dir4tag);
 	}
 	
 	@Option
