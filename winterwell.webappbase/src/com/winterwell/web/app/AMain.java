@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import com.winterwell.bob.wwjobs.BuildHacks;
 import com.winterwell.datalog.DataLog;
 import com.winterwell.es.IESRouter;
 import com.winterwell.es.StdESRouter;
@@ -25,8 +26,11 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.ConfigBuilder;
 import com.winterwell.utils.io.ConfigFactory;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.log.ILogListener;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.log.LogConfig;
 import com.winterwell.utils.log.LogFile;
+import com.winterwell.utils.log.SystemOutLogListener;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.web.LoginDetails;
@@ -128,6 +132,8 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 	public void doMain(String[] args) {
 		Thread.currentThread().setName(getClass().getSimpleName()+".doMain");
 		// logfile before log config??! Is that right?
+		LogConfig logConfig = ConfigFactory.get().getConfig(LogConfig.class);
+		Log.setConfig(logConfig);
 		// Try to use the "logs" subdirectory - but use the app root if that's impossible.
 		File logDir = new File("logs");
 		boolean useSubDir = true;
@@ -141,9 +147,21 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 		File logLocation = new File((useSubDir ? "logs/" : "") + getAppNameLocal() + ".log"); 
 		// NB: this log setup will call ConfigFactory early (before the full init)
 		logFile = new LogFile(logLocation).setLogRotation(TUnit.DAY.dt, 14);
+		
 		// also add a never-rotates! audit log for important audit trail info only (ie stuff tagged "audit"		
 		File auditlogLocation = new File((useSubDir ? "logs/" : "") + getAppNameLocal() + ".audit");
 		auditlogFile = new LogFile(auditlogLocation).setFilter(r -> "audit".equals(r.tag));
+		
+		// don't log to sysout on prod (blockage seen there with contended threads dec 2021)
+		if (true || BuildHacks.getServerType() == KServerType.PRODUCTION) {
+			Log.d(appName, "Removing SystemOutLogListener");
+			List<ILogListener> ls = Log.getListeners();
+			for(ILogListener ll : ls) {
+				if (ll instanceof SystemOutLogListener) {
+					Log.removeListener(ll);
+				}
+			}
+		}
 		
 		try {
 			assert "foo".contains("bar");

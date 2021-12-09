@@ -632,7 +632,6 @@ public class AppUtils {
 		if (AppUtils.getServerType() == KServerType.LOCAL) {
 			ar.setDebug(true);
 			IESResponse resp = ar.get();
-			System.out.println(resp);
 		} else {
 			// log how to switch
 			String switchjson = 

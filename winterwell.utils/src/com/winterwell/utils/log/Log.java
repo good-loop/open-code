@@ -126,6 +126,9 @@ public class Log {
 		}
 	}
 	
+	/**
+	 * NB: using ConfigFactory here causes an error :( Dec 2021
+	 */
 	static LogConfig config = new LogConfig();
 
 	private static IFilter<String> excludeFilter;

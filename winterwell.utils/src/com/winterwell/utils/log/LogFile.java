@@ -2,6 +2,8 @@ package com.winterwell.utils.log;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
@@ -12,6 +14,7 @@ import com.winterwell.utils.ReflectionUtils;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.io.ConfigBuilder;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.threads.Lock;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils;
@@ -83,6 +86,7 @@ public class LogFile implements ILogListener, Closeable {
 		if (lc.fileMaxSize!=null) {
 			setFileMaxSize(ConfigBuilder.bytesFromString(lc.fileMaxSize));
 		}
+		this.timeout = lc.logTimeout;
 	}
 
 	private void setFileMaxSize(long maxSize) {
@@ -110,6 +114,14 @@ public class LogFile implements ILogListener, Closeable {
 		return file;
 	}
 
+	private final ReentrantLock writeLock = new ReentrantLock();
+
+	/**
+	 * timeout in milliseconds
+	 */
+	private long timeout;
+	
+	
 	@Override
 	public void listen(Report report) {
 		if (filter!=null) {
@@ -126,8 +138,25 @@ public class LogFile implements ILogListener, Closeable {
 				}
 			}
 		}
+		// the text to write
 		String line = listen2_lineFromReport(report);
-		listen2(line, report.getTime());
+		// handle threading -- but do not block for long
+		boolean gotLock = false;
+		try {
+			// timeout?
+			gotLock = timeout >= 0? writeLock.tryLock(timeout, TimeUnit.MILLISECONDS) : writeLock.tryLock();
+			if (gotLock) {
+				listen2(line, report.getTime());
+			}
+			// else: sob! and no-one hears it
+		} catch (InterruptedException e) {
+			// swallow! 
+		} finally {
+			if (gotLock) {
+				writeLock.unlock();
+			}
+		}
+		
 	}
 
 
@@ -160,7 +189,7 @@ public class LogFile implements ILogListener, Closeable {
 	 * @param line
 	 * @param time
 	 */
-	public synchronized void listen2(String line, Time time) {
+	private void listen2(String line, Time time) {
 		// too big?!
 		if (fileMaxSize > 0 && file.length() > fileMaxSize) {
 			// one final log message
