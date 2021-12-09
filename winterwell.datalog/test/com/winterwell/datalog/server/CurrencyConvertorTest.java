@@ -30,8 +30,7 @@ import com.winterwell.utils.io.ConfigFactory;
 import com.winterwell.utils.time.Time;
 
 public class CurrencyConvertorTest {
-	
-	@Test
+
 	public void testFetchSaveLoad() throws IOException {
 		init();
 
@@ -40,10 +39,14 @@ public class CurrencyConvertorTest {
 		Printer.out(e);
 		Utils.sleep(1500);
 		
-		DataLogEvent e2 = cc.loadCurrDataFromES();
+		DataLogEvent e2 = cc.loadCurrDataFromES(new Time());
 		assert e != null;
 		assert e2 != null;
-		assert e.getProp("GBP2USD").equals(e2.getProp("GBP2USD")) : e2;
+		System.out.println(e);
+		System.out.println(e.getProp("GBP2USD"));
+		System.out.println(e2);
+		System.out.println(e2.getProp("GBP2USD"));
+		assert e.getProp("GBP2USD").	equals(e2.getProp("GBP2USD")) : e2;
 	}
 
 	@Test
@@ -52,8 +55,17 @@ public class CurrencyConvertorTest {
 
 		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.USD, new Time());
 		
-		DataLogEvent e2 = cc.loadCurrDataFromES();
+		DataLogEvent e2 = cc.loadCurrDataFromES(new Time());
 		assert e2 != null;
+		System.out.println(e2);
+	}
+	
+	public void testConvert() throws IOException {
+		init();
+		
+		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.USD, new Time());
+		double usd = cc.convertES(0.05);
+		System.out.println(usd);
 	}
 	
 	private void init() {

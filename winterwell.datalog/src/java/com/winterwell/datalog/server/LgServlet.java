@@ -225,9 +225,10 @@ public class LgServlet {
 	 * @param params can be null
 	 * @param stdTrackerParams
 	 * @return event, or null if this was screened out (eg our own IPs)
+	 * @throws IOException 
 	 */
 	public static DataLogEvent doLog(WebRequest state, Dataspace dataspace, String gby, String tag, double count, 
-			Time time, Map params, boolean stdTrackerParams) 
+			Time time, Map params, boolean stdTrackerParams) throws IOException 
 	{
 		assert dataspace != null;		
 		assert tag != null : state;
@@ -263,10 +264,9 @@ public class LgServlet {
 			params.put("invalid", userType);
 		}
 		
-		// TODO Currency Converter
-		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
-		
+		// Convert into USD
 		if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
+			CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
 			Double dntn = new Double(params.get("dntn").toString());
 			Double dntnusd = cc.convertES(dntn);
 			params.put("dntnusd", dntnusd);
