@@ -7,6 +7,10 @@ import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.ConfigBuilder;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.threads.ATask;
+import com.winterwell.utils.threads.TaskRunner;
+import com.winterwell.utils.time.Dt;
+import com.winterwell.utils.time.StopWatch;
 import com.winterwell.utils.time.TUnit;
 
 import junit.framework.TestCase;
@@ -27,7 +31,32 @@ public class LogFileTest extends TestCase {
 		lf.close();
 	}
 
-	
+
+
+	public void testContention() {
+		File f = new File("test-output/test-contention.txt");
+		FileUtils.delete(f);
+		LogFile lf = new LogFile(f);
+		Log.report("Hello 1");
+		TaskRunner tr = new TaskRunner(100);
+		StopWatch sw = new StopWatch();
+		for(int i=0; i< 1000; i++) {
+			tr.submit(new ATask("t"+i) {
+				@Override
+				protected Object run() throws Exception {
+					for(int j=0; j<1000; j++) {
+						Log.i(this.getName(), "j "+j);
+					}
+					return null;
+				}
+			});
+		}
+		tr.awaitTermination();
+		sw.stop();
+		sw.print();
+		Dt dt = sw.getDt();
+	}
+
 	public void testLogFileSizeViaConfig() {
 		ConfigBuilder cb = new ConfigBuilder(new LogConfig());
 		cb.setFromMain("-fileMaxSize 1k".split(" "));
