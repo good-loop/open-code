@@ -44,6 +44,13 @@ server=localhost
 public class DataLogConfig extends DBOptions implements IInit, ISiteConfig { 
 
 
+	/**
+	 * e.g.
+	 * "gl minview https://as.good-loop.com/lgwebhook,gl click https://as.good-loop.com/lgwebhook,gl donation https://as.good-loop.com/lgwebhook"
+	 */
+	@Option(description = "Setup callbacks. Format: dataspace event url, comma separated for multiple callbacks")
+	public List<String> callbacks;
+	
 	@Option
 	public boolean debug;
 	

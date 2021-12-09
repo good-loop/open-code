@@ -12,7 +12,7 @@ public class CallbackManagerTest {
 		dle.time = new Time();
 		
 		CallbackManager cm = new CallbackManager();
-		Callback callback = new Callback("gl", "minview", "http://localas.good-loop.com");
+		Callback callback = new Callback(new Dataspace("gl"), "minview", "http://localas.good-loop.com");
 		cm.consume2_doCallback(dle, callback);
 	}
 

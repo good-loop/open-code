@@ -161,8 +161,10 @@ public class ConfigBuilder {
 			// File
 			if (type == File.class)
 				return new File(string);
-			if (type==List.class)
-				return StrUtils.split(string);
+			if (type==List.class) {
+				List<String> vs = StrUtils.splitCSVStyle(string);
+				return vs;
+			}
 			// class
 			if (type== Class.class) {
 				return Class.forName(string);

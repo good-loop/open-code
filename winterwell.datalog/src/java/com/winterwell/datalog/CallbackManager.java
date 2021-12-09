@@ -8,9 +8,8 @@ import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.containers.ListMap;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.threads.Actor;
+import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FakeBrowser;
-import com.winterwell.web.app.AppUtils;
-import com.winterwell.web.app.KServerType;
 
 /**
  * Using an Actor model here for high-throughput low-latency
@@ -22,31 +21,54 @@ public class CallbackManager extends Actor<DataLogEvent> implements IInit {
 	private static final String LOGTAG = "CallbackManager";
 	
 	ListMap<String,Callback> callbacksForDataspace = new ListMap();
+
+	private DataLogConfig config;
 	
 	public CallbackManager() {		
 	}	
 	
 	@Override
 	public void init() {
-		if (DataLog.getImplementation().getConfig().noCallbacks) {
+		config = DataLog.getImplementation().getConfig();
+		if (config.noCallbacks) {
 			return;
 		}
-		// HACK remove this hard-coded callback, and make it a dynamic setup
+		// NB: This is where lgwebhook gets wired up for adserver -- depending on the config!
 		// a call to adserver
-		KServerType mtype = AppUtils.getServerType(null);
-		StringBuilder url = AppUtils.getServerUrl(mtype, "as.good-loop.com");
-		url.append("/lgwebhook");
-		// minview is where money gets spent. donation is when a user picks a charity.		
-		for(String evt : new String[] {"minview","click","donation"}) {
-			Callback cb = new Callback("gl", evt, url.toString());
-			callbacksForDataspace.add("gl", cb);
+		if (config.callbacks != null) {
+			for(String callback : config.callbacks) {
+				try {
+					String[] bits = callback.trim().split("\\s+");
+					assert bits.length==3 : callback;
+					addCallback(new Dataspace(bits[0]), bits[1], bits[2]);					
+				} catch(Throwable ex) {
+					Log.e(LOGTAG, ex); // swallow and carry on
+				}
+			}
+//			KServerType mtype = AppUtils.getServerType(null);
+//			StringBuilder url = AppUtils.getServerUrl(mtype, "as.good-loop.com");
+//			url.append("/lgwebhook");
+//			// minview is where money gets spent. donation is when a user picks a charity.
+//			Dataspace gl = new Dataspace("gl");
+//			for(String evt : new String[] {"minview","click","donation"}) {
+//				addCallback(gl, evt, url.toString());
+//			}
 		}
 	}
+
+	private void addCallback(Dataspace dataspace, String evt, String url) {
+		if ( ! WebUtils2.URL_REGEX.matcher(url).matches()) {
+			throw new IllegalArgumentException(url+" is not a url. evt:"+evt);
+		}
+		Callback cb = new Callback(dataspace, evt, url.toString());
+		callbacksForDataspace.add(dataspace.toString(), cb);
+	}
+	
 
 	@Override
 	protected void consume(DataLogEvent msg, Actor sender) throws Exception {
 		assert msg != null;
-		if (DataLog.getImplementation().getConfig().noCallbacks) {
+		if (config.noCallbacks) {
 			Log.d(LOGTAG, "config: no callbacks");
 			return;
 		}
