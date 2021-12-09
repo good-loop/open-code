@@ -1,7 +1,10 @@
 package com.winterwell.utils.log;
 
+import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
@@ -32,7 +35,7 @@ import com.winterwell.utils.web.WebUtils;
  */
 public class LogFile implements ILogListener, Closeable {
 
-	final class LogFileMsg {
+	final static class LogFileMsg {
 		private Report report;
 
 		public LogFileMsg(LogFile logFile, Report report) {
@@ -42,12 +45,14 @@ public class LogFile implements ILogListener, Closeable {
 
 		LogFile _this;
 	}
+	
 	/**
 	 * ??
 	 * 
 	 * NB: static as a paranoid safety guard against lots of actors
 	 */
-	final static Actor fileWriteActor = new Actor() {
+	final static Actor<LogFileMsg> fileWriteActor = new Actor<LogFileMsg>() {
+		@Override
 		protected void consume(LogFileMsg msg, Actor from) throws Exception {
 			
 			String line = msg._this.listen3_lineFromReport(msg.report);
@@ -121,6 +126,8 @@ public class LogFile implements ILogListener, Closeable {
 	 * will be empty.
 	 */
 	public void clear() {
+		FileUtils.close(writer);
+		writer = null;
 		FileUtils.write(file, "");
 	}
 
@@ -130,6 +137,9 @@ public class LogFile implements ILogListener, Closeable {
 	@Override
 	public void close() {
 		Log.removeListener(this);
+		FileUtils.close(writer);
+		writer = null;
+		fileWriteActor.flush();
 	}
 
 	public File getFile() {
@@ -181,13 +191,19 @@ public class LogFile implements ILogListener, Closeable {
 	SimpleFormatter sf = new SimpleFormatter();
 
 	private transient boolean criedForHelp;
+
+	/**
+	 * TODO keep a writer for a bit of speed
+	 */
+	private BufferedWriter writer;
 	
 	/**
 	 * Low-level faster writing. 
 	 * @param line
 	 * @param time
+	 * @throws IOException 
 	 */
-	public void listen2viaActor(String line, Time time) {
+	public void listen2viaActor(String line, Time time) throws IOException {
 		// too big?!
 		if (fileMaxSize > 0 && file.length() > fileMaxSize) {
 			// one final log message
@@ -198,7 +214,6 @@ public class LogFile implements ILogListener, Closeable {
 				String cry = listen3_lineFromReport(report);
 				FileUtils.append(cry, file);
 				criedForHelp = true;
-				close();
 			}
 			// done
 			return;
@@ -208,8 +223,14 @@ public class LogFile implements ILogListener, Closeable {
 			rotateLogFiles();
 		}
 		// append to file (flushes immediately)
-		stream
-		FileUtils.append(line, file);
+//		if (writer==null) {
+//			writer = FileUtils.getWriter(new FileOutputStream(file, true));
+//		}
+		
+		String tn = " from:"+Thread.currentThread().getName();
+		FileUtils.append(line+tn, file);
+//		writer.write(line);
+//		writer.flush();
 		criedForHelp = false;
 	}
 
@@ -217,6 +238,8 @@ public class LogFile implements ILogListener, Closeable {
 	 * Move all the log files down one.
 	 */
 	private synchronized void rotateLogFiles() {
+		FileUtils.close(writer);
+		writer = null;
 		// advance the trigger
 		nextRotation = nextRotation.plus(rotationInterval);
 		// just nuke the current log?
@@ -225,7 +248,7 @@ public class LogFile implements ILogListener, Closeable {
 			return;
 		}
 		// rotate the old logs
-		for (int i = rotationHistory - 1; i != 0; i--) {
+		for (int i = rotationHistory - 1; i != 0; i--) {			
 			File src = new File(file.getAbsolutePath() + "." + i);
 			File dest = new File(file.getAbsolutePath() + "." + (i + 1));
 			if (src.exists()) {

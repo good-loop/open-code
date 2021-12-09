@@ -37,6 +37,20 @@ public class Actor<Msg> {
 		return this;
 	}
 	
+	final static class Flush {}
+	
+	public void flush() {
+		Flush flush = new Flush();
+		synchronized (flush) {
+			send(new Packet(flush, DeadLetterActor.dflt));
+			try {
+				flush.wait();
+			} catch (InterruptedException e) {
+				throw Utils.runtime(e);
+			}
+		}
+	}
+	
 	/**
 	 * Message + sending Actor.
 	 * @author daniel
@@ -99,6 +113,13 @@ public class Actor<Msg> {
 
 	boolean noDuplicates;
 
+	private String name = Utils.or(getClass().getSimpleName(), "_Actor");
+	
+	public Actor<Msg> setName(String name) {
+		this.name = name;
+		return this;
+	}
+
 	public Actor() {
 		this(new ConcurrentLinkedQueue());
 	}
@@ -130,7 +151,7 @@ public class Actor<Msg> {
 	}
 
 	protected String getName() {
-		return getClass().getSimpleName();
+		return name;
 	}
 
 	/**
@@ -173,6 +194,14 @@ public class Actor<Msg> {
 					Utils.sleep(10);
 					continue;
 				}
+				// HACK flush
+				if (msg.msg instanceof Flush) {
+					synchronized(msg.msg) {
+						msg.msg.notifyAll();
+						continue;
+					}
+				}
+				// Read the message!
 				consume(msg.msg, msg.from);
 			} catch (Throwable e) {
 				Log.e(getName(), e);
