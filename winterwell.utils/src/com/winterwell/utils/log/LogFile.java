@@ -12,6 +12,7 @@ import com.winterwell.utils.ReflectionUtils;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.io.ConfigBuilder;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.threads.Actor;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils;
@@ -27,10 +28,35 @@ import com.winterwell.utils.web.WebUtils;
  * this LogFile from the log listeners.
  * 
  * @author daniel
- * @testedby  LogFileTest}
+ * @testedby  LogFileTest
  */
 public class LogFile implements ILogListener, Closeable {
 
+	final class LogFileMsg {
+		private Report report;
+
+		public LogFileMsg(LogFile logFile, Report report) {
+			_this = logFile;
+			this.report = report;
+		}
+
+		LogFile _this;
+	}
+	/**
+	 * ??
+	 * 
+	 * NB: static as a paranoid safety guard against lots of actors
+	 */
+	final static Actor fileWriteActor = new Actor() {
+		protected void consume(LogFileMsg msg, Actor from) throws Exception {
+			
+			String line = msg._this.listen3_lineFromReport(msg.report);
+			
+			msg._this.listen2viaActor(line, msg.report.getTime());
+			
+		};
+	};
+	
 	private final File file;
 
 	Time nextRotation;
@@ -126,12 +152,13 @@ public class LogFile implements ILogListener, Closeable {
 				}
 			}
 		}
-		String line = listen2_lineFromReport(report);
-		listen2(line, report.getTime());
+		fileWriteActor.send(new LogFileMsg(this, report));
 	}
+	
 
 
-	private String listen2_lineFromReport(Report report) {
+
+	private String listen3_lineFromReport(Report report) {
 //		String lines = report.toString();
 		// Use Java SimpleFormatter to make LogStash happy out of the box
 		LogRecord lr = new LogRecord(report.level, report.tag+" "+report.getMessage()
@@ -160,7 +187,7 @@ public class LogFile implements ILogListener, Closeable {
 	 * @param line
 	 * @param time
 	 */
-	public synchronized void listen2(String line, Time time) {
+	public void listen2viaActor(String line, Time time) {
 		// too big?!
 		if (fileMaxSize > 0 && file.length() > fileMaxSize) {
 			// one final log message
@@ -168,9 +195,10 @@ public class LogFile implements ILogListener, Closeable {
 				// ??minor: possibly refactor Log so this can use guaranteed the same Report construction
 				String tooBigLine = "Log file too big: "+file.length()+" > "+fileMaxSize+". Logging skipped!";
 				Report report = new Report("log", tooBigLine, Level.SEVERE, line, null);
-				String cry = listen2_lineFromReport(report);
+				String cry = listen3_lineFromReport(report);
 				FileUtils.append(cry, file);
 				criedForHelp = true;
+				close();
 			}
 			// done
 			return;
@@ -180,6 +208,7 @@ public class LogFile implements ILogListener, Closeable {
 			rotateLogFiles();
 		}
 		// append to file (flushes immediately)
+		stream
 		FileUtils.append(line, file);
 		criedForHelp = false;
 	}
