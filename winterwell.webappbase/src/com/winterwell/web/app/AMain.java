@@ -153,7 +153,7 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 		auditlogFile = new LogFile(auditlogLocation).setFilter(r -> "audit".equals(r.tag));
 		
 		// don't log to sysout on prod (blockage seen there with contended threads dec 2021)
-		if (true || BuildHacks.getServerType() == KServerType.PRODUCTION) {
+		if (BuildHacks.getServerType() != KServerType.LOCAL) {
 			Log.d(appName, "Removing SystemOutLogListener");
 			List<ILogListener> ls = Log.getListeners();
 			for(ILogListener ll : ls) {
