@@ -4,10 +4,12 @@ import java.util.Objects;
 
 public class Employee {
 
-	String email;
 	String name;
 	String office;
 	String team;
+	String firstName;
+	String email;
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -24,12 +26,13 @@ public class Employee {
 		return Objects.hash(email);
 	}
 	
-	public Employee(String email, String name, String office, String team) {
+	public Employee(String name, String office, String team) {
 		super();
-		this.email = email;
 		this.name = name;
 		this.office = office;
 		this.team = team;
+		this.firstName = getFirstName();
+		this.email = firstName + "@good-loop.com";
 	}
 	
 	String getFirstName() {

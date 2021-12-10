@@ -70,20 +70,7 @@ public class ChatRoundabout  {
 			String office = row[2];
 			String team = Containers.get(row, 5);
 
-			// HACK: non-standard emails
-			String firstName;
-			if (name.equals("Daniel Appel")) {
-				firstName = "sysadmin";
-			} else if (name.equals("Natasha Taylor")) {
-				firstName = "tash";
-			} else if (name.equals("Abdikarim Mohamed")) {
-				firstName = "karim";
-			} else {
-				firstName = name.split(" ")[0];
-			}
-			String email = firstName.toLowerCase()+"@good-loop.com";
-
-			emailList.add(new Employee(email, name, office, team));
+			emailList.add(new Employee(name, office, team));
 		}
 		Log.d(LOGTAG, "All employees: "+emailList);
 		return emailList;
@@ -96,7 +83,6 @@ public class ChatRoundabout  {
 	 * @return true if OK
 	 */
 	private boolean checkEvent(String email, String chatSet, Period slot) {
-		
 		// Restrict events around the date of the meeting
 		
 		// Only getting events 1 days before and after next Friday to try to catch long holidays but not getting too many event results		
