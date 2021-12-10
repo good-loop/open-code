@@ -270,9 +270,11 @@ public class LgServlet {
 			}
 		}
 		
-		// write to log file
-		doLogToFile(dataspace, tag, count, params, trckId, state);
-				
+		// write to log file -- off by default (Dec 2021 datalog crisis) 
+		if (state.debug) {
+			doLogToFile(dataspace, tag, count, params, trckId, state);
+		}		
+		
 		// write to Stat / ES
 		// ...which dataspaces?
 		// Multiple dataspaces: Dan A reports a significant cost to per-user dataspaces

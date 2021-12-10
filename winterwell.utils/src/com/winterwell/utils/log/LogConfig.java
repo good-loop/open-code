@@ -85,5 +85,5 @@ public class LogConfig {
 	public Integer fileHistory;
 	
 	@Option(description="Time in milliseconds to allow for logging ops like file writes. Negative for no timeout.")
-	long logTimeout = 1000;
+	long logTimeout = 500;
 }
