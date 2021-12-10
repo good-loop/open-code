@@ -54,7 +54,7 @@ public class DataLogHttpClient {
 		XId appXid = App2AppAuthClient.getAppXId(thisAppName);
 		AuthToken at = yac.loadLocal(appXid);
 		if (at!=null) {
-			auth = Arrays.asList(at);			
+			setAuth(Arrays.asList(at));	
 			return this;
 		}
 		// try to init!
@@ -154,9 +154,9 @@ public class DataLogHttpClient {
 		if (egs==null || egs.isEmpty()) {
 			String m = jsend.getMessage();
 			// HACK
-			if (m.contains("text=Not logged in => no examples")) {
+			if (m != null && m.contains("text=Not logged in => no examples")) {
 				throw new WebEx.E401(fb.getLocation(), "Call DataLogHttpClient.setAuth() first "+m);
-			}
+			} 
 		}
 		List<DataLogEvent> des = new ArrayList();
 		// Convert into DataLogEvents

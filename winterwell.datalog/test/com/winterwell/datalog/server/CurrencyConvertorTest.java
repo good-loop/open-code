@@ -27,6 +27,7 @@ import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.ConfigFactory;
+import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 
 public class CurrencyConvertorTest {
@@ -49,23 +50,37 @@ public class CurrencyConvertorTest {
 		assert e.getProp("GBP2USD").	equals(e2.getProp("GBP2USD")) : e2;
 	}
 
-	@Test
 	public void testLoad() throws IOException {
 		init();
 
 		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.USD, new Time());
 		
-		DataLogEvent e2 = cc.loadCurrDataFromES(new Time());
+		DataLogEvent e2 = cc.loadCurrDataFromES(new Time().minus(1, TUnit.DAY));
+		System.out.println("e2:"+e2);
 		assert e2 != null;
-		System.out.println(e2);
 	}
 	
+	@Test
 	public void testConvert() throws IOException {
 		init();
 		
 		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.USD, new Time());
 		double usd = cc.convertES(0.05);
 		System.out.println(usd);
+	}
+	
+	public void testLoadwithCache() throws IOException {
+		init();
+		Time today = new Time();
+		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.USD, today);
+		DataLogEvent rate = cc.loadCurrDataFromES(today);
+		if (rate == null) {
+			rate = cc.fetchCurrRate();
+		}
+		cc.cache.put(today.toISOStringDateOnly(), rate);
+		
+		DataLogEvent whatsInCache = cc.cache.get(today.toISOStringDateOnly());
+		System.out.println(whatsInCache);
 	}
 	
 	private void init() {

@@ -19,6 +19,7 @@ import com.winterwell.json.JSONObject;
 import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
+import com.winterwell.utils.containers.Cache;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 
@@ -75,17 +76,26 @@ public class CurrencyConvertor {
 		"USD_EUR", 0.85
 	);
 	
-	public Time latestDateWithRate(Time latestDate) throws IOException {
-		if (loadCurrDataFromES(latestDate) == null) {
-			fetchCurrRate();
-			Utils.sleep(1500);
-			if (loadCurrDataFromES(latestDate) == null) {
-				latestDateWithRate(latestDate.minus(1, TUnit.DAY));
-			}
-		}
-		System.out.println("Reading currency rate of "+latestDate);
-		return latestDate;
-	}
+	// Turns out do not need this part
+//	public Time latestDateWithRate(Time latestDate) throws IOException {
+//		Time today = new Time();
+//		if (loadCurrDataFromES(latestDate) == null) {
+//			if (latestDate.toISOStringDateOnly().equalsIgnoreCase(today.toISOStringDateOnly())) {
+//				fetchCurrRate();
+//				System.out.println("Fetching Today's rate and write into ES.");
+//				Utils.sleep(1500);
+//				latestDateWithRate(latestDate.minus(1, TUnit.DAY));
+//			} else if (latestDate.toISOStringDateOnly().equalsIgnoreCase(today.minus(1, TUnit.DAY).toISOStringDateOnly())) {
+//				latestDateWithRate(latestDate.minus(1, TUnit.DAY));
+//			} else if (latestDate.toISOStringDateOnly().equalsIgnoreCase(today.minus(2, TUnit.DAY).toISOStringDateOnly())) {
+//				return today;
+//			}
+//		}
+//		System.out.println("Reading currency rate of "+latestDate.toISOStringDateOnly());
+//		return latestDate;
+//	}
+	
+	public final Cache<String, DataLogEvent> cache = new Cache(5);
 	
 	/**
 	 * New conversion class, fetch currency rate in ES
@@ -94,9 +104,17 @@ public class CurrencyConvertor {
 	 * @throws IOException 
 	 */
 	public double convertES(double amount) throws IOException {
-		DataLogEvent rate = loadCurrDataFromES(latestDateWithRate(date));
+		DataLogEvent rateFromCache = cache.get(date.toISOStringDateOnly());
+		if (rateFromCache == null) {
+			DataLogEvent rate = loadCurrDataFromES(date);
+			if (rate == null) {
+				rate = fetchCurrRate();
+			}
+			cache.put(date.toISOStringDateOnly(), rate);
+			rateFromCache = cache.get(date.toISOStringDateOnly());
+		}
 		String currencyConversion = from + "2" + to;
-		Double conversionVal = new Double(rate.getProp(currencyConversion).toString());
+		Double conversionVal = new Double(rateFromCache.getProp(currencyConversion).toString());
 		return amount*conversionVal;
 	}
 	
@@ -104,8 +122,9 @@ public class CurrencyConvertor {
 
 	public DataLogEvent fetchCurrRate() throws IOException {
 		// We can only fetch rate in base currency of EUR due to using free tier API Key
-//		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key=81dd51bbdbf39740e59cfa5ae3835537&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY");
-		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key=5ddbce9daf299ed4b46804a0101c5046&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY"); // API Key for testing
+		String apiKey = "81dd51bbdbf39740e59cfa5ae3835537";
+		String apiKeyBackup = "5ddbce9daf299ed4b46804a0101c5046";
+		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key="+apiKey+"&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY"); 
 		HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
 		con.setRequestMethod("GET");
 		
