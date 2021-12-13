@@ -130,14 +130,10 @@ public class ChatRoundabout  {
 			if (period.first.isBefore(start)) {
 				Log.e(LOGTAG, period+" "+event);
 			}
-			if (period.intersects(slot)) {
-				Log.d(LOGTAG, email+" has a Clash: "+summary+" "+period+" vs "+slot);
-				return false;
-			}
 			
 			// TODO no repeat 121s - though the clash check will probably get that
 			if (eventItem.contains("chat-roundabout") && eventItem.contains(chatSet)) {
-				Log.d(LOGTAG, "Already has a 121: "+event+" vs "+slot);
+				Log.d(LOGTAG, email+" already has a 121: "+summary+" vs "+slot);
 				return false;
 			}
 			
@@ -145,13 +141,16 @@ public class ChatRoundabout  {
 			if (eventItem.contains("holiday")) {
 				Period p2 = new Period(TimeUtils.getStartOfDay(period.first), TimeUtils.getEndOfDay(period.second));
 				if (p2.intersects(slot)) {
-					Log.d(LOGTAG, "Holiday Clash: "+event+" vs "+slot);
+					Log.d(LOGTAG, email+" has a Holiday Clash: "+summary+" vs "+slot);
 					return false;
 				}
 			}
-			
-			if (period.isWholeDay()) {
-				continue; // skipping whole day events (after checking if it is holiday)
+			if (period.intersects(slot)) {
+				if (period.isWholeDay()) {
+					continue; // skipping whole day event
+				}
+				Log.d(LOGTAG, email+" has a Clash: "+summary+" "+period+" vs "+slot);
+				return false;
 			}
 		}
 		return true;
