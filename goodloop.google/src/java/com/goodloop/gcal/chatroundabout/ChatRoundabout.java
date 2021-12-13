@@ -44,7 +44,7 @@ import com.winterwell.utils.time.TimeUtils;
  */
 public class ChatRoundabout  {
 	
-	private static final Boolean LIVE_MODE = true;
+	private static final Boolean LIVE_MODE = false;
 	private static final String LOGTAG = null;
 	private static final String CHATSET_CROSS_TEAM = "cross-team";
 	private static final String CHATSET_IN_TEAM = "within-team";
@@ -83,6 +83,7 @@ public class ChatRoundabout  {
 	 * @return true if OK
 	 */
 	private boolean checkEvent(String email, String chatSet, Period slot) {
+		
 		// Restrict events around the date of the meeting
 		
 		// Only getting events 1 days before and after next Friday to try to catch long holidays but not getting too many event results		
@@ -116,14 +117,10 @@ public class ChatRoundabout  {
 			if (period.first.isBefore(start)) {
 				Log.e(LOGTAG, period+" "+event);
 			}
-			if (period.intersects(slot)) {
-				Log.d(LOGTAG, email+" has a Clash: "+summary+" "+period+" vs "+slot);
-				return false;
-			}
 			
 			// TODO no repeat 121s - though the clash check will probably get that
 			if (eventItem.contains("chat-roundabout") && eventItem.contains(chatSet)) {
-				Log.d(LOGTAG, "Already has a 121: "+event+" vs "+slot);
+				Log.d(LOGTAG, email+" already has a 121: "+summary+" vs "+slot);
 				return false;
 			}
 			
@@ -131,13 +128,16 @@ public class ChatRoundabout  {
 			if (eventItem.contains("holiday")) {
 				Period p2 = new Period(TimeUtils.getStartOfDay(period.first), TimeUtils.getEndOfDay(period.second));
 				if (p2.intersects(slot)) {
-					Log.d(LOGTAG, "Holiday Clash: "+event+" vs "+slot);
+					Log.d(LOGTAG, email+" has a Holiday Clash: "+summary+" vs "+slot);
 					return false;
 				}
 			}
-			
-			if (period.isWholeDay()) {
-				continue; // skipping whole day events (after checking if it is holiday)
+			if (period.intersects(slot)) {
+				if (period.isWholeDay()) {
+					continue; // skipping whole day event
+				}
+				Log.d(LOGTAG, email+" has a Clash: "+summary+" "+period+" vs "+slot);
+				return false;
 			}
 		}
 		return true;

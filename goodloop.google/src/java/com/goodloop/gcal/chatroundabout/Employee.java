@@ -31,8 +31,7 @@ public class Employee {
 		this.name = name;
 		this.office = office;
 		this.team = team;
-		this.firstName = getFirstName();
-		this.email = firstName + "@good-loop.com";
+		this.email = getFirstName().toLowerCase() + "@good-loop.com";
 	}
 	
 	String getFirstName() {
