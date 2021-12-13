@@ -44,7 +44,7 @@ import com.winterwell.utils.time.TimeUtils;
  */
 public class ChatRoundabout  {
 	
-	private static final Boolean LIVE_MODE = false;
+	private static final Boolean LIVE_MODE = true;
 	private static final String LOGTAG = null;
 	private static final String CHATSET_CROSS_TEAM = "cross-team";
 	private static final String CHATSET_IN_TEAM = "within-team";
@@ -205,7 +205,7 @@ public class ChatRoundabout  {
 				assert ! pairEmail.equals(randomEmail);
 				Pair pair = new Pair(pairEmail, randomEmail);
 				randomPairs.add(pair);
-				Log.d(LOGTAG, pairEmail.email+" had 121 events with "+largeOffice.get(0)+" last week, skipping pair to next person.");
+				Log.d(LOGTAG, pairEmail.email+" had 121 events with "+largeOffice.get(0).email+" last week, skipping pair to next person > "+randomEmail.email);
 			} else {
 				Employee randomEmail = largeOffice.remove(0);
 				smallOffice.remove(randomEmail);
