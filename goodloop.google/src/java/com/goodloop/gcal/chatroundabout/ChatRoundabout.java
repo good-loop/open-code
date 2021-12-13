@@ -119,7 +119,7 @@ public class ChatRoundabout  {
 			}
 			
 			// TODO no repeat 121s - though the clash check will probably get that
-			if (eventItem.contains("chat-roundabout") && eventItem.contains(chatSet)) {
+			if (eventItem.contains("chatroundabout") && eventItem.contains(chatSet)) {
 				Log.d(LOGTAG, email+" already has a 121: "+summary+" vs "+slot);
 				return false;
 			}
@@ -142,6 +142,35 @@ public class ChatRoundabout  {
 		}
 		return true;
 	}
+	
+	private String check121LastWeek(String email, Period slot) {
+		// Only getting events 1 days before and after last Friday to try to catch long holidays but not getting too many event results		
+		Time start = TimeUtils.getStartOfDay(slot.first.minus(8, TUnit.DAY));
+		Time end = TimeUtils.getStartOfDay(slot.first.minus(6, TUnit.DAY));
+		
+		List<Event> allEvents = client().getEvents(email, start, end);
+
+		for (Event event : allEvents) {
+			String summary = event.getSummary();
+			if (summary != null && summary.contains("SM")) {
+				Log.d(summary);
+			}
+			
+			String eventItem = event.toString().toLowerCase();
+			
+			if (eventItem.contains("chatroundabout")) {
+				String[] summarySplit = summary.split(" ");
+				String[] attendees = {summary.split(" ")[summarySplit.length - 1], summary.split(" ")[summarySplit.length - 3]};
+				for (String staff : attendees) {
+					if (!email.split("@")[0].equalsIgnoreCase(staff)) {
+						return staff.toLowerCase() + "@good-loop.com";
+					}
+				}
+			}
+			
+		}
+		return null;
+	}
 
 	/**
 	 * NB: the seed is fixed so that same day runs would produce the same output
@@ -153,7 +182,7 @@ public class ChatRoundabout  {
 	 * @param _smallOffice
 	 * @param _largeOffice Can be the same as smallOffice
 	 */
-	private ArrayList<Pair<Employee>> getRandomPairs(List<Employee> _smallOffice, List<Employee> _largeOffice) {
+	private ArrayList<Pair<Employee>> getRandomPairs(List<Employee> _smallOffice, List<Employee> _largeOffice, Period slot) {
 		// TODO make sure we hit every pairing
 		// NB: defensive copy so we can edit locally
 		ArrayList<Employee> largeOffice = new ArrayList(_largeOffice);
@@ -169,11 +198,23 @@ public class ChatRoundabout  {
 			if (largeOffice.isEmpty()) {
 				break; // last person can be left out for in-team
 			}
-			Employee randomEmail = largeOffice.remove(0);
-			smallOffice.remove(randomEmail);
-			assert ! pairEmail.equals(randomEmail);
-			Pair pair = new Pair(pairEmail, randomEmail);
-			randomPairs.add(pair);
+			String lastWeekEmail = check121LastWeek(pairEmail.email, slot);
+			if (lastWeekEmail != null && lastWeekEmail.equalsIgnoreCase(largeOffice.get(0).email) && largeOffice.size() > 1) {
+				Employee randomEmail = largeOffice.remove(1);
+				smallOffice.remove(randomEmail);
+				assert ! pairEmail.equals(randomEmail);
+				Pair pair = new Pair(pairEmail, randomEmail);
+				randomPairs.add(pair);
+				Log.d(LOGTAG, pairEmail.email+" had 121 events with "+largeOffice.get(0)+" last week, skipping pair to next person.");
+			} else {
+				Employee randomEmail = largeOffice.remove(0);
+				smallOffice.remove(randomEmail);
+				assert ! pairEmail.equals(randomEmail);
+				Pair pair = new Pair(pairEmail, randomEmail);
+				randomPairs.add(pair);
+				
+			}
+			
 		}
 		
 		Log.i(LOGTAG, "Poor guys who won't have 121 this week: "+largeOffice);
@@ -281,7 +322,7 @@ public class ChatRoundabout  {
 		boolean e2l = (edinburghEmails.size() > londonEmails.size());
 		
 		// Random pairings
-		List<Pair<Employee>> randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails) : getRandomPairs(edinburghEmails, londonEmails);
+		List<Pair<Employee>> randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails, slot) : getRandomPairs(edinburghEmails, londonEmails, slot);
 		
 		postEventsToCalendar(chatSet, slot, randomPairs);
 	}
@@ -325,7 +366,7 @@ public class ChatRoundabout  {
 		// TODO fetch last weeks 121s
 		
 		// Random pairings
-		List<Pair<Employee>> randomPairs = getRandomPairs(edinburghEmails, edinburghEmails);
+		List<Pair<Employee>> randomPairs = getRandomPairs(edinburghEmails, edinburghEmails, slot);
 		
 
 		postEventsToCalendar(chatSet, slot, randomPairs);
