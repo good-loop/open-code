@@ -39,6 +39,9 @@ import com.winterwell.utils.time.TimeUtils;
  * cross-office 121 on Friday at 11:30
  * Plus a within-team 121 on Friday at 11:00 for Tech
  * 
+ * Now it will prevent same 121 pairs matched for two weeks
+ * 
+ * @version 1.1.0
  * @author daniel
  *
  */
@@ -143,6 +146,12 @@ public class ChatRoundabout  {
 		return true;
 	}
 	
+	/**
+	 * Check who is the 121 partner last week
+	 * @param email
+	 * @param slot
+	 * @return email address
+	 */
 	private String check121LastWeek(String email, Period slot) {
 		// Only getting events 1 days before and after last Friday to try to catch long holidays but not getting too many event results		
 		Time start = TimeUtils.getStartOfDay(slot.first.minus(8, TUnit.DAY));
