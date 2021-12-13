@@ -27,8 +27,13 @@ public class CallbackManager extends Actor<DataLogEvent> implements IInit {
 	public CallbackManager() {		
 	}	
 	
+	boolean initFlag;
+	
 	@Override
 	public void init() {
+		// paranoia
+		if (initFlag) return;
+		initFlag = true; 
 		config = DataLog.getImplementation().getConfig();
 		if (config.noCallbacks) {
 			return;

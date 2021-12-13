@@ -346,17 +346,18 @@ public class ESStorage implements IDataLogStorage {
 		}		
 		client.close();
 		
-		// log stuff ??does this create a resource leak??
-		if (f instanceof ListenableFuture) {
-			((ListenableFuture<ESHttpResponse>) f).addListener(() -> {			
-				try {
-					ESHttpResponse response = f.get();
-					response.check();
-				} catch(Throwable ex) {
-					Log.e(DataLog.LOGTAG, "...saveEvent FAIL :( "+ex+" from event: "+event);
-				}
-			}, MoreExecutors.directExecutor());
-		}
+		// commented out - paranoia dec 2021 - something is leaking ESHttpClient objects
+//		// log stuff ??does this create a resource leak??
+//		if (f instanceof ListenableFuture) {
+//			((ListenableFuture<ESHttpResponse>) f).addListener(() -> {			
+//				try {
+//					ESHttpResponse response = f.get();
+//					response.check();
+//				} catch(Throwable ex) {
+//					Log.e(DataLog.LOGTAG, "...saveEvent FAIL :( "+ex+" from event: "+event);
+//				}
+//			}, MoreExecutors.directExecutor());
+//		}
 		
 		return f;
 	}
@@ -456,6 +457,11 @@ public class ESStorage implements IDataLogStorage {
 
 	static Map<Dataspace, ESConfig> config4dataspace = new HashMap();
 	
+	/**
+	 * ??makes a new object each time - why??
+	 * @param dataspace
+	 * @return
+	 */
 	public ESHttpClient client(Dataspace dataspace) {		
 		ESConfig _config = Utils.or(config4dataspace.get(dataspace), esConfig);
 		assert _config != null : dataspace+" "+esConfig;
