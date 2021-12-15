@@ -612,7 +612,7 @@ public class WebRequest implements IProperties, Closeable {
 			String vs = getRequest().getParameter(key.getName());
 			if (vs != null) {
 				IllegalArgumentException ex = new IllegalArgumentException(key
-						+ " should be an AField! But chill we handled it.");
+						+ " should be an AField! But chill we handled it. v:"+vs);
 				Log.w(ex);
 				return (T) vs;
 			}
@@ -1073,6 +1073,9 @@ public class WebRequest implements IProperties, Closeable {
     }
 
 	
+    /**
+     * Set (or remove if null) value for key in properties. `action` is handled as a special case.
+     */
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T put(Key<T> key, T value) {
@@ -1380,4 +1383,12 @@ public class WebRequest implements IProperties, Closeable {
 		}
 		WebUtils2.sendError(code, output, getResponse());
 	}
+
+	/**
+	 * @deprecated low-level access to the properties bag
+	 */
+	public Map<Key, Object> getProperties() {
+		return properties;
+	}
+
 }
