@@ -97,6 +97,9 @@ public final class YouAgainClient {
 		return (String[]) tokens;
 	}
 	
+	/**
+	 * NB: This is not an AField as it is only used for local within-the-request caching
+	 */
 	private static final Key<List<AuthToken>> AUTHS = new Key("ya_auths");
 
 	private static final String LOGTAG = "youagain";
@@ -195,9 +198,11 @@ public final class YouAgainClient {
 	 */
 	public List<AuthToken> getAuthTokens(WebRequest state) {
 		// check cache
-		Object _auths = state.get(AUTHS);
+		// NB: using deprecated low-level getProperties() to avoid the odd bug seen below
+		Object _auths = state.getProperties().get(AUTHS);
 		if (_auths instanceof String) { // paranoia - ClassCast bug seen Apr 2021
-			Log.e(LOGTAG, "String not list?! "+AUTHS+": "+_auths+" from "+state);
+			// Dec 2021: somehow "ya_auths=****" is getting into either cookies or url params?!  
+			Log.w(LOGTAG, "(skip cache) String not list?! "+AUTHS+": "+_auths+" from "+state);
 			_auths = null; // skip the cache then			
 		}		
 		List<AuthToken> tokens = (List<AuthToken>) _auths;
@@ -238,7 +243,7 @@ public final class YouAgainClient {
 		}
 		
 		// stash them
-		state.put(AUTHS, tokens);
+		state.getProperties().put(AUTHS, tokens);
 		// set user?
 		getAuthTokens2_maybeSetUser(state, tokens);
 		// done
