@@ -261,14 +261,15 @@ public class ChatRoundabout  {
 		};
 		event.setAttendees(Arrays.asList(attendees));
 
-		EventReminder[] reminderOverrides = new EventReminder[] {
-		    new EventReminder().setMethod("email").setMinutes(10),
-		    new EventReminder().setMethod("popup").setMinutes(1),
-		};
-		Event.Reminders reminders = new Event.Reminders()
-		    .setUseDefault(false)
-		    .setOverrides(Arrays.asList(reminderOverrides));
-		event.setReminders(reminders);
+//		Don't need reminder as they're not to the attendees
+//		EventReminder[] reminderOverrides = new EventReminder[] {
+//		    new EventReminder().setMethod("email").setMinutes(10),
+//		    new EventReminder().setMethod("popup").setMinutes(1),
+//		};
+//		Event.Reminders reminders = new Event.Reminders()
+//		    .setUseDefault(false)
+//		    .setOverrides(Arrays.asList(reminderOverrides));
+//		event.setReminders(reminders);
 		
 		event.setGuestsCanModify(true);
 		
