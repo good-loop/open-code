@@ -35,6 +35,7 @@ public class PingServlet {
 			Log.e("ping", ex);			
 			output = "Hello from Java - but database connection is troubled: "+Printer.toString(ex, true);
 		}
+		output += " This is "+WebUtils2.hostname();
 		
 		WebUtils2.sendText(output, state.getResponse());
 	}
