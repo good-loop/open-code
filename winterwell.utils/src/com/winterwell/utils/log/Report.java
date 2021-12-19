@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.logging.Level;
 
 import com.winterwell.utils.Printer;
+import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.time.Time;
 
 /**
@@ -86,6 +87,14 @@ public final class Report implements Serializable {
 		// Assumes: level & tag don't have tabs, and after message we don't care
 		String _msg = msg.replace('\t', ' ');
 		return "["+time+"]\t\t#"+tag+"\t"+_msg+"\n";
+	}
+
+	/**
+	 * A crude hash for level+tag+msg -- this is useful for filtering
+	 * @return
+	 */
+	public String getMarker() {
+		return StrUtils.md5(level+tag+msg).substring(0,8);
 	}
 
 }
