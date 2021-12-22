@@ -60,9 +60,9 @@ public final class Dep {
 	 * @return
 	 */
 	public static <X> DepContext with(Class<X> klass, X value) {
-		DepContext context = Dep.setContext(Utils.getRandomString(6));
+		DepContext cntxt = Dep.setContext(Utils.getRandomString(6));
 		Dep.set(klass, value);		
-		return context;
+		return cntxt;
 	}
 	
 	/**

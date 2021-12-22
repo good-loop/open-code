@@ -14,7 +14,6 @@ import com.winterwell.utils.ReflectionUtils;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.io.ConfigBuilder;
 import com.winterwell.utils.io.FileUtils;
-import com.winterwell.utils.threads.Lock;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils;
@@ -163,7 +162,7 @@ public class LogFile implements ILogListener, Closeable {
 	private String listen2_lineFromReport(Report report) {
 //		String lines = report.toString();
 		// Use Java SimpleFormatter to make LogStash happy out of the box
-		LogRecord lr = new LogRecord(report.level, report.tag+" "+report.getMessage()
+		LogRecord lr = new LogRecord(report.level, report.tag+" #"+report.getMarker()+" "+report.getMessage()
 									+" "+report.context+" "+serverName);
 //		lr.setThreadID(report.threadId);
 		lr.setMillis(report.getTime().getTime());

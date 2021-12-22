@@ -44,13 +44,6 @@ public class ManifestServlet extends HttpServlet implements IServlet {
 
 	private static final long serialVersionUID = 1L;
 
-
-//	public static final String PROPERTY_GIT_BRANCH = "branch";
-//	public static final String PROPERTY_GIT_COMMIT_ID = "lastCommitId";
-//	public static final String PROPERTY_GIT_COMMIT_INFO = "lastCommitInfo";
-//	public static final String PROPERTY_PUBLISH_DATE = "publishDate";
-
-
 	private static volatile boolean initFlag;
 	
 	public ManifestServlet() {

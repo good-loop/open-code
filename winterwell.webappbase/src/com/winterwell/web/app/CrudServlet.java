@@ -16,6 +16,7 @@ import org.eclipse.jetty.util.ajax.JSON;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.winterwell.bob.tasks.GitTask;
+import com.winterwell.bob.wwjobs.BuildHacks;
 import com.winterwell.data.AThing;
 import com.winterwell.data.KStatus;
 import com.winterwell.depot.IInit;
@@ -635,13 +636,18 @@ public abstract class CrudServlet<T> implements IServlet {
 	 * @param state
 	 */
 	protected void doBeforeSaveOrPublish(JThing<T> _jthing, WebRequest state) {
-		// set last modified
-		if (_jthing.java() instanceof AThing) {
-			AThing ting = (AThing) _jthing.java();
-			ting.setLastModified(new Time());
+		if ( ! (_jthing.java() instanceof AThing)) {
+			return;
+		}
+		// set last modified		
+		AThing ting = (AThing) _jthing.java();
+		ting.setLastModified(new Time());
 
-			// Git audit trail?
-			if (gitAuditTrail) {
+		// Git audit trail?
+		if (gitAuditTrail) {
+			if (BuildHacks.getServerType() != KServerType.PRODUCTION) {
+				Log.d(LOGTAG(), "No git audit trail on "+BuildHacks.getServerType());				
+			} else {
 				KStatus status = KStatus.DRAFT;
 				if (state!=null && state.actionIs(ACTION_PUBLISH)) status= KStatus.PUBLISHED; 
 				File fd = getGitFile(ting, status);
@@ -650,7 +656,7 @@ public abstract class CrudServlet<T> implements IServlet {
 					doSave2_file_and_git(state, json, fd);
 				}
 			}
-		}		
+		}
 	}
 	
 

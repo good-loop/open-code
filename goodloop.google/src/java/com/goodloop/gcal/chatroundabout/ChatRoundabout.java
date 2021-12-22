@@ -122,7 +122,8 @@ public class ChatRoundabout  {
 			}
 			
 			// TODO no repeat 121s - though the clash check will probably get that
-			if (eventItem.contains("chatroundabout") && eventItem.contains(chatSet)) {
+      // ?? lets turn "chatroundabout" into a string constant (minor)
+			if ((eventItem.contains("chatroundabout") || eventItem.contains("chatroundabout")) && eventItem.contains(chatSet)) {
 				Log.d(LOGTAG, email+" already has a 121: "+summary+" vs "+slot);
 				return false;
 			}

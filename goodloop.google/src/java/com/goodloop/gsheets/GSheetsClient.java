@@ -25,6 +25,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.Sheets.Spreadsheets.Values.Get;
+import com.google.api.services.sheets.v4.Sheets.Spreadsheets.Values.Update;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetResponse;
@@ -48,6 +49,7 @@ import com.google.api.services.sheets.v4.model.UpdateCellsRequest;
 import com.google.api.services.sheets.v4.model.UpdateSheetPropertiesRequest;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.containers.IntRange;
@@ -79,7 +81,7 @@ public class GSheetsClient {
 		this.sheet = sheet;
 	}
 	
-	public Spreadsheet getSheet(String id) throws Exception {
+	public Spreadsheet getSheet(String id) throws IOException {
 		Log.i(LOGTAG, "getSheet... spreadsheet: "+id);
 		Sheets service = getService();
 		Spreadsheet ss = service.spreadsheets().get(id).execute();
@@ -172,7 +174,7 @@ public class GSheetsClient {
 	public Object updateValues(String spreadsheetId, List<List<Object>> values)
 			throws GeneralSecurityException, IOException 
 	{
-		Log.i(LOGTAG, "updateValues... spreadsheet: "+spreadsheetId);
+		Log.i(LOGTAG, "updateValues... spreadsheet: "+spreadsheetId+" sheet: "+sheet);
 		Sheets service = getService();
 		
 		ValueRange body = new ValueRange().setValues(values);
@@ -180,11 +182,33 @@ public class GSheetsClient {
 		String valueInputOption = "USER_ENTERED";
 		int w = values.get(0).size();
 		String c = getBase26(w - 1); // w base 26
-		String range = "A1:" + c + values.size();
-		// TODO sheet number 
-		UpdateValuesResponse result = service.spreadsheets().values()
+
+		if (sheet !=null && sheet != 0) {
+			throw new TodoException("specific sheets :(");
+//			GridRange gr = new GridRange();
+//			gr.setSheetId(sheet);
+//			UpdateCellsRequest updateCellsReq = new UpdateCellsRequest()
+//					.setRange(gr)
+////					.setFields("*")
+//					;
+//			List<Request> requests = new ArrayList<>();
+//			requests.add(new Request()
+//					.setUpdateCells(updateCellsReq));
+//			
+//			BatchUpdateSpreadsheetRequest batchRequest = new BatchUpdateSpreadsheetRequest().setRequests(requests);
+//			BatchUpdateSpreadsheetResponse result = service.spreadsheets()
+//					.batchUpdate(spreadsheetId, batchRequest).execute();
+//			String ps = result.toPrettyString();
+//			Log.i(LOGTAG, "updated spreadsheet: "+getUrl(spreadsheetId));
+//			return result.toPrettyString();			
+		}
+
+		String range = "A1:" + c + values.size();		
+		Update request = service.spreadsheets().values()			
 				.update(spreadsheetId, range, body)
-				.setValueInputOption(valueInputOption).execute();
+				.setValueInputOption(valueInputOption);
+		
+		UpdateValuesResponse result = request.execute();
 		String ps = result.toPrettyString();
 		Integer cnt = result.getUpdatedCells();
 //			System.out.println(ps);
@@ -197,9 +221,7 @@ public class GSheetsClient {
 	 * @throws IOException 
 	 */
 	public List<SheetProperties> getSheetProperties(String spreadsheetId) throws IOException {
-		Sheets service = getService();
-		com.google.api.services.sheets.v4.Sheets.Spreadsheets.Get gotr = service.spreadsheets().get(spreadsheetId);
-		Spreadsheet s = gotr.execute();
+		Spreadsheet s = getSheet(spreadsheetId);
 		List<Sheet> sheets = s.getSheets();
 		List<SheetProperties> sprops = Containers.apply(sheets, Sheet::getProperties);
 		return sprops;		
