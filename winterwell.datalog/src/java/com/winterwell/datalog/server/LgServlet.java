@@ -225,9 +225,10 @@ public class LgServlet {
 	 * @param params can be null
 	 * @param stdTrackerParams
 	 * @return event, or null if this was screened out (eg our own IPs)
+	 * @throws IOException 
 	 */
 	public static DataLogEvent doLog(WebRequest state, Dataspace dataspace, String gby, String tag, double count, 
-			Time time, Map params, boolean stdTrackerParams) 
+			Time time, Map params, boolean stdTrackerParams) throws IOException 
 	{
 		assert dataspace != null;		
 		assert tag != null : state;
@@ -263,9 +264,10 @@ public class LgServlet {
 			params.put("invalid", userType);
 		}
 		
-		// TODO Currency Converter
-		if (false) {
-			if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
+		// Convert into USD
+		// dntn and price?? shouldn't we convert either/both??
+		if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
+			try {
 				CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
 				Double dntn = new Double(params.get("dntn").toString());
 				Double dntnusd = cc.convertES(dntn);
@@ -273,6 +275,9 @@ public class LgServlet {
 				Double price = new Double(params.get("price").toString());
 				Double priceusd = cc.convertES(price);
 				params.put("priceusd", priceusd);
+			} catch(Throwable ex) {
+				// paranoia
+				Log.e("lg", ex);
 			}
 		}
 		

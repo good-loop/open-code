@@ -54,7 +54,7 @@ public class DataLogHttpClient {
 		XId appXid = App2AppAuthClient.getAppXId(thisAppName);
 		AuthToken at = yac.loadLocal(appXid);
 		if (at!=null) {
-			auth = Arrays.asList(at);			
+			setAuth(Arrays.asList(at));	
 			return this;
 		}
 		// try to init!
@@ -128,7 +128,14 @@ public class DataLogHttpClient {
 		return DataLogRemoteStorage.saveToRemoteServer(event, config);
 	}
 	
-	public List<DataLogEvent> getEvents(SearchQuery q, int maxResults) {
+	/**
+	 * 
+	 * @param q
+	 * @param maxResults
+	 * @return Can this return null?? when does that happen??
+	 * @throws WebEX.E401 You have to habd setup auth (see {@link #initAuth(String)}) to get events data. 
+	 */
+	public List<DataLogEvent> getEvents(SearchQuery q, int maxResults) throws WebEx.E401 {
 		// Call DataServlet
 		FakeBrowser fb = new FakeBrowser();
 		fb.setDebug(debug);
@@ -162,7 +169,7 @@ public class DataLogHttpClient {
 			if (m !=null && m.contains("text=Not logged in => no examples")) {
 				throw new WebEx.E401(fb.getLocation(), "Call DataLogHttpClient.setAuth() first "+m);
 			}
-			return null;
+			if (egs==null) return null; // ??
 		}
 		List<DataLogEvent> des = new ArrayList();
 		// Convert into DataLogEvents
