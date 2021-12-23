@@ -760,7 +760,12 @@ public abstract class CrudServlet<T> implements IServlet {
 		}
 		Period period = CommonFields.getPeriod(state);
 		
-		SearchResponse sr = doList2(q, prefix, status, sort, size,from, period, state);
+		// for security filter on query (and later on results)
+		YouAgainClient yac = Dep.get(YouAgainClient.class);
+		List<AuthToken> tokens = yac.getAuthTokens(state);
+
+		// Build the query!
+		SearchResponse sr = doList2(q, prefix, status, sort, size,from, period, state, tokens);
 		
 //		Map<String, Object> jobj = sr.getParsedJson();
 		// Let's deal with ESHit and JThings
@@ -781,9 +786,7 @@ public abstract class CrudServlet<T> implements IServlet {
 			}
 		}
 		
-		// security filter
-		YouAgainClient yac = Dep.get(YouAgainClient.class);
-		List<AuthToken> tokens = yac.getAuthTokens(state);
+		// security filter on results
 		hits2 = doList2_securityFilter(hits2, state, tokens, yac);
 		
 		// sanitise for privacy
@@ -850,7 +853,12 @@ public abstract class CrudServlet<T> implements IServlet {
 		return hits2;
 	}
 	
-	protected void securityHack_teamGoodLoop(WebRequest state) {
+	/**
+	 * Crude security filter: reject non-Good-Loop users with an exception
+	 * @param state
+	 * @throws WebEx.E401
+	 */
+	protected void securityHack_teamGoodLoop(WebRequest state) throws WebEx.E401 {
 		YouAgainClient yac = Dep.get(YouAgainClient.class);
 		List<AuthToken> tokens = yac.getAuthTokens(state);
 		for (AuthToken authToken : tokens) {
@@ -1011,9 +1019,13 @@ public abstract class CrudServlet<T> implements IServlet {
 	 * Does NOT dedupe (eg multiple copies with diff status) or security cleanse.
 	 * @param prefix 
 	 * @param from TODO
+	 * @param tokens 
 	 * @param num 
 	 */
-	public final SearchResponse doList2(String q, String prefix, KStatus status, String sort, int size, int from, Period period, WebRequest stateOrNull) {
+	public final SearchResponse doList2(String q, String prefix, KStatus status, String sort, 
+			int size, int from, Period period, 
+			WebRequest stateOrNull, List<AuthToken> tokens) 
+	{
 		// copied from SoGive SearchServlet
 		SearchRequest s = new SearchRequest(es);
 		/// which index? draft (which should include copies of published) by default
@@ -1021,7 +1033,10 @@ public abstract class CrudServlet<T> implements IServlet {
 		
 		// query
 		ESQueryBuilder qb = doList3_ESquery(q, prefix, period, stateOrNull);
-
+		
+		// security?
+		qb = doList3_securityFilterOnQuery(qb, stateOrNull, tokens);
+		
 		if (qb!=null) {
 			s.setQuery(qb);
 		}
@@ -1057,6 +1072,20 @@ public abstract class CrudServlet<T> implements IServlet {
 //		}
 		
 		return sr;
+	}
+
+
+	/**
+	 * Override to add extra security clauses to the query. Does nothing by default.
+	 * @param qb
+	 * @param stateOrNull
+	 * @param tokens
+	 * @return
+	 */
+	protected ESQueryBuilder doList3_securityFilterOnQuery(ESQueryBuilder qb, WebRequest stateOrNull,
+			List<AuthToken> tokens) 
+	{
+		return qb;
 	}
 
 
