@@ -49,6 +49,8 @@ import com.google.api.services.sheets.v4.model.UpdateCellsRequest;
 import com.google.api.services.sheets.v4.model.UpdateSheetPropertiesRequest;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import com.winterwell.utils.MathUtils;
+import com.winterwell.utils.Printer;
 import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
@@ -184,23 +186,7 @@ public class GSheetsClient {
 		String c = getBase26(w - 1); // w base 26
 
 		if (sheet !=null && sheet != 0) {
-			throw new TodoException("specific sheets :(");
-//			GridRange gr = new GridRange();
-//			gr.setSheetId(sheet);
-//			UpdateCellsRequest updateCellsReq = new UpdateCellsRequest()
-//					.setRange(gr)
-////					.setFields("*")
-//					;
-//			List<Request> requests = new ArrayList<>();
-//			requests.add(new Request()
-//					.setUpdateCells(updateCellsReq));
-//			
-//			BatchUpdateSpreadsheetRequest batchRequest = new BatchUpdateSpreadsheetRequest().setRequests(requests);
-//			BatchUpdateSpreadsheetResponse result = service.spreadsheets()
-//					.batchUpdate(spreadsheetId, batchRequest).execute();
-//			String ps = result.toPrettyString();
-//			Log.i(LOGTAG, "updated spreadsheet: "+getUrl(spreadsheetId));
-//			return result.toPrettyString();			
+			return updateValues2_specificSheet(spreadsheetId, values);
 		}
 
 		String range = "A1:" + c + values.size();		
@@ -216,6 +202,41 @@ public class GSheetsClient {
 		return result.toPrettyString();
 	}
 	
+	private Object updateValues2_specificSheet(String spreadsheetId, List<List<Object>> values) throws GeneralSecurityException, IOException {
+		List<Request> reqs = new ArrayList<Request>();
+		for(int r=0; r<values.size(); r++) {
+			List<Object> rowr = values.get(r);
+			for(int c=0; c<rowr.size(); c++) {
+
+				GridRange gr = new GridRange();
+				gr.setSheetId(sheet);
+				gr.setStartRowIndex(r);
+				gr.setEndRowIndex(r+1);
+				gr.setStartColumnIndex(c);
+				gr.setEndColumnIndex(c+1);
+				
+				CellData cd = new CellData();
+				ExtendedValue ev = new ExtendedValue();
+				Object vrc = rowr.get(c);
+				if (vrc instanceof Number) {
+					ev.setNumberValue(((Number) vrc).doubleValue());
+				} else {
+					ev.setStringValue(""+vrc);
+				}
+				Printer.out(ev.getStringValue());
+				cd = cd.setUserEnteredValue(ev);
+				Request req = new Request().setRepeatCell(
+						new RepeatCellRequest()
+						.setCell(cd)
+						.setRange(gr)
+						.setFields("userEnteredValue")
+						);				
+				reqs.add(req);
+			}
+		}
+		return doBatchUpdate(spreadsheetId, reqs);
+	}
+
 	/**
 	 * https://developers.google.com/sheets/api/samples/sheet
 	 * @throws IOException 
