@@ -90,7 +90,7 @@ public class AppUtils {
 	public static final EnumField<KStatus> STATUS = new EnumField<>(KStatus.class, "status");
 	
 	
-	public static boolean DEBUG = true;
+	public static final boolean DEBUG = true;
 	
 	KServerType serverType = AppUtils.getServerType(null); 
 

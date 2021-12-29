@@ -937,9 +937,24 @@ public abstract class CrudServlet<T> implements IServlet {
 			Log.d(LOGTAG(), "doSave2_file_and_git "+fd);
 			FileUtils.write(fd, text);
 //			Git pull, commit and push!
-			GitTask gt0 = new GitTask(GitTask.PULL, fd);
-			gt0.run();
-			Log.d(LOGTAG(), gt0.getOutput());
+			try {
+				GitTask gt0 = new GitTask(GitTask.PULL, fd);
+				gt0.run();
+				gt0.close();
+				Log.d(LOGTAG(), gt0.getOutput());
+			} catch(Exception ex) {
+				// stach local edits which may be causing a problem
+				GitTask gt0a = new GitTask(GitTask.STASH, fd);
+				gt0a.addArg("--include-untracked");
+				gt0a.run();
+				gt0a.close();
+				Log.d(LOGTAG(), gt0a.getOutput());
+				// try to pull again
+				GitTask gt0 = new GitTask(GitTask.PULL, fd);
+				gt0.run();
+				gt0.close();
+				Log.d(LOGTAG(), gt0.getOutput());
+			}
 			
 			GitTask gt1 = new GitTask(GitTask.ADD, fd);
 			gt1.run();
