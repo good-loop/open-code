@@ -164,6 +164,12 @@ public class Parsers {
 		return bp;
 	}
 
+	/**
+	 * Match a variable-length list of items e.g. "a, b, c"
+	 * @param element
+	 * @param separator
+	 * @see #seq(Parser...)
+	 */
 	public static ChainParser chain(Parser element, Parser separator) {
 		return new ChainParser(element, separator, 1, Integer.MAX_VALUE);
 	}
@@ -275,17 +281,17 @@ public class Parsers {
 		throw new TodoException();
 	}
 
+	/**
+	 * A fixed length (though it can include optional bits) sequence.
+	 * @param parsers
+	 * @return
+	 * @see #chain(Parser, Parser)
+	 */
 	public static Parser seq(final Parser... parsers) {
 		assert parsers.length != 0;
 		if (parsers.length == 1)
 			return parsers[0];
 		return new SeqnParser(parsers);
-		// Parser next = parsers[parsers.length-1];
-		// for (int i=parsers.length-2; i>=0; i--) {
-		// SeqnParser seqn = new SeqnParser(parsers[i], next);
-		// next = seqn;
-		// }
-		// return next;
 	}
 
 	/**

@@ -8,7 +8,7 @@ import com.winterwell.utils.containers.Slice;
 import com.winterwell.utils.web.IHasJson;
 
 /**
- * These are auto-set -- use 
+ * These are auto-set
  * @author daniel
  *
  */
@@ -38,7 +38,8 @@ public class ParseFail extends RuntimeException implements IHasJson {
 
 //	private ParseState input;
 	public int lineNum;
-
+	String sheetId;
+	
 	private String message;
 
 	/**
@@ -73,6 +74,10 @@ public class ParseFail extends RuntimeException implements IHasJson {
 		this.slice = failedToParse;
 		this.message = message;
 	}
+	
+	public void setSheetId(String sheetId) {
+		this.sheetId = sheetId;
+	}
 
 	@Override
 	public String getMessage() {
@@ -97,6 +102,7 @@ public class ParseFail extends RuntimeException implements IHasJson {
 	public Map toJson2()  {
 		return new ArrayMap(
 			"@type", "ParseFail",
+			"sheetId", sheetId,
 			"line", lineNum,
 			"message", message,
 			"slice", slice
