@@ -89,6 +89,10 @@ public abstract class CrudServlet<T> implements IServlet {
 	protected File getGitFile(AThing item, KStatus status) {
 		// TODO a config setting
 		File dir = new File(FileUtils.getWinterwellDir(), AMain.appName+"-files");
+		// HACK backwards compatability
+		if (AMain.main.getAppNameLocal().contains("moneyscript")) {
+			dir = new File(FileUtils.getWinterwellDir(), AMain.appName+"-plans");
+		}
 		if ( ! dir.isDirectory()) {
 			return null;
 		}
@@ -645,7 +649,7 @@ public abstract class CrudServlet<T> implements IServlet {
 
 		// Git audit trail?
 		if (gitAuditTrail) {
-			if (BuildHacks.getServerType() != KServerType.PRODUCTION) {
+			if (false && BuildHacks.getServerType() != KServerType.PRODUCTION) {
 				Log.d(LOGTAG(), "No git audit trail on "+BuildHacks.getServerType());				
 			} else {
 				KStatus status = KStatus.DRAFT;
