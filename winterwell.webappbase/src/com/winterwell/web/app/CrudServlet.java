@@ -649,7 +649,7 @@ public abstract class CrudServlet<T> implements IServlet {
 
 		// Git audit trail?
 		if (gitAuditTrail) {
-			if (false && BuildHacks.getServerType() != KServerType.PRODUCTION) {
+			if (BuildHacks.getServerType() != KServerType.PRODUCTION) {
 				Log.d(LOGTAG(), "No git audit trail on "+BuildHacks.getServerType());				
 			} else {
 				KStatus status = KStatus.DRAFT;

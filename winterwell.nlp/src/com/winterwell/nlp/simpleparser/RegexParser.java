@@ -15,7 +15,7 @@ import com.winterwell.utils.containers.Slice;
  */
 public class RegexParser extends Parser<MatchResult> {
 
-	Pattern regex;
+	public final Pattern regex;
 
 	public RegexParser(Pattern regex) {
 		super();
