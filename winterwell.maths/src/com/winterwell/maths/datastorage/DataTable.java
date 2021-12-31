@@ -73,6 +73,17 @@ public class DataTable<C1> extends Table<C1, Object[]> implements IHasHtml, IHas
 		return super.getRow(row);
 	}
 	
+
+	/**
+	 * Convenience for working with List instead of Object[]
+	 * @param row
+	 * @return
+	 */
+	public List<Object> getRowList(int row) {
+		return Arrays.asList(getRow(row));
+	}	
+
+	
 	/**
 	 * Loads the csv file, if given.
 	 * 
@@ -337,22 +348,31 @@ public class DataTable<C1> extends Table<C1, Object[]> implements IHasHtml, IHas
  * <p> 
  * Note: We don't have a function for merging extra rows, because that is easy - this is a row-based storage (similar to a csv file), so just add them!
  * 
- * @param newData
+ * @param newData This will overwrite oldData if there is any overlap
  * @param oldData
  * @return a new merged DataTable
  */
 	public static DataTable<String> merge(DataTable<String> newData, DataTable<String> oldData) {
-		Object[] oldHeaders = oldData.getRow(0);
-		Object[] freshHeaders = newData.getRow(0);
-		// sort the headers
-		Set allHeaders = new HashSet(Arrays.asList(oldHeaders));
-		allHeaders.addAll(Arrays.asList(freshHeaders));		
+		Object[] oldHeaders = oldData.size()==0? new Object[0] : oldData.getRow(0);
+		Object[] freshHeaders = newData.size()==0? new Object[0] : newData.getRow(0);
+		if (freshHeaders.length==0 && oldHeaders.length==0) {
+			return oldData; // both empty, no-op
+			// NB: if one is empty, we still need to sort the columns for consistent behaviour :(
+		}
+
+		// This is the index column, and should not be sorted
+		Object indexColumnHeader = freshHeaders.length==0? oldHeaders[0] : freshHeaders[0]; 
+
+		// sort the headers (dropping the index column)
+		Set allHeaders = new HashSet();
+		if (oldHeaders.length>0) allHeaders.addAll(Arrays.asList(oldHeaders).subList(1, oldHeaders.length));
+		if (freshHeaders.length>0) allHeaders.addAll(Arrays.asList(freshHeaders).subList(1, freshHeaders.length));		
 		ArrayList<String> hlist = new ArrayList(allHeaders);
-		Object h0 = freshHeaders[0];
-		hlist.remove(h0);
-		hlist.remove(""); // paranoia
-		hlist.remove(null);
 		Collections.sort(hlist); //, (a,b) -> new Time(a).compareTo(new Time(b)));
+		ArrayList hlist2 = new ArrayList();
+		hlist2.add(indexColumnHeader);
+		hlist2.addAll(hlist);
+
 		// fill in the data
 		HashMap<String,Map> colForRow = new HashMap();
 		merge2(oldData, colForRow);
@@ -360,9 +380,6 @@ public class DataTable<C1> extends Table<C1, Object[]> implements IHasHtml, IHas
 		merge2(newData, colForRow);
 		// copy it out - preserving order
 		DataTable merged = new DataTable();
-		ArrayList hlist2 = new ArrayList();
-		hlist2.add(h0);
-		hlist2.addAll(hlist);
 		merged.add(hlist2);
 		// TODO merge row lists, perhaps using levenshtein to slot them in
 		List<String> rlist = newData.getColumn(0); // HACK just the newData rows
@@ -403,6 +420,9 @@ public class DataTable<C1> extends Table<C1, Object[]> implements IHasHtml, IHas
 
 
 	private static void merge2(DataTable<String> data, HashMap<String, Map> colForRow) {
+		if (data.size()==0) {
+			return;
+		}
 		Object[] headers = data.getRow(0);
 		for(Object[] row : data) {
 			String rName = (String) row[0];
@@ -423,7 +443,17 @@ public class DataTable<C1> extends Table<C1, Object[]> implements IHasHtml, IHas
 			rows2.add(new ArrayList(Arrays.asList(row)));
 		}
 		return rows2;
-	}	
+	}
+
+
+	public static DataTable fromRows(List<Object[]> rows) {
+		DataTable dt = new DataTable<>();
+		for (Object[] objects : rows) {
+			dt.add(objects);
+		}
+		return dt;
+	}
+
 
 
 
