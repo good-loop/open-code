@@ -17,9 +17,11 @@ import com.winterwell.datalog.Dataspace;
 import com.winterwell.datalog.server.CurrencyConvertorTest;
 import com.winterwell.json.JSONObject;
 import com.winterwell.nlp.query.SearchQuery;
+import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Cache;
+import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 
@@ -50,7 +52,7 @@ public class CurrencyConvertor {
 	 * @param cidDntn
 	 * @return
 	 */
-	public double convert(double cidDntn) {
+	private double convert2_hardCoded(double cidDntn) {
 		String currencyConversion = from + "_" + to;
 		Double conversionVal = CURRENCY_CONVERSION.get(currencyConversion);
 		return cidDntn*conversionVal;
@@ -95,26 +97,39 @@ public class CurrencyConvertor {
 //		return latestDate;
 //	}
 	
-	public final Cache<String, DataLogEvent> cache = new Cache(5);
+	static final Cache<String, DataLogEvent> cache = new Cache(100);
 	
 	/**
-	 * New conversion class, fetch currency rate in ES
+	 * New conversion class, fetch currency rate in ES. Uses a cache so it is fast once warmed up.
 	 * @param amount
 	 * @return
 	 * @throws IOException 
 	 */
 	public double convertES(double amount) throws IOException {
+		if (amount==0) { // fast zero
+			return 0;
+		}
 		DataLogEvent rateFromCache = cache.get(date.toISOStringDateOnly());
 		if (rateFromCache == null) {
 			DataLogEvent rate = loadCurrDataFromES(date);
 			if (rate == null) {
-				rate = fetchCurrRate();
+				if (date.toISOStringDateOnly().equals(new Time().toISOStringDateOnly())) {
+					rate = fetchCurrRate();
+				} else {
+					// fail :(
+					Log.d("CurrencyConvertor", "No data for "+date+" - using hardcoded FX");
+					return convert2_hardCoded(amount);
+				}
 			}
 			cache.put(date.toISOStringDateOnly(), rate);
-			rateFromCache = cache.get(date.toISOStringDateOnly());
+			rateFromCache = rate;
 		}
 		String currencyConversion = from + "2" + to;
-		Double conversionVal = new Double(rateFromCache.getProp(currencyConversion).toString());
+		double conversionVal = MathUtils.toNum(rateFromCache.getProp(currencyConversion));
+		if (conversionVal==0) {
+			Log.d("CurrencyConvertor", "No data for currency:"+from+" date: " +date+" - using hardcoded FX");
+			return convert2_hardCoded(amount);
+		}
 		return amount*conversionVal;
 	}
 	
@@ -125,10 +140,10 @@ public class CurrencyConvertor {
 		String apiKey = "81dd51bbdbf39740e59cfa5ae3835537";
 		String apiKeyBackup = "5ddbce9daf299ed4b46804a0101c5046";
 		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key="+apiKey+"&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY"); 
-		HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
-		con.setRequestMethod("GET");
 		
 		// Minor: FakeBrowser handles http connections nicely
+		HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
+		con.setRequestMethod("GET");
 		String orgRate = new String();
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "utf-8"))) {
 		    StringBuilder response = new StringBuilder();
@@ -142,17 +157,20 @@ public class CurrencyConvertor {
 		JSONObject obj = new JSONObject(orgRate);
 		
 		// Doing Math
-		Double EUR2USD = Double.parseDouble(obj.getJSONObject("rates").get("USD").toString());
-		Double GBP2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("GBP").toString()) * EUR2USD;
-		Double AUD2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("AUD").toString()) * EUR2USD;
-		Double MXN2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("MXN").toString()) * EUR2USD;
-		Double JPY2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("JPY").toString()) * EUR2USD;
-		Double CNY2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("CNY").toString()) * EUR2USD;
-		Double HKD2USD = 1 / Double.parseDouble(obj.getJSONObject("rates").get("HKD").toString()) * EUR2USD;
+		JSONObject rates = obj.getJSONObject("rates");
+		Double EUR2USD = MathUtils.toNum(rates.get("USD"));
+		Double GBP2USD = 1 / MathUtils.toNum(rates.get("GBP")) * EUR2USD;
+		Double AUD2USD = 1 / MathUtils.toNum(rates.get("AUD")) * EUR2USD;
+		Double MXN2USD = 1 / MathUtils.toNum(rates.get("MXN")) * EUR2USD;
+		Double JPY2USD = 1 / MathUtils.toNum(rates.get("JPY")) * EUR2USD;
+		Double CNY2USD = 1 / MathUtils.toNum(rates.get("CNY")) * EUR2USD;
+		Double HKD2USD = 1 / MathUtils.toNum(rates.get("HKD")) * EUR2USD;
 		
 		// long timestamp = Instant.now().getEpochSecond(); // Don't need timestamp now
 		
-		Map objMap = new ArrayMap("EUR2USD", EUR2USD, "GBP2USD", GBP2USD);
+		Map objMap = new ArrayMap(
+				"EUR2USD", EUR2USD, 
+				"GBP2USD", GBP2USD);
 		DataLogEvent event = new DataLogEvent("fx", 1, currrate, objMap);
 		DataLogRemoteStorage.saveToRemoteServer(event);
 		
@@ -160,7 +178,7 @@ public class CurrencyConvertor {
 		return event;
 	}
 
-	public DataLogEvent loadCurrDataFromES(Time loadingDate) {
+	DataLogEvent loadCurrDataFromES(Time loadingDate) {
 		DataLogHttpClient dlc = new DataLogHttpClient(new Dataspace("fx"));
 		dlc.initAuth("good-loop.com");
 		SearchQuery sq = new SearchQuery("evt:"+currrate+" AND time:"+loadingDate.toISOStringDateOnly());

@@ -24,6 +24,7 @@ import com.winterwell.datalog.DataLogRemoteStorage;
 import com.winterwell.datalog.Dataspace;
 import com.winterwell.json.JSONObject;
 import com.winterwell.utils.Dep;
+import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.containers.ArrayMap;
@@ -226,7 +227,6 @@ public class LgServlet {
 	 * @param stdTrackerParams
 	 * @param saveIt If true, use DataLog.count() to pass it into the save queue. If false, just return the event.
 	 * @return event, or null if this was screened out (eg our own IPs)
-	 * @throws IOException 
 	 */
 	public static DataLogEvent doLog(WebRequest state, Dataspace dataspace, String gby, String tag, double count, 
 			Time time, Map params, boolean stdTrackerParams, boolean saveIt) 
@@ -266,17 +266,18 @@ public class LgServlet {
 		}
 		
 		// Convert into USD
-		// dntn and price?? shouldn't we convert either/both??
 		// Minor TODO refactor into a method
-		if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
+		if (params.get("curr") != null) {
 			try {
-				CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
-				Double dntn = new Double(params.get("dntn").toString());
-				Double dntnusd = cc.convertES(dntn);
-				params.put("dntnusd", dntnusd);
-				Double price = new Double(params.get("price").toString());
-				Double priceusd = cc.convertES(price);
-				params.put("priceusd", priceusd);
+				KCurrency nativeCurrency = KCurrency.valueOf(params.get("curr").toString());
+				CurrencyConvertor cc = new CurrencyConvertor(nativeCurrency, KCurrency.USD, new Time());
+				for(String prop : new String[] {"dntn","price"}) {
+					double dntn = MathUtils.toNum(params.get(prop));
+					if (dntn!=0) {
+						Double dntnusd = cc.convertES(dntn);
+						params.put(prop+"usd", dntnusd); // e.g. dntnusd
+					}
+				}
 			} catch(Throwable ex) {
 				// paranoia
 				Log.e("lg", ex);
