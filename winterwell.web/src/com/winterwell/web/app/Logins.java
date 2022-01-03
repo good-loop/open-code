@@ -51,10 +51,7 @@ public class Logins {
 	 */
 	static Logins init() {
 		ConfigBuilder cb = ConfigFactory.get().getConfigBuilder(Logins.class);
-		loginsDir = new File(FileUtils.getWinterwellDir(), "logins");
-		if (loginsDir.isFile()) {
-			cb.set(loginsDir);
-		}
+		loginsDir = new File(FileUtils.getWinterwellDir(), "logins");		
 		File f = new File(loginsDir, "logins.misc.properties");
 		if (f.isFile()) {
 			cb.set(f);
