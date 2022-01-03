@@ -161,6 +161,53 @@ public class TimeTest {
 		diffTriangular(0);
 	}
 
+	
+	@Test
+	public void testDiffMonths() {
+		{
+			Time start = new Time(2019,2,1);
+			Time end = new Time(2019,3,1);
+			Dt dMonths = start.diff(end, TUnit.MONTH);
+			assert dMonths.getUnit()==TUnit.MONTH;
+			assert dMonths.getValue()==1 : dMonths;
+		}
+		{
+			Time start = new Time(2019,1,1);
+			Time end = new Time(2019,12,31,24,0,0);
+			Dt dMonths = start.diff(end, TUnit.MONTH);
+			assert dMonths.getUnit()==TUnit.MONTH;
+			assert dMonths.getValue()==12 : dMonths;
+		}
+		{
+			Time start = new Time(2019,1,1);
+			Time end = new Time(2019,1,31,24,0,0);
+			Dt dMonths = start.diff(end, TUnit.MONTH);
+			assert dMonths.getUnit()==TUnit.MONTH;
+			assert dMonths.getValue()==1 : dMonths;
+		}
+		{
+			Time start = new Time(2019,1,1);
+			Time end = new Time(2019,1,16);
+			Dt dMonths = start.diff(end, TUnit.MONTH);
+			assert dMonths.getUnit()==TUnit.MONTH;
+			assert MathUtils.approx(dMonths.getValue(), 0.5) : dMonths;
+		}
+		{
+			Time start = new Time(2019,1,1);
+			Time end = new Time(2021,12,31,24,0,0);
+			Dt dMonths = start.diff(end, TUnit.MONTH);
+			assert dMonths.getUnit()==TUnit.MONTH;
+			assert dMonths.getValue()==36;
+		}
+		{
+			Time end = new Time(2019,1,1);
+			Time start = new Time(2021,12,31,24,0,0);
+			Dt dMonths = start.diff(end, TUnit.MONTH);
+			assert dMonths.getUnit()==TUnit.MONTH;
+			assert dMonths.getValue()== -36 : dMonths.getValue();
+		}
+	}
+	
 	@Test
 	public void testDiffElsewhere() {
 		try {

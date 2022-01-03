@@ -337,12 +337,42 @@ public final class Time implements Serializable, Comparable<Time> {
 	 * Time difference: compute the time difference in the specified units. The
 	 * dt will be positive if b is after this.
 	 * 
+	 * Has special case handling if unit=TUnit.MONTH - which does calendar month arithmetic.
+	 * 
 	 * @param b
 	 * @param unit
-	 * @return time from this to b, ie. positive if b is after this
+	 * @return time from this to b, ie. positive if b is after this.
 	 */
 	public Dt diff(Time b, TUnit unit) {
-		// TODO special case handling for months?? e.g. 1st March is 1 month after 1st Feb
+		// HACK special case handling for months? e.g. 1st March is 1 month after 1st Feb
+		if (unit == TUnit.MONTH) {
+			if (this.equals(b)) {
+				return new Dt(0, TUnit.MONTH);
+			}
+			Time start, end;
+			if (isBefore(b)) {
+				start = this; end = b;
+			} else {
+				start = b; end = this;
+			}
+			int dm = 0;
+			GregorianCalendar cal = start.getCalendar();
+			GregorianCalendar endcal = end.getCalendar();
+			while(cal.compareTo(endcal) < 0) {
+				cal.add(unit.getCalendarField(), 1);
+				dm++;
+			}
+			Dt dt = new Dt(dm, TUnit.MONTH);
+			// fractional part?
+			if (cal.compareTo(endcal) != 0) {
+				Time overshot = new Time(cal);
+				long extraBitMsecs = overshot.diff(end);
+				dt = dt.plus(new Dt(extraBitMsecs, TUnit.MILLISECOND));
+			}
+			// which way round?
+			if (start==this) return dt;
+			return dt.multiply(-1);
+		}
 		long d = diff(b);
 		Dt dt = new Dt(d, TUnit.MILLISECOND);
 		return unit == TUnit.MILLISECOND ? dt : dt.convertTo(unit);
