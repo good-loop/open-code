@@ -35,7 +35,7 @@ public class Logins {
 
 	private static final String LOGTAG = "Logins";
 
-	static Logins dflt = init();
+	static final Logins dflt = init();
 	
 	private static File loginsDir;
 	
@@ -43,6 +43,12 @@ public class Logins {
 		return loginsDir;
 	}
 	
+	/**
+	 * Init from the "normal" chain of X.properties -- if they have 
+	 * properties logins.$domain.password, logins.$domain.loginName (see LoginDetails fields)
+	 * + logins.misc.properties
+	 * @return
+	 */
 	static Logins init() {
 		ConfigBuilder cb = ConfigFactory.get().getConfigBuilder(Logins.class);
 		loginsDir = new File(FileUtils.getWinterwellDir(), "logins");
@@ -76,6 +82,11 @@ public class Logins {
 	@Option
 	Map<String,String> logins = new HashMap();
 
+	/**
+	 * Logins loaded by {@link #init()}
+	 * @param domain
+	 * @return can be null
+	 */
 	public static LoginDetails get(String domain) {
 		assert ! Utils.isBlank(domain);
 		String _domain = domain.replace('.', '_');

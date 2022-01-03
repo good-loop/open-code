@@ -24,6 +24,8 @@ import com.winterwell.utils.containers.Cache;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
+import com.winterwell.web.LoginDetails;
+import com.winterwell.web.app.Logins;
 
 /**
  * FIXME load and stash data
@@ -32,6 +34,13 @@ import com.winterwell.utils.time.Time;
  */
 public class CurrencyConvertor {
 
+	
+	private LoginDetails getAPIKey() {
+		// this could be set in logins/logins.currencyconvertor.properties
+		LoginDetails ld = Logins.get("currencyconvertor");
+		return ld;
+	}
+	
 	private KCurrency from;
 	private KCurrency to;
 	private Time date;
@@ -134,7 +143,7 @@ public class CurrencyConvertor {
 	}
 	
 	private static final String currrate = "currrate";
-
+	
 	public DataLogEvent fetchCurrRate() throws IOException {
 		// We can only fetch rate in base currency of EUR due to using free tier API Key
 		String apiKey = "81dd51bbdbf39740e59cfa5ae3835537";
