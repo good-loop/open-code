@@ -176,6 +176,7 @@ public class GSheetsClient {
 	public Object updateValues(String spreadsheetId, List<List<Object>> values)
 			throws GeneralSecurityException, IOException 
 	{
+		assert ! values.isEmpty();
 		Log.i(LOGTAG, "updateValues... spreadsheet: "+spreadsheetId+" sheet: "+sheet);
 		Sheets service = getService();
 		
