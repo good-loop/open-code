@@ -254,7 +254,6 @@ public class ESDataLogSearchBuilder {
 
 		Map aggs2 = Containers.applyToJsonObject(aggregations, ESDataLogSearchBuilder::cleanJson2);
 		// also top-level
-		System.out.println(aggs2);
 		Map aggs3 = (Map) cleanJson2(aggs2, null);
 		return aggs3;
 	}	

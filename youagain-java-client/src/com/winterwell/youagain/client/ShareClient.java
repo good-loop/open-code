@@ -108,7 +108,6 @@ public final class ShareClient {
 			"entity", item
 		);
 		// call the server
-		System.out.println("");
 		String response = fb.getPage(yac.yac.endpoint, shareAction);
 		
 		JSend jsend = JSend.parse(response);		
@@ -129,7 +128,6 @@ public final class ShareClient {
 			"entity", item
 		);
 		// call the server
-		System.out.println("");
 		fb.getPage(yac.yac.endpoint, shareAction);
 		
 		// No exception? It's done.

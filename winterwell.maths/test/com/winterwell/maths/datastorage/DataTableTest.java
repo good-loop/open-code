@@ -41,6 +41,38 @@ public class DataTableTest {
 				+ "Costs,25,50,100\n") : csv;
 	}
 
+
+	@Test
+	public void testMergeEmpty() {
+		List d1 = Arrays.asList(
+			Arrays.asList("", "2020-11-30", "2020-12-31"),
+			Arrays.asList("Income", 100, 200),
+			Arrays.asList("Costs", 50, 100)
+		);
+		DataTable dt1 = new DataTable<>(d1);
+		DataTable dt2 = new DataTable<>();
+		
+		DataTable dtm = DataTable.merge(dt1, dt2);
+		DataTable dtmb = DataTable.merge(dt2, dt1);
+		
+		StringWriter sw = new StringWriter();
+		CSVWriter w = new CSVWriter(sw, new CSVSpec());
+		dtm.save(w);
+		
+		String csv = sw.toString();
+		System.out.println(csv);
+		assert csv.equals(",2020-11-30,2020-12-31\n"
+				+ "Income,100,200\n"
+				+ "Costs,50,100\n") : csv;
+		
+
+		StringWriter swb = new StringWriter();
+		CSVWriter wb = new CSVWriter(swb, new CSVSpec());
+		dtmb.save(wb);
+		
+		String csvb = swb.toString();
+		assert csv.equals(csvb);
+	}
 	
 	@Test
 	public void testAddStrings() {

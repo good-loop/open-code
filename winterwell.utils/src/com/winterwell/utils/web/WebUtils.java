@@ -1261,7 +1261,6 @@ public class WebUtils {
 		File temp1 = null;
 		try { 			
 			temp1 = File.createTempFile("page", ".html");
-			System.out.println(temp1);
 			FileUtils.write(temp1, html);
 			assert temp1.exists();
 			renderUrlToPdf(WebUtils.URI(temp1), file, printStyle, footer, TUnit.MINUTE.dt);

@@ -128,6 +128,7 @@ public class AST<X> extends Tree<Slice> {
 	}
 
 	public String parsed() {
+		// the parsed slice
 		return getValue().toString();
 	}
 

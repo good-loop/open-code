@@ -240,7 +240,10 @@ implements IStore, Flushable, Closeable
 				// normal save one at a time
 				consume2_saveOne(desc);
 				errorCount = null; // success - reset
-				
+			} catch (StackOverflowError soe) {
+				// Fail: we can't serialise this artifact :( e.g. an email Message with a live external connection
+				Log.e(LOGTAG, "Fail: Cannot save "+desc+" "+soe);
+				if (errorCount!=null) errorCount.plus(1);
 			} catch(Throwable ex) {			
 				// try again in a bit!
 				sendDelayed(desc, sender, delay);

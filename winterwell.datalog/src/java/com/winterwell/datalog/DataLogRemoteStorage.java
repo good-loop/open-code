@@ -20,6 +20,7 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Pair2;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.threads.Actor;
 import com.winterwell.utils.threads.IFuture;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.Period;
@@ -34,78 +35,76 @@ import com.winterwell.web.app.KServerType;
  * 
  * Normally use DataLogHttpClient as a front-end on this.
  * 
- * This is a kind of DatalogClient API class
- * TODO Remote server storage for DataLog
- * So the adserver can log stuff into lg.
+ * This is a kind of DatalogClient API class TODO Remote server storage for
+ * DataLog So the adserver can log stuff into lg.
+ * 
  * @author daniel
- * @testedby  DataLogRemoteStorageTest}
+ * @testedby DataLogRemoteStorageTest}
  */
-public class DataLogRemoteStorage implements IDataLogStorage
-{
+public class DataLogRemoteStorage implements IDataLogStorage {
 
 	/**
-	 * HACK a direct call to the remote server
+	 * a direct call to the remote server
+	 * 
 	 * @param event
 	 * @return
 	 */
-	public static boolean saveToRemoteServer(DataLogEvent event) {
+	public static String saveToRemoteServer(DataLogEvent event) {
 		return saveToRemoteServer(event, getConfig());
 	}
-	
 
 	/**
 	 * a direct call to the remote server
 	 * @param event
 	 * @return
 	 */
-	public static boolean saveToRemoteServer(DataLogEvent event, DataLogConfig remote) {
+	public static String saveToRemoteServer(DataLogEvent event, DataLogConfig configForRemote) {
 		assert event != null;
 		// TODO via Dep
 		DataLogRemoteStorage dlrs = new DataLogRemoteStorage();
 		// add https and endpoint
-		assert remote.logEndpoint.contains("/lg") : remote.logEndpoint;
-		dlrs.init(remote);
-		
+		assert configForRemote.logEndpoint.contains("/lg") : configForRemote.logEndpoint;
+		dlrs.init(configForRemote);
+
 		// DEBUG July 2018
-		String eds = event.dataspace; 
-		if (event.dataspace==null) {
-			Log.e("datalog", "null dataspace?! "+event);
+		String eds = event.dataspace;
+		if (event.dataspace == null) {
+			Log.e("datalog", "null dataspace?! " + event);
 			eds = "gl"; // paranoia HACK
-		}		
-		
+		}
+
 		Dataspace ds = new Dataspace(eds);
 		// save
 		Object ok = dlrs.saveEvent(ds, event, new Period(event.time));
-		Log.d("datalog.remote", "Save to "+remote.logEndpoint+" "+event+" response: "+ok);
-		return true;
+		Log.d("datalog.remote", "Save to " + configForRemote.logEndpoint + " " + event + " response: " + ok);
+		return (String) ok;
 	}
-	
-	
+
 	private static DataLogConfig getConfig() {
 		DataLogConfig config = Dep.getWithConfigFactory(DataLogConfig.class);
 		return config;
 	}
 
-
 	private String logEndpoint;
 	private String getDataEndpoint;
-
+	private boolean debug;
 
 	@Override
 	public IDataLogStorage init(DataLogConfig settings) {
 		logEndpoint = settings.logEndpoint;
 		getDataEndpoint = settings.dataEndpoint;
+		debug = settings.debug;
 		return this;
 	}
 
 	@Override
 	public void save(Period period, Map<String, Double> tag2count, Map<String, IDistribution1D> tag2mean) {
 		Collection<DataLogEvent> events = new ArrayList();
-		for(Entry<String, Double> tc : tag2count.entrySet()) {
+		for (Entry<String, Double> tc : tag2count.entrySet()) {
 			DataLogEvent event = new DataLogEvent(tc.getKey(), tc.getValue());
 			events.add(event);
 		}
-		for(Entry<String, IDistribution1D> tm : tag2mean.entrySet()) {
+		for (Entry<String, IDistribution1D> tm : tag2mean.entrySet()) {
 			IDistribution1D distro = tm.getValue();
 			DataLogEvent event = new DataLogEvent(tm.getKey(), distro.getMean());
 			if (distro instanceof IHasJson) {
@@ -119,17 +118,17 @@ public class DataLogRemoteStorage implements IDataLogStorage
 	}
 
 	@Override
-	public void saveHistory(Map<Pair2<String, Time>, Double> tag2time2count) {		
-		for(Entry<Pair2<String, Time>, Double> tc : tag2time2count.entrySet()) {
+	public void saveHistory(Map<Pair2<String, Time>, Double> tag2time2count) {
+		for (Entry<Pair2<String, Time>, Double> tc : tag2time2count.entrySet()) {
 			DataLogEvent event = new DataLogEvent(tc.getKey().first, tc.getValue());
 			event.time = tc.getKey().second;
 			// Minor TODO batch for efficiency
 			Collection<DataLogEvent> events = new ArrayList();
-			events.add(event);		
+			events.add(event);
 			DataLogImpl dl = (DataLogImpl) DataLog.getImplementation();
-			Period bucketPeriod = dl.getBucket(event.time); 
+			Period bucketPeriod = dl.getBucket(event.time);
 			saveEvents(events, bucketPeriod);
-		}		
+		}
 	}
 
 	@Override
@@ -138,16 +137,13 @@ public class DataLogRemoteStorage implements IDataLogStorage
 		throw new TodoException();
 	}
 
-
 	@Deprecated // TODO! parse the output. Unify with DataLogHttpClient
 	@Override
 	public StatReq<IDataStream> getData(String tag, Time start, Time end, KInterpolate fn, Dt bucketSize) {
-		FakeBrowser fb = fb();		
+		FakeBrowser fb = fb();
+		fb.setDebug(debug);
 //		fb.setAuthentication("daniel@local.com", "1234");		// FIXME remove this into options!
-		Map<String, String> vars = new ArrayMap(
-			"q", "evt:"+tag,
-			"breakdown", "time"
-				);
+		Map<String, String> vars = new ArrayMap("q", "evt:" + tag, "breakdown", "time");
 		vars.put("d", DataLog.getDataspace());
 		vars.put("t", DataLogEvent.simple); // type
 		String res = fb.getPage(getDataEndpoint, vars);
@@ -155,13 +151,12 @@ public class DataLogRemoteStorage implements IDataLogStorage
 		throw new TodoException(jobj);
 	}
 
-	private FakeBrowser fb() {
+	static private FakeBrowser fb() {
 		FakeBrowser fb = new FakeBrowser();
 		fb.setDebug(getConfig().isDebug());
 		fb.setUserAgent(FakeBrowser.HONEST_USER_AGENT);
 		return fb;
 	}
-
 
 	@Override
 	public StatReq<Double> getTotal(String tag, Time start, Time end) {
@@ -190,29 +185,58 @@ public class DataLogRemoteStorage implements IDataLogStorage
 	@Override
 	public void setHistory(Map<Pair2<String, Time>, Double> tagTime2set) {
 		// TODO Auto-generated method stub
-		if (Utils.isEmpty(tagTime2set)) return;
-		Log.w(new TodoException(tagTime2set));	
+		if (Utils.isEmpty(tagTime2set))
+			return;
+		Log.w(new TodoException(tagTime2set));
 	}
 
 	@Override
-	public Object saveEvent(Dataspace dataspace, DataLogEvent event, Period periodIsNotUsedHere) {
-		// See LgServlet which reads these		
-		FakeBrowser fb = fb();
-		fb.setRetryOnError(5); // try a few times to get through. Can block for 2 seconds.
-		Map<String, Object> vars = new ArrayMap();
-		// core fields
-		vars.put(DataLogFields.d.name, 	dataspace.name);		
-		vars.put("gby"/*LgServlet.GBY.name*/, 	event.groupById); // group it?
-		vars.put(DataLogFields.t.name, 	event.getEventType0()); // type
-		vars.put("count", event.count);
-		vars.put("time", event.getTime());
-		// props
-		String p = WebUtils2.generateJSON(event.getProps());
-		vars.put("p", p);		
-		// TODO String r = referer		
-		String res = fb.getPage(logEndpoint, (Map) vars);
-		Log.d("datalog.remote", "called "+fb.getLocation()+" return: "+res);
-		return res;
+	public String saveEvent(Dataspace dataspace, DataLogEvent event, Period periodIsNotUsedHere) {
+		assert dataspace.equiv(event.dataspace) : dataspace + " v " + event;
+		saveActor.send(new SaveDataLogEvent(this, event));
+		return "queued";
+	}
+
+	static final Actor<SaveDataLogEvent> saveActor = new DataLogRemoteStorageActor();
+
+	final static class SaveDataLogEvent {
+		private DataLogRemoteStorage dlrs;
+		public SaveDataLogEvent(DataLogRemoteStorage dataLogRemoteStorage, DataLogEvent event2) {
+			this.dlrs = dataLogRemoteStorage;
+			this.event = event2;
+		}
+		DataLogEvent event;
+	}
+	/**
+	 * Use an actor thread for low latency to the caller
+	 * @author daniel
+	 *
+	 */
+	static class DataLogRemoteStorageActor extends Actor<SaveDataLogEvent> {
+		@Override
+		protected void consume(SaveDataLogEvent se, Actor from) throws Exception {
+			// See LgServlet which reads these
+			FakeBrowser fb = fb();
+			fb.setTimeOut(10000); // log should be quick
+			fb.setRetryOnError(5); // try a few times to get through. Can block for 2 seconds.
+			Map<String, Object> vars = new ArrayMap();
+			// core fields
+			vars.put(DataLogFields.d.name, se.event.dataspace);
+			vars.put("gby"/* LgServlet.GBY.name */, se.event.groupById); // group it?
+			vars.put(DataLogFields.t.name, se.event.getEventType0()); // type
+			vars.put("count", se.event.count);
+			vars.put("time", se.event.getTime());
+			// debug?
+			if (debug) {
+				vars.put("debug", debug);
+			}
+			// props
+			String p = WebUtils2.generateJSON(se.event.getProps());
+			vars.put("p", p);
+			// TODO String r = referer
+			String res = fb.getPage(se.dlrs.logEndpoint, (Map) vars);
+			Log.d("datalog.remote", "called " + fb.getLocation() + " return: " + res);
+		}
 	}
 	
 	
@@ -225,13 +249,12 @@ public class DataLogRemoteStorage implements IDataLogStorage
 		}
 	}
 
-
 	/**
 	 * @deprecated old code
 	 * @param event
-	 * @return 
+	 * @return
 	 */
-	public static boolean hackRemoteDataLog(DataLogEvent event) {
+	public static String xhackRemoteDataLog(DataLogEvent event) {
 		return saveToRemoteServer(event);
 	}
 

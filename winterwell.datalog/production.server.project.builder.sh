@@ -2,7 +2,7 @@
 
 
 # Production Server -- Project Builder
-# VERSION=0.94
+# VERSION=0.95
 
 ## Warning - This is a bare-bones template file.
 ##     There are no functions written in here to
@@ -442,10 +442,10 @@ cleanup_repo
 cleanup_wwappbasejs_repo
 cleanup_bobwarehouse_repos
 git_checkout_release_branch
-stop_service
 use_bob
 use_npm
 use_webpack
 use_jerbil
+stop_service
 start_service
 catch_JVM_success_or_error

@@ -16,6 +16,7 @@ import org.eclipse.jetty.util.ajax.JSON;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.winterwell.bob.tasks.GitTask;
+import com.winterwell.bob.wwjobs.BuildHacks;
 import com.winterwell.data.AThing;
 import com.winterwell.data.KStatus;
 import com.winterwell.depot.IInit;
@@ -88,6 +89,10 @@ public abstract class CrudServlet<T> implements IServlet {
 	protected File getGitFile(AThing item, KStatus status) {
 		// TODO a config setting
 		File dir = new File(FileUtils.getWinterwellDir(), AMain.appName+"-files");
+		// HACK backwards compatability
+		if (AMain.main.getAppNameLocal().contains("moneyscript")) {
+			dir = new File(FileUtils.getWinterwellDir(), AMain.appName+"-plans");
+		}
 		if ( ! dir.isDirectory()) {
 			return null;
 		}
@@ -635,13 +640,18 @@ public abstract class CrudServlet<T> implements IServlet {
 	 * @param state
 	 */
 	protected void doBeforeSaveOrPublish(JThing<T> _jthing, WebRequest state) {
-		// set last modified
-		if (_jthing.java() instanceof AThing) {
-			AThing ting = (AThing) _jthing.java();
-			ting.setLastModified(new Time());
+		if ( ! (_jthing.java() instanceof AThing)) {
+			return;
+		}
+		// set last modified		
+		AThing ting = (AThing) _jthing.java();
+		ting.setLastModified(new Time());
 
-			// Git audit trail?
-			if (gitAuditTrail) {
+		// Git audit trail?
+		if (gitAuditTrail) {
+			if (BuildHacks.getServerType() != KServerType.PRODUCTION) {
+				Log.d(LOGTAG(), "No git audit trail on "+BuildHacks.getServerType());				
+			} else {
 				KStatus status = KStatus.DRAFT;
 				if (state!=null && state.actionIs(ACTION_PUBLISH)) status= KStatus.PUBLISHED; 
 				File fd = getGitFile(ting, status);
@@ -650,7 +660,7 @@ public abstract class CrudServlet<T> implements IServlet {
 					doSave2_file_and_git(state, json, fd);
 				}
 			}
-		}		
+		}
 	}
 	
 
@@ -754,7 +764,12 @@ public abstract class CrudServlet<T> implements IServlet {
 		}
 		Period period = CommonFields.getPeriod(state);
 		
-		SearchResponse sr = doList2(q, prefix, status, sort, size,from, period, state);
+		// for security filter on query (and later on results)
+		YouAgainClient yac = Dep.get(YouAgainClient.class);
+		List<AuthToken> tokens = yac.getAuthTokens(state);
+
+		// Build the query!
+		SearchResponse sr = doList2(q, prefix, status, sort, size,from, period, state, tokens);
 		
 //		Map<String, Object> jobj = sr.getParsedJson();
 		// Let's deal with ESHit and JThings
@@ -775,9 +790,7 @@ public abstract class CrudServlet<T> implements IServlet {
 			}
 		}
 		
-		// security filter
-		YouAgainClient yac = Dep.get(YouAgainClient.class);
-		List<AuthToken> tokens = yac.getAuthTokens(state);
+		// security filter on results
 		hits2 = doList2_securityFilter(hits2, state, tokens, yac);
 		
 		// sanitise for privacy
@@ -844,7 +857,12 @@ public abstract class CrudServlet<T> implements IServlet {
 		return hits2;
 	}
 	
-	protected void securityHack_teamGoodLoop(WebRequest state) {
+	/**
+	 * Crude security filter: reject non-Good-Loop users with an exception
+	 * @param state
+	 * @throws WebEx.E401
+	 */
+	protected void securityHack_teamGoodLoop(WebRequest state) throws WebEx.E401 {
 		YouAgainClient yac = Dep.get(YouAgainClient.class);
 		List<AuthToken> tokens = yac.getAuthTokens(state);
 		for (AuthToken authToken : tokens) {
@@ -923,9 +941,24 @@ public abstract class CrudServlet<T> implements IServlet {
 			Log.d(LOGTAG(), "doSave2_file_and_git "+fd);
 			FileUtils.write(fd, text);
 //			Git pull, commit and push!
-			GitTask gt0 = new GitTask(GitTask.PULL, fd);
-			gt0.run();
-			Log.d(LOGTAG(), gt0.getOutput());
+			try {
+				GitTask gt0 = new GitTask(GitTask.PULL, fd);
+				gt0.run();
+				gt0.close();
+				Log.d(LOGTAG(), gt0.getOutput());
+			} catch(Exception ex) {
+				// stach local edits which may be causing a problem
+				GitTask gt0a = new GitTask(GitTask.STASH, fd);
+				gt0a.addArg("--include-untracked");
+				gt0a.run();
+				gt0a.close();
+				Log.d(LOGTAG(), gt0a.getOutput());
+				// try to pull again
+				GitTask gt0 = new GitTask(GitTask.PULL, fd);
+				gt0.run();
+				gt0.close();
+				Log.d(LOGTAG(), gt0.getOutput());
+			}
 			
 			GitTask gt1 = new GitTask(GitTask.ADD, fd);
 			gt1.run();
@@ -941,10 +974,9 @@ public abstract class CrudServlet<T> implements IServlet {
 			Log.d(LOGTAG(), gt3.getOutput());
 			Log.d(LOGTAG(), "...doSave2_file_and_git "+fd+" done");
 		} catch(Throwable ex) {
-			state.addMessage(new AjaxMsg(KNoteType.warning, 
-					"Error while saving to Git", 
+			Log.w(LOGTAG(), "Error while saving to Git: "+ex+" "+ 
 					"Your save worked, but the audit trail did not update. Ask sysadmin@good-loop.com to do `cd "
-							+(fd==null? "null?!" : fd.getParentFile())+"; git pull`"));
+							+(fd==null? "null?!" : fd.getParentFile())+"; git pull`");
 		}
 	}
 
@@ -1005,9 +1037,13 @@ public abstract class CrudServlet<T> implements IServlet {
 	 * Does NOT dedupe (eg multiple copies with diff status) or security cleanse.
 	 * @param prefix 
 	 * @param from TODO
+	 * @param tokens 
 	 * @param num 
 	 */
-	public final SearchResponse doList2(String q, String prefix, KStatus status, String sort, int size, int from, Period period, WebRequest stateOrNull) {
+	public final SearchResponse doList2(String q, String prefix, KStatus status, String sort, 
+			int size, int from, Period period, 
+			WebRequest stateOrNull, List<AuthToken> tokens) 
+	{
 		// copied from SoGive SearchServlet
 		SearchRequest s = new SearchRequest(es);
 		/// which index? draft (which should include copies of published) by default
@@ -1015,7 +1051,10 @@ public abstract class CrudServlet<T> implements IServlet {
 		
 		// query
 		ESQueryBuilder qb = doList3_ESquery(q, prefix, period, stateOrNull);
-
+		
+		// security?
+		qb = doList3_securityFilterOnQuery(qb, stateOrNull, tokens);
+		
 		if (qb!=null) {
 			s.setQuery(qb);
 		}
@@ -1051,6 +1090,20 @@ public abstract class CrudServlet<T> implements IServlet {
 //		}
 		
 		return sr;
+	}
+
+
+	/**
+	 * Override to add extra security clauses to the query. Does nothing by default.
+	 * @param qb
+	 * @param stateOrNull
+	 * @param tokens
+	 * @return
+	 */
+	protected ESQueryBuilder doList3_securityFilterOnQuery(ESQueryBuilder qb, WebRequest stateOrNull,
+			List<AuthToken> tokens) 
+	{
+		return qb;
 	}
 
 

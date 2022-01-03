@@ -90,7 +90,7 @@ public class AppUtils {
 	public static final EnumField<KStatus> STATUS = new EnumField<>(KStatus.class, "status");
 	
 	
-	public static boolean DEBUG = true;
+	public static final boolean DEBUG = true;
 	
 	KServerType serverType = AppUtils.getServerType(null); 
 
@@ -632,7 +632,6 @@ public class AppUtils {
 		if (AppUtils.getServerType() == KServerType.LOCAL) {
 			ar.setDebug(true);
 			IESResponse resp = ar.get();
-			System.out.println(resp);
 		} else {
 			// log how to switch
 			String switchjson = 
@@ -1141,6 +1140,9 @@ public class AppUtils {
 
 /**
  * Setup notes - see App2AppAuthClientTest
+ * 
+ * See DatalogHttpClient.initAuth()
+ * 
  * @param config
  * @param appAuthName
  * @return
@@ -1151,7 +1153,7 @@ public class AppUtils {
 			return Dep.get(AuthToken.class);
 		}
 		YouAgainClient yac = Dep.get(YouAgainClient.class);
-		String appAuthJWT = config.getAppAuthJWT();
+		String appAuthJWT = config==null? null : config.getAppAuthJWT();
 		// use JWT if we have it
 		if ( ! Utils.isBlank(appAuthJWT)) {
 			AuthToken token = new AuthToken(appAuthJWT);
@@ -1163,7 +1165,7 @@ public class AppUtils {
 			Log.d("init.auth", "AuthToken set from loadLocal .token folder "+token.getXId());
 			return Dep.set(AuthToken.class, token);
 		}
-		String appAuthPassword = config.getAppAuthPassword();			
+		String appAuthPassword = config==null? null : config.getAppAuthPassword();			
 		if (Utils.isBlank(appAuthName) || Utils.isBlank(appAuthPassword)) {
 			Log.d(appAuthName, ":( Expected config to provide appAuthJWT for connecting with YouAgain. Missing app-auth details: app-name: "+
 					appAuthName+" p: "+appAuthPassword+" from "+config.getClass());

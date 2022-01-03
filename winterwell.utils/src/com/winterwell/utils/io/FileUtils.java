@@ -194,8 +194,8 @@ public class FileUtils {
 			try {
 				((Flushable) io).flush();
 			} catch (Exception e) {
-				// Swallow
-				System.err.println("FileUtils.close(): " + e); // e.printStackTrace()
+				// Swallow -- completely! seen blocking threads?! Dec 2021 on lg
+//				// System.err.println("FileUtils.close(): " + e); // e.printStackTrace()
 			}
 		}
 
@@ -205,10 +205,10 @@ public class FileUtils {
 			// Already closed?
 			if (e.getMessage() != null && e.getMessage().contains("Closed"))
 				return;
-			// Swallow!
+			// Swallow! -- completely! seen blocking threads?! Dec 2021 on lg
 			// Log.report(e); - bad idea: this can cause an infinite loop if
 			// report throws an IOExecption
-			System.err.println("FileUtils.close(): " + e); // e.printStackTrace();
+//			// System.err.println("FileUtils.close(): " + e); // e.printStackTrace();
 		}
 	}
 

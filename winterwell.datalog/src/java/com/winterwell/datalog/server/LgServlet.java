@@ -143,7 +143,7 @@ public class LgServlet {
 		ICallable<Time> ctime = state.get(DataLogFields.time);
 		Time time = ctime==null? null : ctime.call();
 		// log it!
-		DataLogEvent logged = doLog(state, ds, gby, tag, count, time, params, stdTrackerParams);
+		DataLogEvent logged = doLog(state, ds, gby, tag, count, time, params, stdTrackerParams, true);
 				
 		// also fire a callback?
 		String cb = state.get(JsonResponse.CALLBACK);
@@ -224,11 +224,12 @@ public class LgServlet {
 	 * @param time Optional set the event time 
 	 * @param params can be null
 	 * @param stdTrackerParams
+	 * @param saveIt If true, use DataLog.count() to pass it into the save queue. If false, just return the event.
 	 * @return event, or null if this was screened out (eg our own IPs)
 	 * @throws IOException 
 	 */
 	public static DataLogEvent doLog(WebRequest state, Dataspace dataspace, String gby, String tag, double count, 
-			Time time, Map params, boolean stdTrackerParams) throws IOException 
+			Time time, Map params, boolean stdTrackerParams, boolean saveIt) 
 	{
 		assert dataspace != null;		
 		assert tag != null : state;
@@ -266,6 +267,7 @@ public class LgServlet {
 		
 		// Convert into USD
 		// dntn and price?? shouldn't we convert either/both??
+		// Minor TODO refactor into a method
 		if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
 			try {
 				CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
@@ -281,17 +283,24 @@ public class LgServlet {
 			}
 		}
 		
-		// write to log file
-		doLogToFile(dataspace, tag, count, params, trckId, state);
-				
+		// write to log file -- off by default (Dec 2021 datalog crisis) 
+		if (state.debug) {
+			doLogToFile(dataspace, tag, count, params, trckId, state);
+		}
+		
 		// write to Stat / ES
 		// ...which dataspaces?
 		// Multiple dataspaces: Dan A reports a significant cost to per-user dataspaces
 		// -- he estimated one server per 4k ES indexes. c.f. #5403
 		DataLogEvent event = new DataLogEvent(dataspace, gby, count, new String[] { tag}, params);
 		if (time != null) event.setTime(time);
-		DataLog.count(event);
-
+		if (state.debug) {
+			event.debug = state.debug;
+		}
+		if (saveIt) {
+			DataLog.count(event);
+		}
+		
 		return event;
 	}
 	

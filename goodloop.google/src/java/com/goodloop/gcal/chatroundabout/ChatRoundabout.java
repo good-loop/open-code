@@ -39,6 +39,9 @@ import com.winterwell.utils.time.TimeUtils;
  * cross-office 121 on Friday at 11:30
  * Plus a within-team 121 on Friday at 11:00 for Tech
  * 
+ * Now it will prevent same 121 pairs matched for two weeks
+ * 
+ * @version 1.1.0
  * @author daniel
  *
  */
@@ -70,20 +73,7 @@ public class ChatRoundabout  {
 			String office = row[2];
 			String team = Containers.get(row, 5);
 
-			// HACK: non-standard emails
-			String firstName;
-			if (name.equals("Daniel Appel")) {
-				firstName = "sysadmin";
-			} else if (name.equals("Natasha Taylor")) {
-				firstName = "tash";
-			} else if (name.equals("Abdikarim Mohamed")) {
-				firstName = "karim";
-			} else {
-				firstName = name.split(" ")[0];
-			}
-			String email = firstName.toLowerCase()+"@good-loop.com";
-
-			emailList.add(new Employee(email, name, office, team));
+			emailList.add(new Employee(name, office, team));
 		}
 		Log.d(LOGTAG, "All employees: "+emailList);
 		return emailList;
@@ -130,14 +120,11 @@ public class ChatRoundabout  {
 			if (period.first.isBefore(start)) {
 				Log.e(LOGTAG, period+" "+event);
 			}
-			if (period.intersects(slot)) {
-				Log.d(LOGTAG, email+" has a Clash: "+summary+" "+period+" vs "+slot);
-				return false;
-			}
 			
 			// TODO no repeat 121s - though the clash check will probably get that
-			if (eventItem.contains("chat-roundabout") && eventItem.contains(chatSet)) {
-				Log.d(LOGTAG, "Already has a 121: "+event+" vs "+slot);
+      // ?? lets turn "chatroundabout" into a string constant (minor)
+			if ((eventItem.contains("chatroundabout") || eventItem.contains("chatroundabout")) && eventItem.contains(chatSet)) {
+				Log.d(LOGTAG, email+" already has a 121: "+summary+" vs "+slot);
 				return false;
 			}
 			
@@ -145,16 +132,54 @@ public class ChatRoundabout  {
 			if (eventItem.contains("holiday")) {
 				Period p2 = new Period(TimeUtils.getStartOfDay(period.first), TimeUtils.getEndOfDay(period.second));
 				if (p2.intersects(slot)) {
-					Log.d(LOGTAG, "Holiday Clash: "+event+" vs "+slot);
+					Log.d(LOGTAG, email+" has a Holiday Clash: "+summary+" vs "+slot);
 					return false;
 				}
 			}
-			
-			if (period.isWholeDay()) {
-				continue; // skipping whole day events (after checking if it is holiday)
+			if (period.intersects(slot)) {
+				if (period.isWholeDay()) {
+					continue; // skipping whole day event
+				}
+				Log.d(LOGTAG, email+" has a Clash: "+summary+" "+period+" vs "+slot);
+				return false;
 			}
 		}
 		return true;
+	}
+	
+	/**
+	 * Check who is the 121 partner last week
+	 * @param email
+	 * @param slot
+	 * @return email address
+	 */
+	private String check121LastWeek(String email, Period slot) {
+		// Only getting events 1 days before and after last Friday to try to catch long holidays but not getting too many event results		
+		Time start = TimeUtils.getStartOfDay(slot.first.minus(8, TUnit.DAY));
+		Time end = TimeUtils.getStartOfDay(slot.first.minus(6, TUnit.DAY));
+		
+		List<Event> allEvents = client().getEvents(email, start, end);
+
+		for (Event event : allEvents) {
+			String summary = event.getSummary();
+			if (summary != null && summary.contains("SM")) {
+				Log.d(summary);
+			}
+			
+			String eventItem = event.toString().toLowerCase();
+			
+			if (eventItem.contains("chatroundabout")) {
+				String[] summarySplit = summary.split(" ");
+				String[] attendees = {summary.split(" ")[summarySplit.length - 1], summary.split(" ")[summarySplit.length - 3]};
+				for (String staff : attendees) {
+					if (!email.split("@")[0].equalsIgnoreCase(staff)) {
+						return staff.toLowerCase() + "@good-loop.com";
+					}
+				}
+			}
+			
+		}
+		return null;
 	}
 
 	/**
@@ -167,7 +192,7 @@ public class ChatRoundabout  {
 	 * @param _smallOffice
 	 * @param _largeOffice Can be the same as smallOffice
 	 */
-	private ArrayList<Pair<Employee>> getRandomPairs(List<Employee> _smallOffice, List<Employee> _largeOffice) {
+	private ArrayList<Pair<Employee>> getRandomPairs(List<Employee> _smallOffice, List<Employee> _largeOffice, Period slot) {
 		// TODO make sure we hit every pairing
 		// NB: defensive copy so we can edit locally
 		ArrayList<Employee> largeOffice = new ArrayList(_largeOffice);
@@ -183,11 +208,23 @@ public class ChatRoundabout  {
 			if (largeOffice.isEmpty()) {
 				break; // last person can be left out for in-team
 			}
-			Employee randomEmail = largeOffice.remove(0);
-			smallOffice.remove(randomEmail);
-			assert ! pairEmail.equals(randomEmail);
-			Pair pair = new Pair(pairEmail, randomEmail);
-			randomPairs.add(pair);
+			String lastWeekEmail = check121LastWeek(pairEmail.email, slot);
+			if (lastWeekEmail != null && lastWeekEmail.equalsIgnoreCase(largeOffice.get(0).email) && largeOffice.size() > 1) {
+				Employee randomEmail = largeOffice.remove(1);
+				smallOffice.remove(randomEmail);
+				assert ! pairEmail.equals(randomEmail);
+				Pair pair = new Pair(pairEmail, randomEmail);
+				randomPairs.add(pair);
+				Log.d(LOGTAG, pairEmail.email+" had 121 events with "+largeOffice.get(0).email+" last week, skipping pair to next person > "+randomEmail.email);
+			} else {
+				Employee randomEmail = largeOffice.remove(0);
+				smallOffice.remove(randomEmail);
+				assert ! pairEmail.equals(randomEmail);
+				Pair pair = new Pair(pairEmail, randomEmail);
+				randomPairs.add(pair);
+				
+			}
+			
 		}
 		
 		Log.i(LOGTAG, "Poor guys who won't have 121 this week: "+largeOffice);
@@ -225,14 +262,15 @@ public class ChatRoundabout  {
 		};
 		event.setAttendees(Arrays.asList(attendees));
 
-		EventReminder[] reminderOverrides = new EventReminder[] {
-		    new EventReminder().setMethod("email").setMinutes(10),
-		    new EventReminder().setMethod("popup").setMinutes(1),
-		};
-		Event.Reminders reminders = new Event.Reminders()
-		    .setUseDefault(false)
-		    .setOverrides(Arrays.asList(reminderOverrides));
-		event.setReminders(reminders);
+//		Don't need reminder as they're not to the attendees
+//		EventReminder[] reminderOverrides = new EventReminder[] {
+//		    new EventReminder().setMethod("email").setMinutes(10),
+//		    new EventReminder().setMethod("popup").setMinutes(1),
+//		};
+//		Event.Reminders reminders = new Event.Reminders()
+//		    .setUseDefault(false)
+//		    .setOverrides(Arrays.asList(reminderOverrides));
+//		event.setReminders(reminders);
 		
 		event.setGuestsCanModify(true);
 		
@@ -295,7 +333,7 @@ public class ChatRoundabout  {
 		boolean e2l = (edinburghEmails.size() > londonEmails.size());
 		
 		// Random pairings
-		List<Pair<Employee>> randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails) : getRandomPairs(edinburghEmails, londonEmails);
+		List<Pair<Employee>> randomPairs = e2l ? getRandomPairs(londonEmails, edinburghEmails, slot) : getRandomPairs(edinburghEmails, londonEmails, slot);
 		
 		postEventsToCalendar(chatSet, slot, randomPairs);
 	}
@@ -339,7 +377,7 @@ public class ChatRoundabout  {
 		// TODO fetch last weeks 121s
 		
 		// Random pairings
-		List<Pair<Employee>> randomPairs = getRandomPairs(edinburghEmails, edinburghEmails);
+		List<Pair<Employee>> randomPairs = getRandomPairs(edinburghEmails, edinburghEmails, slot);
 		
 
 		postEventsToCalendar(chatSet, slot, randomPairs);

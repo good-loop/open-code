@@ -323,7 +323,9 @@ public class DataLogImpl implements Closeable, IDataLog {
 		storage.save(period, old, oldMean);
 		storage.saveHistory(oldTagTimeCount);
 		storage.setHistory(oldTagTimeSet);
-		storage.saveEvents(oldid2event.values(), period);
+		if ( ! oldid2event.isEmpty()) {
+			storage.saveEvents(oldid2event.values(), period);
+		}
 	}
 
 	Period getCurrentBucket() {

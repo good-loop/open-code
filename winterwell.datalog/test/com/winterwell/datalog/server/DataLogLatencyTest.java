@@ -21,43 +21,116 @@ import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FakeBrowser;
+import com.winterwell.web.WebEx;
 
+/**
+ * NB: not using junit cos we dont want to autorun this slow thing
+ * @author daniel
+ *
+ */
 public class DataLogLatencyTest {
+
+	private static boolean gby;
+
 
 	public static void main(String[] args) {
 		DataLogLatencyTest dlt = new DataLogLatencyTest();
-		dlt.saveEventLatency_testServer();
+//		gby = true; // still slow and no logs
+		
+		dlt.saveEventLatency_liveServer(); // SLOW :(
+//		113.76797 minutes
+//		SUCCESS! :(
+		// wtf? 
+//		0.47901666 minutes
+//		SUCCESS!
+		
+//		dlt.saveEventLatency_testServer(); // FAST
+//		dlt.saveEventLatency_localServer(); // FAST
+		Printer.out("SUCCESS!");
 	}
 
-//	@Test
-	public void saveEventLatency_testServer() {
+	private void saveEventLatency_testServer() {
 		DataLogConfig dlc = new DataLogConfig();
 		dlc.logEndpoint = "https://testlg.good-loop.com/lg";
 		dlc.dataEndpoint = "https://testlg.good-loop.com/data";
 		dlc.debug = true;
+		try(DepContext c = Dep.with(DataLogConfig.class, dlc)) {
+			saveEventLatency_2();
+		}
+	}
+
+	
+
+	private void saveEventLatency_localServer() {
+		DataLogConfig dlc = new DataLogConfig();
+		dlc.logEndpoint = "http://locallg.good-loop.com/lg";
+		dlc.dataEndpoint = "http://locallg.good-loop.com/data";
+		dlc.debug = true;
+		try(DepContext c = Dep.with(DataLogConfig.class, dlc)) {
+			saveEventLatency_2();
+		}
+	}
+
+	
+
+	private void saveEventLatency_liveServer() {
+		DataLogConfig dlc = new DataLogConfig();
+		dlc.logEndpoint = "https://lg.good-loop.com/lg";
+		dlc.dataEndpoint = "https://lg.good-loop.com/data";
+		dlc.debug = true;
+		try(DepContext c = Dep.with(DataLogConfig.class, dlc)) {
+			saveEventLatency_2();
+		}
+	}
+
+	
+	public void saveEventLatency_2() {
 		String tag = "latency_"+Utils.getRandomString(6);
 		
-		try(DepContext c = Dep.with(DataLogConfig.class, dlc)) {
-			Dataspace ds = new Dataspace("test");
-			DataLogHttpClient dlhc = new DataLogHttpClient(ds);
-			
-			DataLogEvent e = new DataLogEvent(tag, 1);
-			Object ok = dlhc.save(e);
-			
-			// wait and see...
-			Time time = new Time();
-			while(true) {
-				Utils.sleep(10000);
+		Dataspace ds = new Dataspace("test");
+		DataLogHttpClient dlhc = new DataLogHttpClient(ds);
+		dlhc.setDebug(true);
+		dlhc.getConfig().debug = true;
+		dlhc.initAuth("good-loop.com");
+		
+		String _gby = gby? "gby_id_"+tag : null;
+		// NB: needs 2+ props to avoid being treated as a simple stat!
+		DataLogEvent e = new DataLogEvent(ds, _gby, 1, new String[] {tag}, 
+				new ArrayMap("oxid","latencytester","country","GB","city","Edinburgh"));
+		dlhc.save(e);
+		
+		// wait and see...
+		Time time = new Time();
+		while(true) {
+			try {
+				Utils.sleep(1000);
 				SearchQuery q = new SearchQuery("evt:"+tag);
-				List<DataLogEvent> es = dlhc.getEvents(q, 1);
-				if ( ! es.isEmpty()) {
+				List<DataLogEvent> es = dlhc.getEvents(q, 5);
+				if (es!=null && ! es.isEmpty()) {
 					Printer.out(es);
-					Printer.out(time.dt(new Time()));
+					Printer.out(time.dt(new Time()).convertTo(TUnit.MINUTE));
 					break;
 				}
+				
+				SearchQuery q2 = new SearchQuery("oxid:latencytester");
+				List<DataLogEvent> es2 = dlhc.getEvents(q2, 5);
+				if (es2!=null && ! es2.isEmpty()) {
+					Printer.out(es2);
+				}
+				
+				String _gby2 = gby? "gby_id_"+time.getMinutes()+tag : null;
+				DataLogEvent en = new DataLogEvent(ds, _gby2, 1, new String[] {tag}, new ArrayMap(
+						"oxid","latencytester",
+						"cause","worry"));
+				dlhc.save(en);
+	
 				System.out.println(time.dt(new Time()).convertTo(TUnit.MINUTE));
-			}			
-		}
+				Utils.sleep(20000);
+			} catch (WebEx.E50X e50x) {
+				Log.w(e50x);
+				Utils.sleep(20000);
+			}
+		}			
 	}
 	
 	

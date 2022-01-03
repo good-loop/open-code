@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.Map.Entry;
 
 import com.winterwell.datalog.server.CompressDataLogIndexMain;
@@ -42,12 +44,13 @@ import com.winterwell.utils.time.Time;
 public class ESDataLogIndexManager {
 
 	private static final String LOGTAG = "ESDIM";
-	private ESStorage ess;
+	private final ESStorage ess;
 
 
 
 	public ESDataLogIndexManager(ESStorage esStorage) {
 		this.ess = esStorage;
+		Log.d(LOGTAG, "new ESDataLogIndexManager");
 	}
 
 	/**
@@ -89,9 +92,8 @@ public class ESDataLogIndexManager {
 	}
 	
 
-	
-	final Set<String> knownBaseIndexes = new HashSet();
-	final Map<Dataspace,String> activeBase4dataspace = new HashMap();
+	private final static Set<String> knownBaseIndexes = new ConcurrentSkipListSet<>();
+	private final static Map<Dataspace,String> activeBase4dataspace = new ConcurrentHashMap();
 	
 
 	/**
@@ -105,6 +107,7 @@ public class ESDataLogIndexManager {
 	private synchronized boolean registerDataspace3_doIt(Dataspace dataspace, String baseIndex, ESHttpClient _client, Time now) {
 		// race condition - check it hasn't been made
 		if (_client.admin().indices().indexExists(baseIndex)) {
+			Log.i(LOGTAG, "No register dataspace: "+dataspace+" baseIndex: "+baseIndex+" - already exists in ES");
 			knownBaseIndexes.add(baseIndex);
 			return false;
 		}
@@ -214,7 +217,8 @@ public class ESDataLogIndexManager {
 		Set<String> writeIndices = GetAliasesRequest.getBaseIndices(wa);
 
 		if (writeIndices.contains(baseIndex)) {
-			Log.d(LOGTAG, "Write index already correct: "+baseIndex+" <- "+writeIndex);
+			Log.d(LOGTAG, "Write index already correct: "+baseIndex+" <- "+writeIndex+" NOT -> "+ab);
+			Log.d(LOGTAG, "set (without a swap) dataspace: "+dataspace+" activeBase: "+baseIndex);
 			activeBase4dataspace.put(dataspace, baseIndex);
 			return;
 		}
@@ -231,6 +235,7 @@ public class ESDataLogIndexManager {
 		
 		aliasSwap.get().check(); //What happens if we fail here??
 		
+		Log.d(LOGTAG, "set post-swap dataspace: "+dataspace+" activeBase: "+baseIndex);
 		activeBase4dataspace.put(dataspace, baseIndex);
 	}
 
