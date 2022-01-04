@@ -21,5 +21,7 @@ public class ChatRoundaboutConfig implements ISiteConfig {
 
 	@Option
 	Dt duration = new Dt(10, TUnit.MINUTE);
-	
+
+	@Option(description = "If set, do not make any events - just report on what you would do, and who's blocked this week")
+	boolean reportOnly;
 }

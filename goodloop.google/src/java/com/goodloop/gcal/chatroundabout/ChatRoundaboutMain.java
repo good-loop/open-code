@@ -29,11 +29,15 @@ public class ChatRoundaboutMain extends AMain<ChatRoundaboutConfig> {
 		// ChatRoundabout should be idempotent within a given week.
 		// A repeated call should (painstakingly) fail to make any events, because they already exist
 		try {
-			new ChatRoundabout(getConfig()).run();
-			pleaseStop = true;
+			ChatRoundabout cr = new ChatRoundabout(getConfig(), ChatRoundabout.CHATSET_CROSS_TEAM);
+			cr.run();
+			
+			ChatRoundabout cr2 = new ChatRoundabout(getConfig(), ChatRoundabout.CHATSET_IN_TEAM);
+			cr2.run();
 		} catch (IOException e) {
 			throw Utils.runtime(e);
-		}
+		}		
+		pleaseStop = true;
 	}
 	
 }

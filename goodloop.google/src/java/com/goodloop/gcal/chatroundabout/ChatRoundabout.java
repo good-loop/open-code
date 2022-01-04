@@ -9,7 +9,9 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -47,10 +49,9 @@ import com.winterwell.utils.time.TimeUtils;
  */
 public class ChatRoundabout  {
 	
-	private static final Boolean LIVE_MODE = true;
-	private static final String LOGTAG = null;
-	private static final String CHATSET_CROSS_TEAM = "cross-team";
-	private static final String CHATSET_IN_TEAM = "within-team";
+	private static final String LOGTAG = "ChatRoundabout";
+	static final String CHATSET_CROSS_TEAM = "cross-team";
+	static final String CHATSET_IN_TEAM = "within-team";
 
 	public void TODOremoveEventsByRegex() {
 		
@@ -85,7 +86,7 @@ public class ChatRoundabout  {
 	 * @param chatSet "team" or "cross-team"
 	 * @return true if OK
 	 */
-	private boolean checkEvent(String email, String chatSet, Period slot) {
+	private boolean checkEvent(String email) {
 		
 		// Restrict events around the date of the meeting
 		
@@ -133,6 +134,7 @@ public class ChatRoundabout  {
 				Period p2 = new Period(TimeUtils.getStartOfDay(period.first), TimeUtils.getEndOfDay(period.second));
 				if (p2.intersects(slot)) {
 					Log.d(LOGTAG, email+" has a Holiday Clash: "+summary+" vs "+slot);
+					no121reasonForEmployeeEmail.put(email, "holiday: "+summary);
 					return false;
 				}
 			}
@@ -141,6 +143,7 @@ public class ChatRoundabout  {
 					continue; // skipping whole day event
 				}
 				Log.d(LOGTAG, email+" has a Clash: "+summary+" "+period+" vs "+slot);
+				no121reasonForEmployeeEmail.put(email, "clash: "+summary+" at "+period);
 				return false;
 			}
 		}
@@ -228,6 +231,10 @@ public class ChatRoundabout  {
 		}
 		
 		Log.i(LOGTAG, "Poor guys who won't have 121 this week: "+largeOffice);
+		for (Employee e : largeOffice) {
+			assert ! no121reasonForEmployeeEmail.containsKey(e.email);
+			no121reasonForEmployeeEmail.put(e.email, "no partner this week");
+		}
 		
 		return randomPairs;
 	}
@@ -302,27 +309,38 @@ public class ChatRoundabout  {
 		}
 		
 		// Cross team
-		createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);
+		if (CHATSET_CROSS_TEAM.equals(chatSet)) {
+			createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);		
+		} else if (CHATSET_IN_TEAM.equals(chatSet)) {
+			// Within team
+			createTeamEvents(nextFriday, edinburghEmails);
+		} else {
+			throw new IllegalArgumentException(chatSet);
+		}
 		
-		
-		// Within team
-		createTeamEvents(nextFriday, edinburghEmails);
+		// output
+		// NB the extra whitespace is stripped in the log file but not in sysout
+		Log.i(LOGTAG, "\n\nNo 121s for "+chatSet+" at "+slot.first.format("hh:mm")+":\n\n"+Printer.toString(no121reasonForEmployeeEmail, "\n", ":\t")+"\n\n");
 	}
 
 	final ChatRoundaboutConfig config;
 	
-	public ChatRoundabout(ChatRoundaboutConfig config) {
+	public ChatRoundabout(ChatRoundaboutConfig config, String chatSet) {
 		this.config = config;
+		this.chatSet = chatSet;
 	}
+	
+	Map<String, String> no121reasonForEmployeeEmail = new HashMap();
+	String chatSet;
+	private Period slot;
 	
 	private void createCrossTeamEvents(Time nextFriday, List<Employee> londonEmails, List<Employee> edinburghEmails) throws IOException {
 		Time s = config.crossTeamTime.set(nextFriday);
 		Time e = s.plus(config.duration);
-		Period slot = new Period(s, e);
-		String chatSet = CHATSET_CROSS_TEAM;
+		slot = new Period(s, e);
 		// filter out people who cant make the slot
-		londonEmails = Containers.filter(londonEmails, employee -> checkEvent(employee.email, chatSet, slot));
-		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
+		londonEmails = Containers.filter(londonEmails, employee -> checkEvent(employee.email));
+		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email));
 		
 		// TODO fetch last weeks 121s
 		
@@ -345,7 +363,7 @@ public class ChatRoundabout  {
 		for (Pair<Employee> ab : randomPairs) {
 			Event preparedEvent = prepare121(ab, slot, chatSet);			
 			// Save events to Google Calendar, or just do a dry run?
-			if (LIVE_MODE) {
+			if ( ! config.reportOnly) {
 				GCalClient gcc = client();
 				Calendar person1 = gcc.getCalendar(ab.first.email);
 				String calendarId = person1.getId(); // "primary";
@@ -369,10 +387,9 @@ public class ChatRoundabout  {
 	private void createTeamEvents(Time nextFriday, List<Employee> edinburghEmails) throws IOException {
 		Time s = config.inTeamTime.set(nextFriday);
 		Time e = s.plus(config.duration);
-		Period slot = new Period(s, e);
-		String chatSet = CHATSET_IN_TEAM;
+		slot = new Period(s, e);
 		// filter out people who cant make the slot
-		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
+		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email));
 		
 		// TODO fetch last weeks 121s
 		
