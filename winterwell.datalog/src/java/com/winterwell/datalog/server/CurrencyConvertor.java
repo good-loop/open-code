@@ -35,11 +35,11 @@ import com.winterwell.web.app.Logins;
 public class CurrencyConvertor {
 
 	
-	private LoginDetails getAPIKey() {
-		// this could be set in logins/logins.currencyconvertor.properties
-		LoginDetails ld = Logins.get("currencyconvertor");
-		return ld;
-	}
+//	private LoginDetails getAPIKey() {
+//		// this could be set in logins/logins.currencyconvertor.properties
+//		LoginDetails ld = Logins.get("currencyconvertor");
+//		return ld;
+//	}
 	
 	private KCurrency from;
 	private KCurrency to;
@@ -146,9 +146,8 @@ public class CurrencyConvertor {
 	
 	public DataLogEvent fetchCurrRate() throws IOException {
 		// We can only fetch rate in base currency of EUR due to using free tier API Key
-		String apiKey = "81dd51bbdbf39740e59cfa5ae3835537";
-		String apiKeyBackup = "5ddbce9daf299ed4b46804a0101c5046";
-		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key="+apiKey+"&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY"); 
+//		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key="+getAPIKey().apiKey+"&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY"); 
+		URL urlForGetRequest = new URL("https://api.exchangerate.host/latest?base=EUR");
 		
 		// Minor: FakeBrowser handles http connections nicely
 		HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
