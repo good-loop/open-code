@@ -54,7 +54,7 @@ public class DataLogHttpClient {
 		XId appXid = App2AppAuthClient.getAppXId(thisAppName);
 		AuthToken at = yac.loadLocal(appXid);
 		if (at!=null) {
-			auth = Arrays.asList(at);			
+			setAuth(Arrays.asList(at));	
 			return this;
 		}
 		// try to init!
@@ -128,7 +128,14 @@ public class DataLogHttpClient {
 		return DataLogRemoteStorage.saveToRemoteServer(event, config);
 	}
 	
-	public List<DataLogEvent> getEvents(SearchQuery q, int maxResults) {
+	/**
+	 * 
+	 * @param q
+	 * @param maxResults
+	 * @return Can this return null?? when does that happen??
+	 * @throws WebEX.E401 You have to habd setup auth (see {@link #initAuth(String)}) to get events data. 
+	 */
+	public List<DataLogEvent> getEvents(SearchQuery q, int maxResults) throws WebEx.E401 {
 		// Call DataServlet
 		FakeBrowser fb = new FakeBrowser();
 		fb.setDebug(debug);
@@ -141,7 +148,7 @@ public class DataLogHttpClient {
 				"dataspace", dataspace, 
 				"q", q==null? null : q.getRaw(), 
 				"size", maxResults,
-				DataLogFields.START.name, startParam(),
+				DataLogFields.START.name, startParam(), // ?? why not use null if unset? Wouldnt that be a bit faster in ES
 				DataLogFields.END.name, end==null? null : end.toISOString(),
 				"debug", debug
 				);
@@ -176,7 +183,7 @@ public class DataLogHttpClient {
 	}
 
 	private String startParam() {
-		// /data sedaults to start=1 month ago
+		// NB: the /data endpoint defaults to start=1 month ago
 		return start==null? TimeUtils.WELL_OLD.toISOString() : start.toISOString();
 	}	
 

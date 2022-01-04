@@ -11,7 +11,7 @@ public class BuildDataLog extends BuildWinterwellProject {
 
 	public BuildDataLog() {
 		super("winterwell.datalog");
-		setVersion("1.2.3"); // 9 Dec 2021
+		setVersion("1.2.4"); // 3 Jan 2022
 	}	
 
 	@Override

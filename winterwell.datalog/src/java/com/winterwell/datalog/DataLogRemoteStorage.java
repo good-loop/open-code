@@ -44,7 +44,7 @@ import com.winterwell.web.app.KServerType;
 public class DataLogRemoteStorage implements IDataLogStorage {
 
 	/**
-	 * HACK a direct call to the remote server
+	 * a direct call to the remote server
 	 * 
 	 * @param event
 	 * @return
@@ -55,7 +55,6 @@ public class DataLogRemoteStorage implements IDataLogStorage {
 
 	/**
 	 * a direct call to the remote server
-	 * 
 	 * @param event
 	 * @return
 	 */
@@ -154,6 +153,7 @@ public class DataLogRemoteStorage implements IDataLogStorage {
 
 	static private FakeBrowser fb() {
 		FakeBrowser fb = new FakeBrowser();
+		fb.setDebug(getConfig().isDebug());
 		fb.setUserAgent(FakeBrowser.HONEST_USER_AGENT);
 		return fb;
 	}
@@ -238,6 +238,8 @@ public class DataLogRemoteStorage implements IDataLogStorage {
 			Log.d("datalog.remote", "called " + fb.getLocation() + " return: " + res);
 		}
 	}
+	
+	
 
 	@Override
 	public void saveEvents(Collection<DataLogEvent> events, Period period) {
