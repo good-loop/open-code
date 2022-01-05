@@ -14,7 +14,6 @@ import com.winterwell.datalog.DataLogEvent;
 import com.winterwell.datalog.DataLogHttpClient;
 import com.winterwell.datalog.DataLogRemoteStorage;
 import com.winterwell.datalog.Dataspace;
-import com.winterwell.datalog.server.CurrencyConvertorTest;
 import com.winterwell.json.JSONObject;
 import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.MathUtils;
