@@ -10,6 +10,7 @@ import java.util.Set;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.WrappedException;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.web.SimpleJson;
@@ -135,35 +136,40 @@ public class JsonPatch implements IHasJson {
 			return;
 		}		
 		for (JsonPatchOp diff : diffs) {
-			// NB: drop the leading / on path
-			String[] bits = diff.path.substring(1).split("/");			
-			Object value = diff.value;
-			String[] ppath;
-			String lastBit;
-			switch(diff.op) {
-			case add: case replace:
-				SimpleJson.set(jobj, value, bits);
-				break;
-			case remove:
-				// remove from array or object?
-				ppath = Arrays.copyOf(bits, bits.length-1);
-				lastBit = bits[bits.length-1];
-				Object parent = SimpleJson.get(jobj, ppath);
-				if (parent instanceof List || parent.getClass().isArray()) {
-					// NB: copy 'cos some lists can't be edited
-					List<Object> list = new ArrayList(Containers.asList(parent));
-					int i = Integer.valueOf(lastBit);
-					list.remove(i);
-					SimpleJson.set(jobj, list, ppath);
-				} else {
-					// object -- null out
-					((Map)parent).remove(lastBit);
+			try {
+				// NB: drop the leading / on path
+				String[] bits = diff.path.substring(1).split("/");			
+				Object value = diff.value;
+				String[] ppath;
+				String lastBit;
+				switch(diff.op) {
+				case add: case replace:
+					SimpleJson.set(jobj, value, bits);
+					break;
+				case remove:
+					// remove from array or object?
+					ppath = Arrays.copyOf(bits, bits.length-1);
+					lastBit = bits[bits.length-1];
+					Object parent = SimpleJson.get(jobj, ppath);
+					if (parent instanceof List || parent.getClass().isArray()) {
+						// NB: copy 'cos some lists can't be edited
+						List<Object> list = new ArrayList(Containers.asList(parent));
+						int i = Integer.valueOf(lastBit);
+						list.remove(i);
+						SimpleJson.set(jobj, list, ppath);
+					} else {
+						// object -- null out
+						((Map)parent).remove(lastBit);
+					}
+					break;			
+				case move:
+				case copy:
+				case test:
+					throw new TodoException(diff);
 				}
-				break;			
-			case move:
-			case copy:
-			case test:
-				throw new TodoException(diff);
+			} catch (Exception ex) {
+				// add a bit more info
+				throw new WrappedException(diff.toString()+" -> "+ex.getMessage(), ex);
 			}
 		}
 	}
@@ -201,7 +207,5 @@ public class JsonPatch implements IHasJson {
 	public String toString() {
 		return "JsonPatch"+toJSONString();
 	}
-
-	
 
 }
