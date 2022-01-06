@@ -31,6 +31,8 @@ import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils;
 import com.winterwell.utils.web.WebUtils2;
+import com.winterwell.web.ajax.AjaxMsg;
+import com.winterwell.web.ajax.AjaxMsg.KNoteType;
 import com.winterwell.web.ajax.JsonResponse;
 import com.winterwell.web.app.IServlet;
 import com.winterwell.web.app.Json2Csv;
@@ -89,7 +91,7 @@ public class DataServlet implements IServlet {
 		// ONLY give examples for logged in users
 		if ( ! isLoggedIn(state) && size > 0) {			
 			size = 0;
-			state.addMessage("Not logged in => no examples");
+			state.addMessage(new AjaxMsg(KNoteType.info, "401", "Not logged in => no examples"));
 		}
 		
 		// time window

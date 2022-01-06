@@ -1,6 +1,11 @@
 package com.winterwell.datalog.server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,12 +16,15 @@ import java.util.regex.Matcher;
 
 import org.eclipse.jetty.util.ajax.JSON;
 
-import com.goodloop.data.CurrencyConvertor;
+import com.goodloop.data.KCurrency;
 import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.DataLogEvent;
+import com.winterwell.datalog.DataLogRemoteStorage;
 import com.winterwell.datalog.Dataspace;
+import com.winterwell.json.JSONObject;
 import com.winterwell.utils.Dep;
+import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.containers.ArrayMap;
@@ -207,7 +215,7 @@ public class LgServlet {
 	 */
 	static List<Map> userTypeForIPorXId;
 	static volatile Time userTypeForIPorXIdFetched;
-	
+
 	/**
 	 * 
 	 * @param state
@@ -257,23 +265,29 @@ public class LgServlet {
 			params.put("invalid", userType);
 		}
 		
-		// TODO Currency Converter
-		if (false) {
-			if (params.get("curr") != null && params.get("dntn") != null && params.get("price") != null) {
-//				CurrencyConvertor cc = new CurrencyConvertor(KCurrency.valueOf(params.get("curr").toString()), KCurrency.USD, new Time());
-//				Double dntn = new Double(params.get("dntn").toString());
-//				Double dntnusd = cc.convertES(dntn);
-//				params.put("dntnusd", dntnusd);
-//				Double price = new Double(params.get("price").toString());
-//				Double priceusd = cc.convertES(price);
-//				params.put("priceusd", priceusd);
+		// Convert into USD
+		// Minor TODO refactor into a method
+		if (params.get("curr") != null) {
+			try {
+				KCurrency nativeCurrency = KCurrency.valueOf(params.get("curr").toString());
+				CurrencyConvertor cc = new CurrencyConvertor(nativeCurrency, KCurrency.USD, new Time());
+				for(String prop : new String[] {"dntn","price"}) {
+					double dntn = MathUtils.toNum(params.get(prop));
+					if (dntn!=0) {
+						Double dntnusd = cc.convertES(dntn);
+						params.put(prop+"usd", dntnusd); // e.g. dntnusd
+					}
+				}
+			} catch(Throwable ex) {
+				// paranoia
+				Log.e("lg", ex);
 			}
 		}
 		
 		// write to log file -- off by default (Dec 2021 datalog crisis) 
 		if (state.debug) {
 			doLogToFile(dataspace, tag, count, params, trckId, state);
-		}		
+		}
 		
 		// write to Stat / ES
 		// ...which dataspaces?
