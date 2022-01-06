@@ -123,6 +123,7 @@ public class AppUtils {
 	 * @return
 	 */
 	public static <X> X get(String id, Class<X> klass) {
+		assert id != null : "No ID for get "+klass;
 		ESPath path = Dep.get(IESRouter.class).getPath(klass, id, KStatus.PUBLISHED);
 		return get(path, klass);
 	}

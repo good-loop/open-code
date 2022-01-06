@@ -149,7 +149,7 @@ implements INotSerializable, IHasJson // serialize the json not this wrapper
 			return java;
 		} catch (Throwable ex) {
 			// add in extra info
-			throw new WrappedException("Cause POJO: "+sjson, ex);
+			throw new WrappedException(ex.toString()+" Cause POJO: "+sjson, ex);
 		}
 	}
 	
