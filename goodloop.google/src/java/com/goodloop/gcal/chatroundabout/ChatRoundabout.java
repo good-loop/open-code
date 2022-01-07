@@ -2,6 +2,7 @@ package com.goodloop.gcal.chatroundabout;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -9,9 +10,14 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.stream.Collectors;
+
+import javax.mail.internet.InternetAddress;
 
 import com.goodloop.gcal.GCalClient;
 import com.google.api.client.util.DateTime;
@@ -26,12 +32,17 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.containers.Pair;
 import com.winterwell.utils.io.CSVReader;
+import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Period;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.time.TimeOfDay;
 import com.winterwell.utils.time.TimeUtils;
+import com.winterwell.web.ConfigException;
+import com.winterwell.web.app.Emailer;
+import com.winterwell.web.email.EmailConfig;
+import com.winterwell.web.email.SimpleMessage;
 
 /**
  * 121s
@@ -47,10 +58,9 @@ import com.winterwell.utils.time.TimeUtils;
  */
 public class ChatRoundabout  {
 	
-	private static final Boolean LIVE_MODE = true;
-	private static final String LOGTAG = null;
-	private static final String CHATSET_CROSS_TEAM = "cross-team";
-	private static final String CHATSET_IN_TEAM = "within-team";
+	private static final String LOGTAG = "ChatRoundabout";
+	static final String CHATSET_CROSS_TEAM = "cross-team";
+	static final String CHATSET_IN_TEAM = "within-team";
 
 	public void TODOremoveEventsByRegex() {
 		
@@ -85,7 +95,7 @@ public class ChatRoundabout  {
 	 * @param chatSet "team" or "cross-team"
 	 * @return true if OK
 	 */
-	private boolean checkEvent(String email, String chatSet, Period slot) {
+	private boolean checkEvent(String email) {
 		
 		// Restrict events around the date of the meeting
 		
@@ -133,6 +143,7 @@ public class ChatRoundabout  {
 				Period p2 = new Period(TimeUtils.getStartOfDay(period.first), TimeUtils.getEndOfDay(period.second));
 				if (p2.intersects(slot)) {
 					Log.d(LOGTAG, email+" has a Holiday Clash: "+summary+" vs "+slot);
+					no121reasonForEmployeeEmail.put(email, "holiday: "+summary);
 					return false;
 				}
 			}
@@ -141,6 +152,7 @@ public class ChatRoundabout  {
 					continue; // skipping whole day event
 				}
 				Log.d(LOGTAG, email+" has a Clash: "+summary+" "+period+" vs "+slot);
+				no121reasonForEmployeeEmail.put(email, "clash: "+summary+" at "+period);
 				return false;
 			}
 		}
@@ -228,6 +240,10 @@ public class ChatRoundabout  {
 		}
 		
 		Log.i(LOGTAG, "Poor guys who won't have 121 this week: "+largeOffice);
+		for (Employee e : largeOffice) {
+			assert ! no121reasonForEmployeeEmail.containsKey(e.email);
+			no121reasonForEmployeeEmail.put(e.email, "no partner this week");
+		}
 		
 		return randomPairs;
 	}
@@ -278,15 +294,10 @@ public class ChatRoundabout  {
 	}
 
 	
-	void run() throws IOException {
+	String run(Time nextFriday) throws IOException {
 		
 		// Get a list of email
 		List<Employee> emailList = emailList();
-		
-		// Get 121 Date (Next Friday)
-		LocalDate _nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
-		Time nextFriday = new Time(_nextFriday.toString());
-		System.out.println("Next Friday is: " + nextFriday);
 						
 		// Separate Edinburgh and London team into two list
 		ArrayList<Employee> edinburghEmails = new ArrayList<>();
@@ -302,27 +313,73 @@ public class ChatRoundabout  {
 		}
 		
 		// Cross team
-		createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);
+		if (CHATSET_CROSS_TEAM.equals(chatSet)) {
+			createCrossTeamEvents(nextFriday, londonEmails, edinburghEmails);		
+		} else if (CHATSET_IN_TEAM.equals(chatSet)) {
+			// Within team
+			createTeamEvents(nextFriday, edinburghEmails);
+		} else {
+			throw new IllegalArgumentException(chatSet);
+		}
 		
+		// output
+		// NB the extra whitespace is stripped in the log file but not in sysout
+		String logString = "No 121s for "+chatSet+" at "+slot.first.format("hh:mm")+":\n\n"+Printer.toString(no121reasonForEmployeeEmail, "\n", ":\t");
+		Log.i(LOGTAG, "\n\n"+logString+"\n\n");
 		
-		// Within team
-		createTeamEvents(nextFriday, edinburghEmails);
+		return logString;
 	}
 
 	final ChatRoundaboutConfig config;
 	
-	public ChatRoundabout(ChatRoundaboutConfig config) {
+	public ChatRoundabout(ChatRoundaboutConfig config, String chatSet) {
 		this.config = config;
+		this.chatSet = chatSet;
+	}
+	
+	Map<String, String> no121reasonForEmployeeEmail = new HashMap();
+	String chatSet;
+	private Period slot;
+	
+	public static void sendEmail(String emailContent, Time nextFriday) {
+		File propsFile = new File(FileUtils.getWinterwellDir(), "open-code/goodloop.google/config/email.properties");
+		if ( ! propsFile.exists()) {
+			propsFile = new File(FileUtils.getWinterwellDir(), "logins/local.properties");
+			if ( ! propsFile.exists()) {
+				System.out.println("Please make a file with email login details here: "+propsFile);
+				throw new ConfigException("Please symlink the logins/local.properties file or make a file with email login details here: "+propsFile+".");
+			}
+		}
+		Properties props = FileUtils.loadProperties(propsFile);				
+		EmailConfig ec = new EmailConfig();
+		ec.emailServer = props.getProperty("emailServer").trim();
+		ec.emailFrom = props.getProperty("emailFrom").trim();
+		ec.emailPassword = props.getProperty("emailPassword").trim();
+		ec.emailPort = 465;
+		ec.emailSSL = true;		
+		
+		Emailer emailer = new Emailer(ec);
+		String appName = "ChatRoundabout";
+		String subject = appName+": Weekly Report "+nextFriday.toISOStringDateOnly();
+		StringBuilder body = new StringBuilder();
+		body.append("\r\nChatRoundabout ran on :"+nextFriday.toISOStringDateOnly());
+		body.append("\r\n\r\n"+emailContent+"\r\n");
+		
+		InternetAddress from = emailer.getBotEmail();
+		from.setAddress("wing@good-loop.com");
+		InternetAddress email = emailer.getBotEmail();
+		email.setAddress("wing@good-loop.com");
+		SimpleMessage msg = new SimpleMessage(from, email, subject, body.toString());
+		emailer.send(msg);
 	}
 	
 	private void createCrossTeamEvents(Time nextFriday, List<Employee> londonEmails, List<Employee> edinburghEmails) throws IOException {
 		Time s = config.crossTeamTime.set(nextFriday);
 		Time e = s.plus(config.duration);
-		Period slot = new Period(s, e);
-		String chatSet = CHATSET_CROSS_TEAM;
+		slot = new Period(s, e);
 		// filter out people who cant make the slot
-		londonEmails = Containers.filter(londonEmails, employee -> checkEvent(employee.email, chatSet, slot));
-		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
+		londonEmails = Containers.filter(londonEmails, employee -> checkEvent(employee.email));
+		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email));
 		
 		// TODO fetch last weeks 121s
 		
@@ -345,7 +402,7 @@ public class ChatRoundabout  {
 		for (Pair<Employee> ab : randomPairs) {
 			Event preparedEvent = prepare121(ab, slot, chatSet);			
 			// Save events to Google Calendar, or just do a dry run?
-			if (LIVE_MODE) {
+			if ( ! config.reportOnly) {
 				GCalClient gcc = client();
 				Calendar person1 = gcc.getCalendar(ab.first.email);
 				String calendarId = person1.getId(); // "primary";
@@ -369,10 +426,9 @@ public class ChatRoundabout  {
 	private void createTeamEvents(Time nextFriday, List<Employee> edinburghEmails) throws IOException {
 		Time s = config.inTeamTime.set(nextFriday);
 		Time e = s.plus(config.duration);
-		Period slot = new Period(s, e);
-		String chatSet = CHATSET_IN_TEAM;
+		slot = new Period(s, e);
 		// filter out people who cant make the slot
-		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email, chatSet, slot));
+		edinburghEmails = Containers.filter(edinburghEmails, employee -> checkEvent(employee.email));
 		
 		// TODO fetch last weeks 121s
 		
