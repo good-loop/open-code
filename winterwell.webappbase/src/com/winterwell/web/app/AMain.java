@@ -285,6 +285,7 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 	/**
 	 * called after config has been loaded.
 	 * This is the recommended method to override for custom init stuff.
+	 * But do call super.init2()!
 	 * 
 	 * This base method does:
 	 *  - App YA auth
@@ -301,6 +302,7 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 		if (initFlag) return;
 		initFlag = true;		
 		// init DataLog
+		DataLog.init();
 		DataLog.getImplementation();
 		// YA - manual
 //		init3_youAgain();
@@ -393,6 +395,8 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 
 	
 	/**
+	 * Initialise the _config_
+	 * 
 	 * Suggestion: use AppUtils.getConfig()
 	 * @param args
 	 * @return
