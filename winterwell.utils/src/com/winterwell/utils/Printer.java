@@ -502,6 +502,33 @@ public class Printer {
 		return w.toString();
 	}
 
+	
+	/**
+	 * 
+	 * @param x Can be null (returns "")
+	 * @param stacktrace
+	 * @return
+	 */
+	public static String getStackTrace(Throwable x) {
+		if (x==null) return "";
+		// Don't generally unwrap, but do unwrap our own wrapper
+		if (x instanceof WrappedException) {
+			x = x.getCause();
+		}
+		// SQLException is a horrible class which hides the actual cause
+		if (x instanceof SQLException) {
+			x = Utils.getRootCause(x);
+		}
+		// NB: the use of StringWriter here means there's little point having an
+		// append-to-StringBuilder version of this method
+		StringWriter w = new StringWriter();
+		PrintWriter pw = new PrintWriter(w);
+		x.printStackTrace(pw);
+		pw.flush();
+		FileUtils.close(pw);
+		return w.toString();
+	}
+	
 	/**
 	 * e.g. 2100.17
 	 */

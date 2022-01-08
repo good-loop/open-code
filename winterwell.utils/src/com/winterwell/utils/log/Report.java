@@ -1,6 +1,7 @@
 package com.winterwell.utils.log;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 import com.winterwell.utils.Printer;
@@ -22,10 +23,6 @@ public final class Report implements Serializable {
 	private final String details;
 	public final Level level;
 	private final String msg;
-//	/**
-//	 * The object behind the message (can be handy to keep it for listeners).
-//	 */
-//	public final Object ref;
 
 	public String getDetails() {
 		return details;
@@ -47,7 +44,6 @@ public final class Report implements Serializable {
 		this.tag = tag;
 		this.msg = msg;
 		this.level = level;
-//		this.ref = ref;
 		this.ex = ex;
 		this.details = details;
 //		this.threadId = Thread.currentThread().getId();		
@@ -70,12 +66,12 @@ public final class Report implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		// Convert tabs, so we lines are nicely tab-aligned
-		// Assumes: level & tag don't have tabs, and after message we don't care
-		String _msg = msg.replace('\t', ' ');
-		return // Environment.get().get(Printer.INDENT)+
-		Printer.format("[{0}]\t{1}\t#{2}\t{3}\t{4}\t{5}\t{6}", 
-				time, level, tag, _msg, details, Log.getContextMessage(), thread);
+//		// Convert tabs, so we lines are nicely tab-aligned
+//		// Assumes: level & tag don't have tabs, and after message we don't care
+//		String _msg = msg.replace('\t', ' ');
+		return "["+time+"]"+StrUtils.join(Arrays.asList(
+				time, level, tag, getMarker(), msg, details, Log.getContextMessage(), thread
+				), "\t"); 
 	}
 	
 	/** 
@@ -90,11 +86,11 @@ public final class Report implements Serializable {
 	}
 
 	/**
-	 * A crude hash for level+tag+msg -- this is useful for filtering
+	 * A crude hash for tag+msg -- this is useful for filtering
 	 * @return
 	 */
 	public String getMarker() {
-		return StrUtils.md5(level+tag+msg).substring(0,8);
+		return StrUtils.md5(tag+msg).substring(0,8);
 	}
 
 }

@@ -21,7 +21,8 @@ import com.winterwell.utils.time.Time;
  */
 public class LogConfig {
 
-	@Option
+	@Deprecated // replaced by exclude
+	@Option(description="ignore reports by tag e.g. ignore reports from a particular class. See also `exclude` which is more flexible.")
 	List<String> ignoretags;
 	
 	public LogConfig addIgnoreTag(String tag) {

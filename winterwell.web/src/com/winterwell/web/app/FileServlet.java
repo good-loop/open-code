@@ -142,7 +142,10 @@ public class FileServlet extends HttpServlet implements IServlet {
 				doFile(file, request);
 			}
 		} catch (Throwable e) {
-			Log.report("file", e, Level.SEVERE);
+			// NB: no file = 404 is handled already in doFile()
+			// e here might be a SecurityExecption
+			Log.w("file", e+" "+request);
+			FileUtils.close(request);
 		}
 	}
 

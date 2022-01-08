@@ -259,12 +259,12 @@ public class Log {
 	 *            classification on the report, which allows for
 	 *            simple-but-effective filtering. Can be null
 	 * @param msg
-	 * @param error
+	 * @param level
 	 */
-	static void report(String tag, Object msg, Level error, Throwable ex) {
+	static void report(String tag, Object msg, Level level, Throwable ex) {
 		// Ignore?
 		Level minLevel = getMinLevel(tag);
-		if (minLevel.intValue() > error.intValue()) {
+		if (minLevel.intValue() > level.intValue()) {
 			return;
 		}
 		// stochastic (off by default)
@@ -283,33 +283,27 @@ public class Log {
 			return; // throttled!
 		}
 		
-		String smsg = Printer.toString(msg);
-		// exclude or downgrade?
+		// exclude or downgrade by tag? (before we do the work of making a report)
 		if (excludeFilter!=null) {
 			// tag or message ??should this be report.toString()
 			if (excludeFilter.accept(tag)) {
 				return;
 			}
-			if (excludeFilter.accept(smsg)) {
-				return;
-			}
 		}		
-		if (downgradeFilter!=null && error.intValue() > Level.INFO.intValue()) {
-			if (downgradeFilter.accept(smsg)) {
-				error = Level.INFO;
-			} else if (downgradeFilter.accept(tag)) {
-				error = Level.INFO;
+		if (downgradeFilter!=null && level.intValue() > Level.INFO.intValue()) {
+			if (downgradeFilter.accept(tag)) {
+				level = Level.INFO;
 			}
 		}
 		
 		// Message
-		String msgText;
+		String msgText = Printer.toString(msg);
+		String details = null;
 		// Exception? Add in some stack
 		if (msg instanceof Throwable) {
-			msgText = Printer.toString((Throwable)msg, true);
+			details = Printer.getStackTrace((Throwable)msg);
+			details = StrUtils.ellipsize(details, MAX_LENGTH);
 			if (ex==null) ex = (Throwable) msg;
-		} else {
-			msgText = Printer.toString(msg);			
 		}
 		// Guard against giant objects getting put into log, which is almost
 		// certainly a careless error
@@ -317,8 +311,25 @@ public class Log {
 			msgText = msgText.substring(0, MAX_LENGTH - 100)
 					+ "... (message is too long for Log!)";
 		}
+		
 		// make a Report
-		Report report = new Report(tag, smsg, error, msgText, ex);
+		Report report = new Report(tag, msgText, level, details, ex);
+		
+		// exclude or downgrade by full report?
+		String sreport = null;
+		if (excludeFilter!=null) {
+			sreport = report.toString();
+			if (excludeFilter.accept(sreport)) {
+				return;
+			}
+		}		
+		if (downgradeFilter!=null && level.intValue() > Level.INFO.intValue()) {
+			if (sreport != null) sreport = report.toString();
+			if (downgradeFilter.accept(sreport)) {
+				report = new Report(tag, msgText, Level.INFO, details, ex);
+			}
+		}
+				
 		// Note: using an array for listeners avoids any concurrent-mod
 		// exceptions
 		for (ILogListener listener : listeners) {
@@ -330,7 +341,7 @@ public class Log {
 			}
 		}
 		// HACK escalate on error + #escalate?
-		if (error==Level.SEVERE && msgText.contains("#escalate")) {
+		if (level==Level.SEVERE && msgText.contains("#escalate")) {
 			escalate(new WeirdException("Escalating "+msgText));
 		}
 	}
