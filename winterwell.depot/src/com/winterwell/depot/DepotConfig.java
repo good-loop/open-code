@@ -24,7 +24,7 @@ public class DepotConfig {
 	int httpPort = 0;
 
 	@Option
-	String defaultRemoteHost = "datastore.soda.sh";
+	String defaultRemoteHost = "datastore.good-loop.com";
 
 	public String getDefaultRemoteHost() {
 		return defaultRemoteHost;

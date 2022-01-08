@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.winterwell.nlp.NLPWorkshop;
 import com.winterwell.utils.containers.Cache;
+import com.winterwell.utils.log.Log;
 
 /**
  * Short names, e.g. bob = robert.
@@ -28,6 +29,9 @@ public class ShortNameDictionary extends Dictionary {
 	private static File getDictFile(String lang) {
 		NLPWorkshop workshop = NLPWorkshop.get(lang);
 		File dictFile = workshop.getFile("short-names.txt");
+		if (dictFile==null || ! dictFile.isFile()) {
+			Log.w("ShortNameDictionary", "Missing file: "+dictFile.getAbsolutePath());
+		}
 		return dictFile;
 	}
 	
