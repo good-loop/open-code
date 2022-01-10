@@ -123,6 +123,10 @@ public class CurrencyConvertor {
 			if (rate == null) {
 				if (date.toISOStringDateOnly().equals(new Time().toISOStringDateOnly())) {
 					rate = fetchCurrRate();
+					if (rate == null) {
+						Log.d("CurrencyConvertor", "fetchCurrRate failed for "+date+" - using hardcoded FX");
+						return convert2_hardCoded(amount);
+					}
 				} else {
 					// fail :(
 					Log.d("CurrencyConvertor", "No data for "+date+" - using hardcoded FX");
@@ -159,6 +163,9 @@ public class CurrencyConvertor {
 		        response.append(responseLine.trim());
 		    }
 		    orgRate = response.toString();
+		} catch (Exception e) {
+			Log.d("CurrencyConvertor", e);
+			return null;
 		}
 		
 		JSONObject obj = new JSONObject(orgRate);
