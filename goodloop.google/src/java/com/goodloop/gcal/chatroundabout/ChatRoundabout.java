@@ -341,8 +341,8 @@ public class ChatRoundabout  {
 	String chatSet;
 	private Period slot;
 	
-	public static void sendEmail(String emailContent, Time nextFriday) {
-		File propsFile = new File(FileUtils.getWinterwellDir(), "open-code/goodloop.google/config/email.properties");
+	public void sendEmail(String emailContent, Time nextFriday, String sendEmail) {
+		File propsFile = new File(FileUtils.getWinterwellDir(), config.emailProperties);
 		if ( ! propsFile.exists()) {
 			propsFile = new File(FileUtils.getWinterwellDir(), "logins/local.properties");
 			if ( ! propsFile.exists()) {
@@ -359,16 +359,21 @@ public class ChatRoundabout  {
 		ec.emailSSL = true;		
 		
 		Emailer emailer = new Emailer(ec);
-		String appName = "ChatRoundabout";
-		String subject = appName+": Weekly Report "+nextFriday.toISOStringDateOnly();
-		StringBuilder body = new StringBuilder();
-		body.append("\r\nChatRoundabout ran on :"+nextFriday.toISOStringDateOnly());
-		body.append("\r\n\r\n"+emailContent+"\r\n");
-		
 		InternetAddress from = emailer.getBotEmail();
-		from.setAddress("wing@good-loop.com");
 		InternetAddress email = emailer.getBotEmail();
-		email.setAddress("wing@good-loop.com");
+		email.setAddress(sendEmail);
+		String firstName = sendEmail.split("@")[0].toLowerCase();
+		String firstNameCap = firstName.substring(0,1).toUpperCase() + firstName.substring(1);
+		
+		String appName = "ChatRoundabout";
+		String readableDate = nextFriday.toString().replace(" 00:00:00 GMT", "");
+		String subject = appName+": Weekly Report "+readableDate;
+		StringBuilder body = new StringBuilder();
+		body.append("Hello "+firstNameCap);
+		body.append("\r\n\r\nChatRoundabout ran on: "+readableDate);
+		body.append("\r\n\r\n"+emailContent);
+		body.append("\r\n\r\nI am a bot, beep boop.");
+		
 		SimpleMessage msg = new SimpleMessage(from, email, subject, body.toString());
 		emailer.send(msg);
 	}

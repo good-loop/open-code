@@ -41,7 +41,8 @@ public class ChatRoundaboutMain extends AMain<ChatRoundaboutConfig> {
 			ChatRoundabout cr2 = new ChatRoundabout(getConfig(), ChatRoundabout.CHATSET_IN_TEAM);
 			String cr2Log = cr2.run(nextFriday);
 			
-			ChatRoundabout.sendEmail(crLog +"\n\n"+ cr2Log, nextFriday);
+			cr2.sendEmail(crLog +"\r\n\r\n"+ cr2Log, nextFriday, "wing@good-loop.com");
+			cr2.sendEmail(crLog +"\r\n\r\n"+ cr2Log, nextFriday, "daniel@good-loop.com");
 		} catch (IOException e) {
 			throw Utils.runtime(e);
 		}		
