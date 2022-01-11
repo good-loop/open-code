@@ -59,6 +59,10 @@ implements INotSerializable, IHasJson // serialize the json not this wrapper
 		return this;
 	}
 	
+	/**
+	 * What class of thing is this?
+	 * @return can be null if type info hasn't been set
+	 */
 	public Class<T> getType() {
 		return type;
 	}
