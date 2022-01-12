@@ -280,6 +280,10 @@ public class ConfigBuilder {
 			if (field2default.get(f) != null) {
 				msg.append(" Default: " + field2default.get(f));
 			}
+			// TODO have a config object and report on its values?? screening passwords if (field2default.get(f) != null) {
+//				Object fdflt = field2default.get(f);
+//				msg.append(" Set: " + );
+//			}
 			// special support for enums
 			if (ReflectionUtils.isa(f.getType(), Enum.class)) {
 				List evals = ReflectionUtils.getEnumValues(f.getType());
@@ -287,6 +291,27 @@ public class ConfigBuilder {
 			}
 			msg.append(StrUtils.LINEEND);
 		}
+		// config files
+		List<File> srcFiles = Containers.filterByClass(sources, File.class);
+		if ( ! srcFiles.isEmpty()) {			
+			msg.append(StrUtils.LINEEND);
+			msg.append("Options can be passed in on the command line or set in these files: ");
+			msg.append(StrUtils.LINEEND);
+			File here = FileUtils.getWorkingDirectory();
+			for(File f : srcFiles) {
+				String sf;
+				if (FileUtils.contains(here, f)) {
+					sf = FileUtils.getRelativePath(f, here);
+				} else {
+					sf = f.toString();
+				}
+				msg.append(sf);
+				msg.append(", ");
+			}			
+			StrUtils.pop(msg, 2);
+			msg.append(StrUtils.LINEEND);
+		}
+		
 		return msg.toString();
 	}
 
@@ -308,8 +333,8 @@ public class ConfigBuilder {
 	 */
 	public ConfigBuilder setFromMain(String[] args) {
 		if (args==null) return this;
-		source = "main args";
-		sources.add(source);
+		currentSource = "main args";
+		sources.add(currentSource);
 		try {
 			// Look for config
 			int i = 0;
@@ -339,7 +364,7 @@ public class ConfigBuilder {
 		} catch (Exception e) {
 			throw new IllegalArgumentException(StrUtils.join(args,  " "), e);
 		} finally {
-			source = null;
+			currentSource = null;
 		}
 	}
 
@@ -392,10 +417,10 @@ public class ConfigBuilder {
 	}
 	
 	private void fieldSet(Field field, Object v) throws IllegalArgumentException, IllegalAccessException {
-		Object prev = source4setFields.put(field, Utils.or(source, "unknown"));
+		Object prev = source4setFields.put(field, Utils.or(currentSource, "unknown"));
 		if (prev!=null) {
 			// log the override
-			Log.i(LOGTAG, "... "+config.getClass().getSimpleName()+"."+field.getName()+" source "+source+" overrode "+prev);
+			Log.i(LOGTAG, "... "+config.getClass().getSimpleName()+"."+field.getName()+" source "+currentSource+" overrode "+prev);
 		}
 		field.set(config, v);
 	}
@@ -415,8 +440,8 @@ public class ConfigBuilder {
 			);
 			return this;
 		}		
-		source = propertiesFile.getAbsoluteFile();
-		sources.add(source);
+		currentSource = propertiesFile.getAbsoluteFile();
+		sources.add(currentSource);
 		try {
 			File absFile = propertiesFile.getAbsoluteFile();
 			Properties props = new Properties();
@@ -429,7 +454,7 @@ public class ConfigBuilder {
 		} catch (IOException e) {
 			throw new WrappedException(e);
 		} finally {
-			source = null;
+			currentSource = null;
 		}
 	}
 
@@ -474,9 +499,9 @@ public class ConfigBuilder {
 	 *             properties as it can before throwing any exception.
 	 */
 	public ConfigBuilder set(Map properties) {
-		if (source==null) {
-			source = "Map";
-			sources.add(source);
+		if (currentSource==null) {
+			currentSource = "Map";
+			sources.add(currentSource);
 		}
 		List<Exception> errors = new ArrayList();
 		// keys
@@ -556,7 +581,10 @@ public class ConfigBuilder {
 		return false;
 	}
 
-	Object source;
+	/**
+	 * What are we processing now?
+	 */
+	Object currentSource;
 	
 	private boolean set2(Field f, String prop, List<Exception> errors) {
 		assert f != null : prop;
@@ -660,8 +688,8 @@ public class ConfigBuilder {
 	 */
 	public ConfigBuilder setFromSystemProperties(String namespace) {
 		if (namespace!=null && namespace.isEmpty()) namespace = null;
-		source = "System.properties"+(Utils.isBlank(namespace)? "" : " namespace:"+namespace);
-		sources.add(source);
+		currentSource = "System.properties"+(Utils.isBlank(namespace)? "" : " namespace:"+namespace);
+		sources.add(currentSource);
 		try {
 			Properties systemProps = System.getProperties();
 			if (Utils.isBlank(namespace)) {
@@ -682,7 +710,7 @@ public class ConfigBuilder {
 			}
 			return set(map);
 		} finally {
-			source = null;
+			currentSource = null;
 		}
 	}
 
