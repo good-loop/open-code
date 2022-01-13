@@ -111,6 +111,9 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 		this(FileUtils.getWorkingDirectory().getName().toLowerCase(), null);
 	}
 	
+	/**
+	 * aka app local name e.g. "myapp" (and NOT myapp.mydomain.com)
+	 */
 	public AMain(String projectName, Class<ConfigType> configType) {
 		this.appName = projectName;
 		this.configType = configType;
