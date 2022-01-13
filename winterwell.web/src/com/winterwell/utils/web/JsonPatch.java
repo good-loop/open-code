@@ -138,7 +138,7 @@ public class JsonPatch implements IHasJson {
 		for (JsonPatchOp diff : diffs) {
 			try {
 				// NB: drop the leading / on path
-				String[] bits = diff.path.substring(1).split("/");			
+				final String[] bits = diff.path.substring(1).split("/");			
 				Object value = diff.value;
 				String[] ppath;
 				String lastBit;
