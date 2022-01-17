@@ -370,7 +370,7 @@ public class ChatRoundabout  {
 		String subject = appName+": Weekly Report "+readableDate;
 		StringBuilder body = new StringBuilder();
 		body.append("Hello "+firstNameCap);
-		if (!config.reportOnly) body.append("\r\n\r\nReport Only Mode, no actual events were created.");
+		if (config.reportOnly == true) body.append("\r\n\r\nReport Only Mode, no actual events were created.");
 		body.append("\r\n\r\nChatRoundabout ran on: "+readableDate);
 		body.append("\r\n\r\n"+emailContent);
 		body.append("\r\n\r\nI am a bot, beep boop.");
