@@ -64,7 +64,7 @@ public class GitBobProjectTask extends BuildTask {
 	protected void doTask() throws Exception {
 		Log.d(LOGTAG, dir+" < "+this);
 		// clone or pull
-		if (dir.isDirectory()) {
+		if (dir.isDirectory() && new File(dir, ".git").isDirectory()) {
 			// stash?
 			if (stashLocalChanges) {
 				GitTask gt0 = new GitTask(GitTask.STASH, dir);
@@ -113,7 +113,9 @@ public class GitBobProjectTask extends BuildTask {
 			assert ! dir.isFile() : dir;
 			// clone
 			boolean ok = dir.getAbsoluteFile().mkdirs();
-			if ( ! ok) throw new IOException("Could not make directory "+dir);
+			if ( ! dir.isDirectory()) {
+				throw new IOException("Could not make directory "+dir);
+			}
 			GitTask gt = new GitTask(GitTask.CLONE, dir);
 			gt.setDepth(getDepth()+1);
 			gt.addArg("--depth 1");
@@ -125,6 +127,11 @@ public class GitBobProjectTask extends BuildTask {
 		
 		// build				
 		ForkJVMTask childBob = new ForkJVMTask();
+		// HACK adserver has two build files so we have to specify one
+		if ("adserver".equals(dir.getName())) {
+			childBob.close();
+			childBob = new ForkJVMTask("BuildAdserver");
+		}
 		childBob.setDepth(getDepth()+1);
 		File pd;
 		if (projectSubDir!=null) {			
@@ -143,6 +150,11 @@ public class GitBobProjectTask extends BuildTask {
 		return this;
 	}
 
+	/**
+	 * HACK github details for core WW / GL projects
+	 * @param pname
+	 * @return
+	 */
 	public static GitBobProjectTask getKnownProject(String pname) {
 		String g_s = WinterwellProjectFinder.KNOWN_PROJECTS.get(pname);
 		if (g_s==null) return null;
