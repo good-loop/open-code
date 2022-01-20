@@ -33,6 +33,25 @@ public class JsonPatchTest {
 		assertEquals("{'a':[{'fruit':'apple'}]}".replace('\'', '"'),jafter);
 	}
 
+	
+
+	@Test
+	public void testAddIntoEmptyArray() {
+		Map before = new ArrayMap("a", Arrays.asList());
+		JsonPatch ops = JsonPatch.fromJson(Arrays.asList(new ArrayMap(
+					"op","add",
+					"path","/a/0/fruit", 
+					"value","apple")
+				));
+		JsonPatchOp jop = ops.diffs.get(0);
+		
+		Map after2 = new ArrayMap(before);
+		ops.apply(after2);
+//		System.out.println(after2);
+		String jafter = Gson.toJSON(after2);
+		assertEquals("{'a':[{'fruit':'apple'}]}".replace('\'', '"'),jafter);
+	}
+
 
 	@Test
 	public void testArrayNull() {

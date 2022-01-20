@@ -346,10 +346,13 @@ public class SimpleJson {
 	 */
 	public static Map<String, Object> getCreate(Map jobj, String key) {
 		Object m = jobj.get(key);
+		// create?
 		if (m==null) {
 			m = new ArrayMap(); // hm... good for small maps, bad for larger ones. But this is a convenience method.
 			jobj.put(key, m);
+			return (Map<String, Object>) m;
 		}
+		// already exists :)
 		if (m instanceof Map) {
 			return (Map<String, Object>) m;
 		}
@@ -369,11 +372,28 @@ public class SimpleJson {
 	 * @param key 
 	 */
 	public static void set(Map<String, ?> jobj, Object value, String... key) {
+		// drill down
 		Map obj = jobj;
 		for(int i=0,n=key.length-1; i<n; i++) {
 			String k = key[i];
-			obj = getCreate(obj, k);
-			assert obj != null : jobj+" "+k;
+			try {				
+				obj = getCreate(obj, k);
+				assert obj != null : jobj+" "+k;
+			} catch(UnsupportedOperationException ex) {
+				// add to an array failed? replace the array
+				if (obj instanceof ListAsMap && key.length > 1) {
+					ArrayList obj2 = new ArrayList(((ListAsMap) obj).list);
+					Map createK = new ArrayMap();
+					ListAsMap obj2AsMap = new ListAsMap(obj2);
+					obj2AsMap.put(k, createK);
+					String[] pathToArray = Arrays.copyOf(key, i);
+					set(jobj, obj2, pathToArray);
+					obj = createK;
+				} else {
+					// can't fix
+					throw ex;
+				}
+			}
 		}
 		// set it
 		String k = key[key.length-1];
