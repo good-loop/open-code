@@ -229,6 +229,8 @@ public class MavenDependencyTask extends BuildTask {
 						"This directory of project dependencies from Maven is managed by a Bob build script. \nWarning: Best not to edit it directly!\n");
 			}
 //			FileUtils.delete(pom);
+		} catch(Exception ex) {
+			throw ex; // for breakpoint debugging
 		} finally {
 			if (pomPrev != null) {
 				FileUtils.move(pomPrev, pomProper);

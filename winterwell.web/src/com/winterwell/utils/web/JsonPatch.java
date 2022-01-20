@@ -23,7 +23,12 @@ import com.winterwell.web.ajax.JThing;
 public class JsonPatch implements IHasJson {
 
 	List<JsonPatchOp> diffs;
+	private List<JsonPatchOp> extraDiffs = new ArrayList();
 
+	public List<JsonPatchOp> getExtraDiffs() {
+		return extraDiffs;
+	}
+	
 	public List<JsonPatchOp> getDiffs() {
 		return diffs;
 	}
@@ -144,7 +149,7 @@ public class JsonPatch implements IHasJson {
 				String lastBit;
 				switch(diff.op) {
 				case add: case replace:
-					SimpleJson.set(jobj, value, bits);
+					set(jobj, value, bits);
 					break;
 				case remove:
 					// remove from array or object?
@@ -156,7 +161,7 @@ public class JsonPatch implements IHasJson {
 						List<Object> list = new ArrayList(Containers.asList(parent));
 						int i = Integer.valueOf(lastBit);
 						list.remove(i);
-						SimpleJson.set(jobj, list, ppath);
+						set(jobj, list, ppath);
 					} else {
 						// object -- null out
 						((Map)parent).remove(lastBit);
@@ -185,10 +190,10 @@ public class JsonPatch implements IHasJson {
 			Object value = diff.value;
 			switch(diff.op) {
 			case add: case replace:
-				SimpleJson.set(jobj, value, bits);
+				set(jobj, value, bits);
 				break;
 			case remove:
-				SimpleJson.set(jobj, null, bits);
+				set(jobj, null, bits);
 				break;			
 			case move:
 			case copy:
@@ -208,4 +213,86 @@ public class JsonPatch implements IHasJson {
 		return "JsonPatch"+toJSONString();
 	}
 
+	
+	/**
+	 * @param jobj
+	 * @param key
+	 * @return jobj.key
+	 */
+	Map<String, Object> getAsMap(Map jobj, String key) {
+		Object m = jobj.get(key);
+		if (m==null) return null;
+		// already exists :)
+		if (m instanceof Map) {
+			return (Map<String, Object>) m;
+		}
+		// probably an array!
+		List<Object> list = Containers.asList(m);
+		// make up a new map??
+		Map map = new ListAsMap(list);
+		return map;
+	}
+
+	
+	/**
+	 * HACK copy from SimpleJson so we can add catching of extra ops
+	 * 
+	 * Convenience for drilling down through (and making) the map-of-maps data structures
+	 * that JSON tends to involve. 
+	 * Uses getCreate to access/build intermediate objects.
+	 * @param jobj
+	 * @param value
+	 * @param key 
+	 */
+	void set(Map<String, ?> jobj, Object value, String... key) {
+		// drill down
+		Map obj = jobj;
+		for(int i=0,n=key.length-1; i<n; i++) {
+			String k = key[i];
+			Map<String, Object> nextObj = getAsMap(obj, k);
+			if (nextObj!=null) {
+				obj = nextObj;
+				continue;
+			}
+			// create			
+			nextObj = new ArrayMap(); // what if an array is wanted??
+			if (obj instanceof ListAsMap && key.length > 1) {
+				// array? copy it
+				ArrayList obj2 = new ArrayList(((ListAsMap) obj).list);				
+				ListAsMap obj2AsMap = new ListAsMap(obj2);
+				obj2AsMap.put(k, nextObj);
+				String[] pathToArray = Arrays.copyOf(key, i);
+				set(jobj, obj2, pathToArray);				
+			} else {
+				nextObj = new ArrayMap();
+				obj.put(k, nextObj);				
+			}			
+			obj = nextObj;
+			String[] pathToK = Arrays.copyOf(key, i+1);
+			String path = "/"+StrUtils.join(pathToK, "/");
+			extraDiffs.add(JsonPatchOp.add(path, new ArrayMap()));
+		}
+		// set it
+		String k = key[key.length-1];
+		try {		
+			if (value==null) {
+				obj.remove(k);
+			} else {
+				obj.put(k, value);
+			}
+		} catch (UnsupportedOperationException ex) {
+			// add to an array failed? replace the array
+			if (obj instanceof ListAsMap && key.length > 1) {
+				ArrayList obj2 = new ArrayList(((ListAsMap) obj).list);
+				new ListAsMap(obj2).put(k, value);
+				String[] pathToArray = Arrays.copyOf(key, key.length-1);
+				set(jobj, obj2, pathToArray);
+				return;
+			}
+			// can't fix
+			throw ex;
+		}
+	}
+
+	
 }

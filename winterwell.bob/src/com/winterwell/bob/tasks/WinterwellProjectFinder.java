@@ -98,6 +98,8 @@ public class WinterwellProjectFinder implements IFn<String, File> {
 	/**
 	 * HACK for deploying WW libs
 	 * {project-name: "repo_url repo_folder sub_folder"}
+	 * 
+	 * NB: use https repo urls for public repos, and git@github.com ssh info for private ones
 	 */
 	static final Map<String,String> KNOWN_PROJECTS = new ArrayMap(
 		"winterwell.utils", 
@@ -119,6 +121,8 @@ public class WinterwellProjectFinder implements IFn<String, File> {
 		"youagain-java-client", 
 			"https://github.com/good-loop/open-code open-code youagain-java-client",
 			
+		"adserver",
+			"git@github.com:/good-loop/adserver",
 		"elasticsearch-java-client",
 			"https://github.com/good-loop/elasticsearch-java-client.git",
 		"juice",
