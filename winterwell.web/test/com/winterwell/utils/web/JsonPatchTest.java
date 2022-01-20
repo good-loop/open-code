@@ -31,6 +31,11 @@ public class JsonPatchTest {
 //		System.out.println(after2);
 		String jafter = Gson.toJSON(after2);
 		assertEquals("{'a':[{'fruit':'apple'}]}".replace('\'', '"'),jafter);
+		
+		assert ! ops.getExtraDiffs().isEmpty();
+//		System.out.println(Gson.toJSON(ops.getExtraDiffs()));
+		// TODO we'd rather have value:[] 
+		assertEquals("[{\"op\":\"add\",\"path\":\"/a/0\",\"value\":{}}]", Gson.toJSON(ops.getExtraDiffs()));
 	}
 
 	

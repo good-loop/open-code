@@ -1421,14 +1421,13 @@ public abstract class CrudServlet<T> implements IServlet {
 		XId user = state.getUserId(); // TODO save who did the edit + audit trail
 		
 		// If there is a diff, apply it
-		// TODO We *also* save the diff as an update script
-		String diff = state.get("diff");
-		List<Map> diffs = null;
+		// We *also* save the diff as an update script
+		String diff = state.get("diff");		
 		if (diff != null) {
 			Object jdiff = WebUtils2.parseJSON(diff);
 			diffs = Containers.asList(jdiff);
 			JThing<T> oldThing = getThingFromDB(state);
-			applyDiff(oldThing, diffs);
+			applyDiff(oldThing);
 			jthing = oldThing; // NB: getThing(state) below will now return the diff-modified oldThing
 		} else {
 			T thing = getThing(state); 
@@ -1455,11 +1454,17 @@ public abstract class CrudServlet<T> implements IServlet {
 	
 
 	/**
+	 * HACK: can be a list of Map or JsonPatchOp
+	 */
+	List diffs;
+	
+	/**
+	 * This can modify diffs!
 	 * @param room
 	 * @param diffs Each diff is {op:replace, path:/foo/bar, value:v}
 	 * @return
 	 */
-	void applyDiff(JThing<T> room, List<Map> diffs) {		
+	final void applyDiff(JThing<T> room) {		
 		if (diffs.isEmpty()) {
 			return;
 		}
@@ -1467,6 +1472,13 @@ public abstract class CrudServlet<T> implements IServlet {
 		Map<String, Object> thingMap = new HashMap(room.map());
 		jp.apply(thingMap);
 		room.setMap(thingMap);
+		// modify diffs?
+		if ( ! jp.getExtraDiffs().isEmpty()) {
+			// Add extra diffs
+			List<JsonPatchOp> alldiffs = jp.getExtraDiffs();
+			alldiffs.addAll(jp.getDiffs());
+			diffs = alldiffs;
+		}
 	}
 
 	/**

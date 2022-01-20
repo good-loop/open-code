@@ -350,6 +350,15 @@ public class AppUtils {
 		return doSaveEdit2(path, item, diffs, stateCanBeNull, false);
 	}
 	
+	/**
+	 * 
+	 * @param path
+	 * @param item
+	 * @param diffs of Maps or JsonPatchOps
+	 * @param stateCanBeNull
+	 * @param instant
+	 * @return
+	 */
 	public static JThing doSaveEdit2(ESPath path, JThing item, List diffs, WebRequest stateCanBeNull, boolean instant) {
 		assert path.id != null : "need an id in path to save "+item;
 		ESHttpClient client = new ESHttpClient(Dep.get(ESConfig.class));		
