@@ -435,6 +435,9 @@ class ListAsMap<V> extends AbstractMap2<String, V> {
 	@Override
 	public V get(Object i) {
 		Integer ni = i instanceof Integer? (Integer) i : Integer.valueOf((String)i);
+		if (ni >= list.size()) {
+			return null; // be map-like - avoid an exception
+		}
 		return list.get(ni);
 	}
 
