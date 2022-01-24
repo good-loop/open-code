@@ -13,6 +13,7 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.WrappedException;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.log.Log;
 import com.winterwell.utils.web.SimpleJson;
 import com.winterwell.web.ajax.JThing;
 /**
@@ -23,10 +24,10 @@ import com.winterwell.web.ajax.JThing;
 public class JsonPatch implements IHasJson {
 
 	List<JsonPatchOp> diffs;
-	private List<JsonPatchOp> extraDiffs = new ArrayList();
-
-	public List<JsonPatchOp> getExtraDiffs() {
-		return extraDiffs;
+	private Map<JsonPatchOp,JsonPatchOp> modifiedDiff4diff = new ArrayMap();
+	
+	public Map<JsonPatchOp, JsonPatchOp> getModifiedDiff4diff() {
+		return modifiedDiff4diff;
 	}
 	
 	public List<JsonPatchOp> getDiffs() {
@@ -149,7 +150,7 @@ public class JsonPatch implements IHasJson {
 				String lastBit;
 				switch(diff.op) {
 				case add: case replace:
-					set(jobj, value, bits);
+					set(diff, jobj, value, bits);
 					break;
 				case remove:
 					// remove from array or object?
@@ -161,7 +162,7 @@ public class JsonPatch implements IHasJson {
 						List<Object> list = new ArrayList(Containers.asList(parent));
 						int i = Integer.valueOf(lastBit);
 						list.remove(i);
-						set(jobj, list, ppath);
+						set(diff, jobj, list, ppath);
 					} else {
 						// object -- null out
 						((Map)parent).remove(lastBit);
@@ -190,10 +191,10 @@ public class JsonPatch implements IHasJson {
 			Object value = diff.value;
 			switch(diff.op) {
 			case add: case replace:
-				set(jobj, value, bits);
+				set(diff, jobj, value, bits);
 				break;
 			case remove:
-				set(jobj, null, bits);
+				set(diff, jobj, null, bits);
 				break;			
 			case move:
 			case copy:
@@ -244,33 +245,49 @@ public class JsonPatch implements IHasJson {
 	 * @param value
 	 * @param key 
 	 */
-	void set(Map<String, ?> jobj, Object value, String... key) {
+	private void set(JsonPatchOp diff, final Map<String, ?> jobj, Object value, String... key) {
 		// drill down
 		Map obj = jobj;
 		for(int i=0,n=key.length-1; i<n; i++) {
 			String k = key[i];
 			Map<String, Object> nextObj = getAsMap(obj, k);
 			if (nextObj!=null) {
+				// step along the path
 				obj = nextObj;
 				continue;
+			}
+			// no path
+			// ...set null?
+			if (value==null) {
+				return; // no-op
 			}
 			// create			
 			nextObj = new ArrayMap(); // what if an array is wanted??
 			if (obj instanceof ListAsMap && key.length > 1) {
-				// array? copy it
-				ArrayList obj2 = new ArrayList(((ListAsMap) obj).list);				
-				ListAsMap obj2AsMap = new ListAsMap(obj2);
-				obj2AsMap.put(k, nextObj);
+				// array? copy it so we can safely edit it without an exception
+				ArrayList obj2 = new ArrayList(((ListAsMap) obj).list);				 
 				String[] pathToArray = Arrays.copyOf(key, i);
-				set(jobj, obj2, pathToArray);				
+				set(null, jobj, obj2, pathToArray);		
+				// set
+				ListAsMap obj2AsMap = new ListAsMap(obj2);				
+				obj2AsMap.put(k, nextObj);
 			} else {
-				nextObj = new ArrayMap();
 				obj.put(k, nextObj);				
 			}			
-			obj = nextObj;
+			// modify our new sub-object
+//			obj = nextObj; // NB step-in recursion works ...but ES objects if we then go on to use the outputs for an update
+			String[] pathFromKToEnd = Arrays.copyOfRange(key, i+1, key.length);
+			set(null, nextObj, value, pathFromKToEnd);
+			// record the new diff op
 			String[] pathToK = Arrays.copyOf(key, i+1);
 			String path = "/"+StrUtils.join(pathToK, "/");
-			extraDiffs.add(JsonPatchOp.add(path, new ArrayMap()));
+			if (diff==null) {
+				// paranoia
+				Log.e("JsonPatch", key);
+			} else {
+				modifiedDiff4diff.put(diff, JsonPatchOp.add(path, nextObj));
+			}
+			return; // done
 		}
 		// set it
 		String k = key[key.length-1];
@@ -286,7 +303,7 @@ public class JsonPatch implements IHasJson {
 				ArrayList obj2 = new ArrayList(((ListAsMap) obj).list);
 				new ListAsMap(obj2).put(k, value);
 				String[] pathToArray = Arrays.copyOf(key, key.length-1);
-				set(jobj, obj2, pathToArray);
+				set(diff, jobj, obj2, pathToArray);
 				return;
 			}
 			// can't fix

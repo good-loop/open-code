@@ -7,7 +7,7 @@ public class BuildWWAppBase extends BuildWinterwellProject {
 	
 	public BuildWWAppBase() {
 		super("winterwell.webappbase");
-		setVersion("1.0.7"); // 02 Nov 2021
+		setVersion("1.0.8"); // Jan 2022
 		setIncSrc(true);
 	}
 	

@@ -1480,11 +1480,15 @@ public abstract class CrudServlet<T> implements IServlet {
 		jp.apply(thingMap);
 		room.setMap(thingMap);
 		// modify diffs?
-		if ( ! jp.getExtraDiffs().isEmpty()) {
-			// Add extra diffs
-			List<JsonPatchOp> alldiffs = jp.getExtraDiffs();
-			alldiffs.addAll(jp.getDiffs());
-			diffs = alldiffs;
+		if ( ! jp.getModifiedDiff4diff().isEmpty()) {
+			// swap diffs
+			ArrayList<JsonPatchOp> modDiffs = new ArrayList();
+			for(JsonPatchOp d : jp.getDiffs()) {
+				JsonPatchOp d2 = jp.getModifiedDiff4diff().get(d);
+				modDiffs.add(d2==null? d : d2);
+			}
+			Log.d(LOGTAG(), "modDiffs: "+modDiffs+" originalDiffs: "+diffs);
+			diffs = modDiffs;
 		}
 	}
 
