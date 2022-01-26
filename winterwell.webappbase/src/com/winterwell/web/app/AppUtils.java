@@ -737,6 +737,9 @@ public class AppUtils {
 
 		List<Field> fields = ReflectionUtils.getAllFields(k);
 		for (Field field : fields) {
+			if (ReflectionUtils.isTransient(field)) {
+				continue;
+			}
 			String fname = field.getName();
 			
 			// already setup?			

@@ -648,19 +648,26 @@ public abstract class CrudServlet<T> implements IServlet {
 		ting.setLastModified(new Time());
 
 		// Git audit trail?
-		if (gitAuditTrail) {
-			if (BuildHacks.getServerType() != KServerType.PRODUCTION) {
-				Log.d(LOGTAG(), "No git audit trail on "+BuildHacks.getServerType());				
-			} else {
-				KStatus status = KStatus.DRAFT;
-				if (state!=null && state.actionIs(ACTION_PUBLISH)) status= KStatus.PUBLISHED; 
-				File fd = getGitFile(ting, status);
-				if (fd != null) {
-					String json = prettyPrinter().toJson(ting);
-					doSave2_file_and_git(state, json, fd);
-				}
-			}
+		if (gitAuditTrail) {			
+			doBeforeSaveOrPublish2_git(state, ting);
 		}
+	}
+
+
+	protected File doBeforeSaveOrPublish2_git(WebRequest state, AThing ting) {
+		if (BuildHacks.getServerType() != KServerType.PRODUCTION) {
+			Log.d(LOGTAG(), "No git audit trail on "+BuildHacks.getServerType());
+			return null;
+		}
+		KStatus status = KStatus.DRAFT;
+		if (state!=null && state.actionIs(ACTION_PUBLISH)) status= KStatus.PUBLISHED; 
+		File fd = getGitFile(ting, status);
+		if (fd == null) {
+			return null;
+		}
+		String json = prettyPrinter().toJson(ting);
+		doSave2_file_and_git(state, json, fd);
+		return fd;			
 	}
 	
 
@@ -1473,11 +1480,15 @@ public abstract class CrudServlet<T> implements IServlet {
 		jp.apply(thingMap);
 		room.setMap(thingMap);
 		// modify diffs?
-		if ( ! jp.getExtraDiffs().isEmpty()) {
-			// Add extra diffs
-			List<JsonPatchOp> alldiffs = jp.getExtraDiffs();
-			alldiffs.addAll(jp.getDiffs());
-			diffs = alldiffs;
+		if ( ! jp.getModifiedDiff4diff().isEmpty()) {
+			// swap diffs
+			ArrayList<JsonPatchOp> modDiffs = new ArrayList();
+			for(JsonPatchOp d : jp.getDiffs()) {
+				JsonPatchOp d2 = jp.getModifiedDiff4diff().get(d);
+				modDiffs.add(d2==null? d : d2);
+			}
+			Log.d(LOGTAG(), "modDiffs: "+modDiffs+" originalDiffs: "+diffs);
+			diffs = modDiffs;
 		}
 	}
 

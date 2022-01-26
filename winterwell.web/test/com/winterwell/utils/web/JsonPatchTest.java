@@ -32,10 +32,11 @@ public class JsonPatchTest {
 		String jafter = Gson.toJSON(after2);
 		assertEquals("{'a':[{'fruit':'apple'}]}".replace('\'', '"'),jafter);
 		
-		assert ! ops.getExtraDiffs().isEmpty();
-//		System.out.println(Gson.toJSON(ops.getExtraDiffs()));
+		assert ! ops.getModifiedDiff4diff().isEmpty();
+		System.out.println(ops.getModifiedDiff4diff());
+//		System.out.println(Gson.toJSON(ops.getModifiedDiff4diff()));
 		// TODO we'd rather have value:[] 
-		assertEquals("[{\"op\":\"add\",\"path\":\"/a/0\",\"value\":{}}]", Gson.toJSON(ops.getExtraDiffs()));
+//		assertEquals("[{\"op\":\"add\",\"path\":\"/a/0\",\"value\":{}}]", Gson.toJSON(ops.getModifiedDiff4diff()));
 	}
 
 	
@@ -55,9 +56,14 @@ public class JsonPatchTest {
 //		System.out.println(after2);
 		String jafter = Gson.toJSON(after2);
 		assertEquals("{'a':[{'fruit':'apple'}]}".replace('\'', '"'),jafter);
+		
+		System.out.println(ops.getModifiedDiff4diff());
+		System.out.println(ops.getDiffs());				
+		assert ! ops.getModifiedDiff4diff().isEmpty();
 	}
 
-
+	
+	
 	@Test
 	public void testArrayNull() {
 		Map before = new ArrayMap("a", Arrays.asList("Apple","Avocado"));
