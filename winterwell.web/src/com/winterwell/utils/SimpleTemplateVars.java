@@ -90,16 +90,20 @@ public final class SimpleTemplateVars {
 			txt2 = process2_js(txtWithVars, txt2);
 		}
 		
-		// any missed vars?
-		List<String> missed = StrUtils.findAll(p, txt3);
-		if ( ! missed.isEmpty()) {
-			Log.w("SimpleTemplateVars", "Possibly missed variables: "+missed);
-		}
+//		// any missed vars?
+//		List<String> missed = findVars(txt3);
+//		if ( ! missed.isEmpty()) {
+//			Log.w("SimpleTemplateVars", "Possibly missed variables: "+missed);
+//		}
 		
 		// done
 		return txt3;
 	}
 
+	public List<String> findVars(String txt3) {
+		return StrUtils.findAll(p, txt3);
+	}
+	
 	/**
 	 * Replace ${var} or ${encodeURI($var)}
 	 * This is a simpler safer alternative to js. It only runs if useJS is false
