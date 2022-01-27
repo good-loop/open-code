@@ -125,9 +125,16 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 		}
 		
 		ESHttpClient esc = Dep.get(ESHttpClient.class);
+		
+		boolean sourceExists = esc.admin().indices().indexExists(sourceIndex);
+		if ( ! sourceExists) {
+			throw new IllegalArgumentException("ES source index does not exist: "+sourceExists);
+		}
+		
 		String destIndex = Utils.or(getConfig().destIndex, sourceIndex+"_compressed");
 		Log.i(LOGTAG, "Compress "+sourceIndex+" --> "+destIndex);
-
+		
+		
 		// Specify some terms that we want to keep
 		// See DataLogEvent#COMMON_PROPS
 		// TODO increase this list as our usage changes		
