@@ -1,6 +1,7 @@
 package com.goodloop.data.charity;
 
 import com.goodloop.data.Money;
+import com.winterwell.es.ESKeyword;
 import com.winterwell.es.ESNoIndex;
 import com.winterwell.utils.time.Time;
 
@@ -14,6 +15,7 @@ public class Impact {
 	/**
 	 * Charity/NGO ID
 	 */
+	@ESKeyword
 	String charity;
 	
 	/**
