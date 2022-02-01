@@ -1793,7 +1793,7 @@ public class WebUtils {
 	}
 	
 	public static Proc renderToPdf_usingChrome(File html, File pdf, String options) {
-		String url = "file://"+html.getAbsolutePath();
+		String url = "file://"+WebUtils.urlEncode(html.getAbsolutePath()).replace("%2F", "/");
 		return renderUrlToPdf_usingChrome(url, pdf, options);
 	}
 	
@@ -1812,7 +1812,7 @@ public class WebUtils {
 			Proc proc = new Proc(
 					"chrome-headless-render-pdf"
 					+ (options==null? "" : " "+options)				
-					+ " --url="+u+" --pdf="+pdf.getAbsolutePath());
+					+ " --url="+u+" --pdf=\""+pdf.getAbsolutePath()+"\"");
 			Log.d("pdf", proc.getCommand());
 			proc.start();
 			return proc;
