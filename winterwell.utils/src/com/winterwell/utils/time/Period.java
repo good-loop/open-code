@@ -116,13 +116,15 @@ public final class Period extends Pair<Time> {
 	/**
 	 * 
 	 * @param period
-	 * @return null if the intersection is empty
+	 * @return null if the intersection is empty. 
+	 * Warning: Periods which only overlap at the start/end point (i.e. for an instant) will return a Period with start=end, dt=0! 
 	 */
 	public Period intersect(Period period) {
 		Time s = first.isAfter(period.first) ? first : period.first;
 		Time e = second.isBefore(period.second) ? second : period.second;
-		if (s.isAfter(e))
+		if (s.isAfter(e)) {
 			return null;
+		}
 		return new Period(s, e);
 	}
 	
@@ -163,12 +165,13 @@ public final class Period extends Pair<Time> {
 	}
 
 	/**
-	 * Convenience for intersect != null
+	 * Convenience for intersect != null && intersect.dt != 0
 	 * @param slot
 	 * @return true if they overlap
 	 */
 	public boolean intersects(Period slot) {
-		return intersect(slot) != null;
+		Period i = intersect(slot);
+		return i!=null && i.getMillisecs() > 0;
 	}
 
 }
