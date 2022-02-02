@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileWriter;
 
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.web.app.AMain;
@@ -32,20 +33,26 @@ public class ChatRoundaboutMain extends AMain<ChatRoundaboutConfig> {
 		// A repeated call should (painstakingly) fail to make any events, because they already exist
 		LocalDate _nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
 		Time nextFriday = new Time(_nextFriday.toString());
-		System.out.println("Next Friday is: " + nextFriday);
-		
+		System.out.println("Next Friday is: " + nextFriday);		
+		String crLog;
 		try {
 			ChatRoundabout cr = new ChatRoundabout(getConfig(), ChatRoundabout.CHATSET_CROSS_TEAM);
-			String crLog = cr.run(nextFriday);
+			crLog = cr.run(nextFriday);
 			
 			ChatRoundabout cr2 = new ChatRoundabout(getConfig(), ChatRoundabout.CHATSET_IN_TEAM);
-			String cr2Log = cr2.run(nextFriday);
-			
-			cr2.sendEmail(crLog +"\r\n\r\n"+ cr2Log, nextFriday, "wing@good-loop.com");
-			cr2.sendEmail(crLog +"\r\n\r\n"+ cr2Log, nextFriday, "daniel@good-loop.com");
+			String cr2Log2 = cr2.run(nextFriday);
+			crLog += "\n\n"+cr2Log2;
 		} catch (IOException e) {
 			throw Utils.runtime(e);
-		}		
+		}	
+		// let dan and wing know how it went
+		try {
+			ChatRoundabout cr2 = new ChatRoundabout(getConfig(), ChatRoundabout.CHATSET_IN_TEAM);
+			cr2.sendEmail(crLog, nextFriday, "wing@good-loop.com");
+			cr2.sendEmail(crLog, nextFriday, "daniel@good-loop.com");
+		} catch (Exception ex) {
+			Log.e("no.email", ex);
+		}
 		pleaseStop = true;
 	}
 	
