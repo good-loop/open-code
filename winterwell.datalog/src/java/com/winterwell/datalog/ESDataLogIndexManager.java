@@ -70,10 +70,13 @@ public class ESDataLogIndexManager {
 		}
 		ESHttpClient _client = ess.client(dataspace);
 		if (_client.admin().indices().indexExists(baseIndex)) {
-			knownBaseIndexes.add(baseIndex);
-			assert knownBaseIndexes.size() < 100000;
-			
-			return false;
+			// also check that the index has a mapping! (possible race condition if two saveEvent() calls overlap)
+			Map mapping = _client.admin().indices().getMapping(baseIndex);
+			if (mapping!=null && mapping.containsKey("count")) {
+				knownBaseIndexes.add(baseIndex);
+				assert knownBaseIndexes.size() < 100000;			
+				return false;
+			}
 		}
 		// make it, with a base and an alias
 		return registerDataspace3_doIt(dataspace, baseIndex, _client, now);
@@ -82,7 +85,7 @@ public class ESDataLogIndexManager {
 	/**
 	 * per-month index blocks
 	 * @param time
-	 * @return the base index name
+	 * @return the base (i.e. not the alias) index name
 	 */
 	public String baseIndexFromDataspace(Dataspace dataspace, Time time) {
 		// replaces _client.getConfig().getIndexAliasVersion()
@@ -104,29 +107,30 @@ public class ESDataLogIndexManager {
 	 * @param now NB: This is to allow testing to simulate time passing
 	 * @return
 	 */
-	private synchronized boolean registerDataspace3_doIt(Dataspace dataspace, String baseIndex, ESHttpClient _client, Time now) {
-		// race condition - check it hasn't been made
-		if (_client.admin().indices().indexExists(baseIndex)) {
-			Log.i(LOGTAG, "No register dataspace: "+dataspace+" baseIndex: "+baseIndex+" - already exists in ES");
-			knownBaseIndexes.add(baseIndex);
-			return false;
-		}
+	private synchronized boolean registerDataspace3_doIt(Dataspace dataspace, String baseIndex, ESHttpClient _client, Time now) {		
 		try {
-			Log.i(LOGTAG, "register dataspace: "+dataspace+" baseIndex: "+baseIndex);
-			// HACK
-			CreateIndexRequest pc = _client.admin().indices().prepareCreate(baseIndex);			
-//			actually, you can have multiple for all pc.setFailIfAliasExists(true); // this is synchronized, but what about other servers?
-			pc.setDefaultAnalyzer(Analyzer.keyword);
-			// aliases: index and index.all both point to baseIndex  
-			// Set the query index here. The write one is set later as an atomic swap.			
-			pc.setAlias(ESStorage.readIndexFromDataspace(dataspace));
-			pc.setDebug(true);			
-			IESResponse cres = pc.get();
-			cres.check();
+			// race condition - check it hasn't been made
+			if (_client.admin().indices().indexExists(baseIndex)) {
+				Log.i(LOGTAG, "No register dataspace: "+dataspace+" baseIndex: "+baseIndex+" - already exists in ES");							
+			} else {
+				Log.i(LOGTAG, "register dataspace: "+dataspace+" baseIndex: "+baseIndex);
+	
+				CreateIndexRequest pc = _client.admin().indices().prepareCreate(baseIndex);			
+	//			actually, you can have multiple for all pc.setFailIfAliasExists(true); // this is synchronized, but what about other servers?
+				pc.setDefaultAnalyzer(Analyzer.keyword);
+				// aliases: index and index.all both point to baseIndex  
+				// Set the query index here. The write one is set later as an atomic swap.			
+				pc.setAlias(ESStorage.readIndexFromDataspace(dataspace));
+				pc.setDebug(true);			
+				IESResponse cres = pc.get();
+				cres.check();
+			}
 
 			// register some standard event types??
 			registerDataspace4_mapping(_client, dataspace, now);
-			
+
+			// done
+			knownBaseIndexes.add(baseIndex);
 			return true;
 			
 		} catch (ESIndexAlreadyExistsException ex) {
@@ -144,10 +148,12 @@ public class ESDataLogIndexManager {
 
 
 	private void registerDataspace4_mapping(ESHttpClient _client, Dataspace dataspace, Time now) 
-	{
+	{		
 		String esType = ESStorage.ESTYPE;
 //		String v = _client.getConfig().getIndexAliasVersion();
 		String index = baseIndexFromDataspace(dataspace, now);
+		Log.d(LOGTAG, "registerDataspace4_mapping d: "+dataspace+" index: "+index);
+
 		PutMappingRequest pm = _client.admin().indices().preparePutMapping(index, esType);
 		// See DataLogEvent.COMMON_PROPS and toJson()
 		ESType keywordy = new ESType().keyword().norms(false).lock();

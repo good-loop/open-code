@@ -194,6 +194,7 @@ public final class DataLogEvent implements Serializable, IHasJson
 	 * e.g. type=simple, tag=any old string
 	 */
 	private final String[] evt;
+	
 	/**
 	 * never null
 	 */
