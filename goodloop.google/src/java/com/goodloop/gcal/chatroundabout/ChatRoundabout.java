@@ -17,6 +17,7 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
 import com.goodloop.gcal.GCalClient;
@@ -341,7 +342,7 @@ public class ChatRoundabout  {
 	String chatSet;
 	private Period slot;
 	
-	public void sendEmail(String emailContent, Time nextFriday, String sendEmail) {
+	public void sendEmail(String emailContent, Time nextFriday, String sendEmail) throws AddressException {
 		File propsFile = new File(FileUtils.getWinterwellDir(), config.emailProperties);
 		if ( ! propsFile.exists()) {
 			propsFile = new File(FileUtils.getWinterwellDir(), "logins/local.properties");
@@ -360,7 +361,8 @@ public class ChatRoundabout  {
 		
 		Emailer emailer = new Emailer(ec);
 		InternetAddress from = emailer.getBotEmail();
-		InternetAddress email = emailer.getBotEmail();
+//		InternetAddress email = emailer.getBotEmail();
+		InternetAddress email = new InternetAddress(sendEmail) ;
 		email.setAddress(sendEmail);
 		String firstName = sendEmail.split("@")[0].toLowerCase();
 		String firstNameCap = firstName.substring(0,1).toUpperCase() + firstName.substring(1);
@@ -389,8 +391,8 @@ public class ChatRoundabout  {
 		
 		// TODO fetch last weeks 121s
 		
-		System.out.println("Edinburgh's team size today: " + edinburghEmails.size());
-		System.out.println("London's team size today: " + londonEmails.size());
+		System.out.println("Edinburgh's team size this Friday: " + edinburghEmails.size());
+		System.out.println("London's team size this Friday: " + londonEmails.size());
 		
 		// Logic: which office is larger
 		boolean e2l = (edinburghEmails.size() > londonEmails.size());
