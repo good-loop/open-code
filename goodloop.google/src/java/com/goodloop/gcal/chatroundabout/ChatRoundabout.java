@@ -325,7 +325,12 @@ public class ChatRoundabout  {
 		
 		// output
 		// NB the extra whitespace is stripped in the log file but not in sysout
-		String logString = "No 121s for "+chatSet+" at "+slot.first.format("hh:mm")+":\n\n"+Printer.toString(no121reasonForEmployeeEmail, "\n", ":\t");
+		String logString = new String();
+		if ( no121reasonForEmployeeEmail.size() == 0 ) {
+			logString = "No 121s for "+chatSet+" at "+slot.first.format("hh:mm")+":\n\n"+"All Empolyees will have 121 in this slot";
+		} else {
+			logString = "No 121s for "+chatSet+" at "+slot.first.format("hh:mm")+":\n\n"+Printer.toString(no121reasonForEmployeeEmail, "\n", ":\t");
+		}
 		Log.i(LOGTAG, "\n\n"+logString+"\n\n");
 		
 		return logString;
