@@ -399,7 +399,7 @@ public class ChatRoundabout  {
 		emailer.send(msg);
 	}
 	
-	public void sendNotification(String anotherEmail, Period slot, String sendEmail) throws AddressException {
+	public void sendNotification(String anotherEmail, Period slot, String sendEmail, String htmlLink) throws AddressException {
 		File propsFile = new File(FileUtils.getWinterwellDir(), config.emailProperties);
 		Emailer emailer = getEmailer(propsFile);
 		
@@ -418,7 +418,7 @@ public class ChatRoundabout  {
 		StringBuilder body = new StringBuilder();
 		body.append("Hello "+firstNameCap);
 		body.append("\r\n\r\nThis is an automated message to let you know that you have a Chat Roundabout meeting with "+personNameCap+" from "+readableDate+".");
-		body.append("\r\n\r\nPlease accept the event on your calender here: https://calendar.google.com/calendar/ .");
+		body.append("\r\n\r\nPlease accept the event on your calender here: "+htmlLink);
 		body.append("\r\n\r\nIf you're unable to make it, please contact your Chat Roundabout partner to let them know and arrange a new time slot for your 121.");
 		body.append("\r\n\r\nEnjoy the rest of your day!");
 		body.append("\r\n\r\nI am a bot, beep boop.");
@@ -462,10 +462,9 @@ public class ChatRoundabout  {
 				String calendarId = person1.getId(); // "primary";
 				Event event2 = gcc.addEvent(calendarId, preparedEvent, false, true);
 				Log.d(LOGTAG, "Saved event to Google Calendar: " + event2.toPrettyString());
-				
 				try {
-					sendNotification(ab.first.email, slot, ab.second.email);
-					sendNotification(ab.second.email, slot, ab.first.email);
+					sendNotification(ab.first.email, slot, ab.second.email, event2.getHtmlLink());
+					sendNotification(ab.second.email, slot, ab.first.email, event2.getHtmlLink());
 				} catch (AddressException e) {
 					e.printStackTrace();
 				}
