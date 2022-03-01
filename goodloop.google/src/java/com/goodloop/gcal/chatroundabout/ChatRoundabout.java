@@ -343,12 +343,7 @@ public class ChatRoundabout  {
 		this.chatSet = chatSet;
 	}
 	
-	Map<String, String> no121reasonForEmployeeEmail = new HashMap();
-	String chatSet;
-	private Period slot;
-	
-	public void sendEmail(String emailContent, Time nextFriday, String sendEmail) throws AddressException {
-		File propsFile = new File(FileUtils.getWinterwellDir(), config.emailProperties);
+	public Emailer getEmailer(File propsFile) {
 		if ( ! propsFile.exists()) {
 			propsFile = new File(FileUtils.getWinterwellDir(), "logins/local.properties");
 			if ( ! propsFile.exists()) {
@@ -356,7 +351,8 @@ public class ChatRoundabout  {
 				throw new ConfigException("Please symlink the logins/local.properties file or make a file with email login details here: "+propsFile+".");
 			}
 		}
-		Properties props = FileUtils.loadProperties(propsFile);				
+		Properties props = FileUtils.loadProperties(propsFile);		
+		
 		EmailConfig ec = new EmailConfig();
 		ec.emailServer = props.getProperty("emailServer").trim();
 		ec.emailFrom = props.getProperty("emailFrom").trim();
@@ -364,7 +360,24 @@ public class ChatRoundabout  {
 		ec.emailPort = 465;
 		ec.emailSSL = true;		
 		
-		Emailer emailer = new Emailer(ec);
+		return new Emailer(ec);
+	}
+	
+	Map<String, String> no121reasonForEmployeeEmail = new HashMap();
+	String chatSet;
+	private Period slot;
+	
+	/**
+	 * Send Report Email to confirm who and why did they don not have 121 events this Friday
+	 * @param emailContent
+	 * @param nextFriday
+	 * @param sendEmail Receiver Email
+	 * @throws AddressException
+	 */
+	public void sendEmail(String emailContent, Time nextFriday, String sendEmail) throws AddressException {
+		File propsFile = new File(FileUtils.getWinterwellDir(), config.emailProperties);
+		Emailer emailer = getEmailer(propsFile);
+		
 		InternetAddress from = emailer.getBotEmail();
 //		InternetAddress email = emailer.getBotEmail();
 		InternetAddress email = new InternetAddress(sendEmail) ;
@@ -380,6 +393,34 @@ public class ChatRoundabout  {
 		if (config.reportOnly == true) body.append("\r\n\r\nReport Only Mode, no actual events were created.");
 		body.append("\r\n\r\nChatRoundabout ran on: "+readableDate);
 		body.append("\r\n\r\n"+emailContent);
+		body.append("\r\n\r\nI am a bot, beep boop.");
+		
+		SimpleMessage msg = new SimpleMessage(from, email, subject, body.toString());
+		emailer.send(msg);
+	}
+	
+	public void sendNotification(String anotherEmail, Period slot, String sendEmail) throws AddressException {
+		File propsFile = new File(FileUtils.getWinterwellDir(), config.emailProperties);
+		Emailer emailer = getEmailer(propsFile);
+		
+		InternetAddress from = emailer.getBotEmail();
+//		InternetAddress email = emailer.getBotEmail();
+		InternetAddress email = new InternetAddress(sendEmail) ;
+		email.setAddress(sendEmail);
+		String firstName = sendEmail.split("@")[0].toLowerCase();
+		String firstNameCap = firstName.substring(0,1).toUpperCase() + firstName.substring(1);
+		String personName = anotherEmail.split("@")[0].toLowerCase();
+		String personNameCap = personName.substring(0,1).toUpperCase() + personName.substring(1);
+		
+		String appName = "ChatRoundabout";
+		String readableDate = slot.toString();
+		String subject = appName+": Notification";
+		StringBuilder body = new StringBuilder();
+		body.append("Hello "+firstNameCap);
+		body.append("\r\n\r\nThis is an automated message to let you know that you have a Chat Roundabout meeting with "+personNameCap+" from "+readableDate+".");
+		body.append("\r\n\r\nPlease accept the event on your calender here: https://calendar.google.com/calendar/ .");
+		body.append("\r\n\r\nIf you're unable to make it, please contact your Chat Roundabout partner to let them know and arrange a new time slot for your 121.");
+		body.append("\r\n\r\nEnjoy the rest of your day!");
 		body.append("\r\n\r\nI am a bot, beep boop.");
 		
 		SimpleMessage msg = new SimpleMessage(from, email, subject, body.toString());
@@ -420,7 +461,14 @@ public class ChatRoundabout  {
 				Calendar person1 = gcc.getCalendar(ab.first.email);
 				String calendarId = person1.getId(); // "primary";
 				Event event2 = gcc.addEvent(calendarId, preparedEvent, false, true);
-				Printer.out("Saved event to Google Calendar: " + event2.toPrettyString());
+				Log.d(LOGTAG, "Saved event to Google Calendar: " + event2.toPrettyString());
+				
+				try {
+					sendNotification(ab.first.email, slot, ab.second.email);
+					sendNotification(ab.second.email, slot, ab.first.email);
+				} catch (AddressException e) {
+					e.printStackTrace();
+				}
 			} else {
 				Printer.out("\nTESTING \nEvent: " + preparedEvent.getSummary() +
 						"\nDescription: " + preparedEvent.getDescription() + 

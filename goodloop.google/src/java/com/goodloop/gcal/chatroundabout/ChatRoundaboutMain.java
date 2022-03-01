@@ -10,6 +10,7 @@ import java.io.FileWriter;
 
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Period;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.web.app.AMain;
@@ -34,6 +35,17 @@ public class ChatRoundaboutMain extends AMain<ChatRoundaboutConfig> {
 		LocalDate _nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
 		Time nextFriday = new Time(_nextFriday.toString());
 		System.out.println("Next Friday is: " + nextFriday);		
+		
+//		if (config.testMode) {
+//			try {
+//				ChatRoundabout crTest = new ChatRoundabout(getConfig(), ChatRoundabout.CHATSET_IN_TEAM);
+//				crTest.sendNotification("wing@good-loop.com", new Period(nextFriday, nextFriday.plus(config.duration)), "wing@good-loop.com");
+//			} catch (Exception ex) {
+//				Log.e("no.email", ex);
+//			}
+//			pleaseStop = true;
+//		}
+		
 		String crLog;
 		try {
 			ChatRoundabout cr = new ChatRoundabout(getConfig(), ChatRoundabout.CHATSET_CROSS_TEAM);
