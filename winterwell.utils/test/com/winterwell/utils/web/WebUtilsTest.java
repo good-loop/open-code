@@ -442,6 +442,11 @@ public class WebUtilsTest extends TestCase {
 	}
 
 	public void testStripTags() {
+		{
+			String txt = "https://my.good-loop.com/\"><img src=x onerror=prompt(\"OPENBUGBOUNTY\")>";
+			String txt2 = WebUtils.stripTags(txt);
+			assertEquals("https://my.good-loop.com/\">", txt2);
+		}
 		String a = WebUtils.stripTags("a <b><!--This is a comment--> c");
 		assert a.equals("a  c") : a;
 		String b = WebUtils

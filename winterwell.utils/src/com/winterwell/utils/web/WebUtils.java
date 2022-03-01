@@ -1517,11 +1517,13 @@ public class WebUtils {
 	 * attacks, or to get plain text for NLP.
 	 * <p>
 	 * You may then wish to use {@link StrUtils#compactWhitespace(String)}
-	 *
+	 * <p>
+	 * NB: an alternative would be to convert <> to &lt;&gt;
+	 * 
 	 * @param xml
 	 *            can be null, in which case null will be returned
 	 * @return the text contents - ie input with all tags removed
-	 * @testedby  WebUtilsTest#testStripTags()}
+	 * @testedby  WebUtilsTest#testStripTags()
 	 */
 	public static String stripTags(String xml) {
 		if (xml == null)
@@ -1842,6 +1844,17 @@ public class WebUtils {
 			Log.w("WebUtils.parseHeaderTime", e);
 			return null;
 		}		
+	}
+
+	/**
+	 * Convert <, > into &lt; &gt; -- thereby defusing any html injection
+	 * @param text
+	 * @return text
+	 */
+	public static String defuseTagByEncoding(String text) {
+		text = text.replace("<", "&lt;");
+		text = text.replace(">", "&gt;");
+		return text;
 	}
 
 
