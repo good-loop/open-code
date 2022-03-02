@@ -39,7 +39,7 @@ public class ChatRoundaboutMain extends AMain<ChatRoundaboutConfig> {
 //		if (config.testMode) {
 //			try {
 //				ChatRoundabout crTest = new ChatRoundabout(getConfig(), ChatRoundabout.CHATSET_IN_TEAM);
-//				crTest.sendNotification("wing@good-loop.com", new Period(nextFriday, nextFriday.plus(config.duration)), "wing@good-loop.com");
+//				crTest.sendNotification("wing@good-loop.com", new Period(nextFriday, nextFriday.plus(config.duration)), "wing@good-loop.com", "htmlLink");
 //			} catch (Exception ex) {
 //				Log.e("no.email", ex);
 //			}

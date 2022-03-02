@@ -343,14 +343,8 @@ public class ChatRoundabout  {
 		this.chatSet = chatSet;
 	}
 	
-	public Emailer getEmailer(File propsFile) {
-		if ( ! propsFile.exists()) {
-			propsFile = new File(FileUtils.getWinterwellDir(), "logins/local.properties");
-			if ( ! propsFile.exists()) {
-				System.out.println("Please make a file with email login details here: "+propsFile);
-				throw new ConfigException("Please symlink the logins/local.properties file or make a file with email login details here: "+propsFile+".");
-			}
-		}
+	public Emailer getEmailer() {
+		File propsFile = new File(FileUtils.getWinterwellDir(), config.emailProperties);
 		Properties props = FileUtils.loadProperties(propsFile);		
 		
 		EmailConfig ec = new EmailConfig();
@@ -375,8 +369,7 @@ public class ChatRoundabout  {
 	 * @throws AddressException
 	 */
 	public void sendEmail(String emailContent, Time nextFriday, String sendEmail) throws AddressException {
-		File propsFile = new File(FileUtils.getWinterwellDir(), config.emailProperties);
-		Emailer emailer = getEmailer(propsFile);
+		Emailer emailer = getEmailer();
 		
 		InternetAddress from = emailer.getBotEmail();
 //		InternetAddress email = emailer.getBotEmail();
@@ -401,7 +394,7 @@ public class ChatRoundabout  {
 	
 	public void sendNotification(String anotherEmail, Period slot, String sendEmail, String htmlLink) throws AddressException {
 		File propsFile = new File(FileUtils.getWinterwellDir(), config.emailProperties);
-		Emailer emailer = getEmailer(propsFile);
+		Emailer emailer = getEmailer();
 		
 		InternetAddress from = emailer.getBotEmail();
 //		InternetAddress email = emailer.getBotEmail();
