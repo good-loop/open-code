@@ -815,10 +815,13 @@ public abstract class CrudServlet<T> implements IServlet {
 				// Swallow and keep on trucking for the odd data error
 				// Note: minor data privacy issue: this means the uncleansed data gets served up here!
 				// Which will be useful for dbugging and should not happen in the wild.
-				Log.e(LOGTAG(), ex);
+				Log.e(LOGTAG()+".swallowed", ex);
 				// Though if too much is breaking, then give up
 				errCnt++;
-				if (errCnt > 100) break;
+				if (errCnt > 200) {
+					Log.e(LOGTAG()+".ABORT", ex);
+					break;
+				}
 			}
 		}	
 		
