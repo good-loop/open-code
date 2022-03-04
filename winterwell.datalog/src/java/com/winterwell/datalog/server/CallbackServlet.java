@@ -28,10 +28,11 @@ public class CallbackServlet extends CrudServlet<Callback> implements IServlet {
 	@Override
 	protected JThing<Callback> doNew(WebRequest state, String id) {
 		Utils.check4null(id, state);
-		String dataspace = state.getRequired(DataServlet.DATASPACE);
+		Dataspace d = state.get(DataLogFields.d);
+		if (d==null) d = new Dataspace(state.getRequired(DataServlet.DATASPACE));
 		String url = state.getRequired(new UrlField("callback"));
 		String eventType = state.get(DataLogEvent.EVT);
-		Callback cb = new Callback(new Dataspace(dataspace), eventType, url); 
+		Callback cb = new Callback(d, eventType, url); 
 		// OK				
 		return new JThing().setJava(cb);
 	}

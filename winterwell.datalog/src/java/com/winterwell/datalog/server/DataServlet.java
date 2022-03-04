@@ -63,13 +63,16 @@ public class DataServlet implements IServlet {
 	 */
 	private static final IntField numRows = new IntField("numRows");
 	private static final IntField SIZE = new IntField("size");
+	
+	@Deprecated /* let's standardise on `d` for input and query */
 	public static final SField DATASPACE = new SField("dataspace");
+	
 	private static final String LOGTAG = "DataServlet";
 
 	@Override
-	public void process(WebRequest state) throws IOException {						
-				
-		Dataspace dataspace = new Dataspace(state.get(DATASPACE, "default"));				
+	public void process(WebRequest state) throws IOException {										
+		Dataspace d = state.get(DataLogFields.d);
+		if (d==null) d = new Dataspace(state.get(DATASPACE, "default"));
 		// Uses "paths" of breakdown1/breakdown2/... {field1:operation, field2}
 		List<String> breakdown = state.get(DataLogFields.breakdown);
 		if (breakdown==null) {
@@ -81,7 +84,7 @@ public class DataServlet implements IServlet {
 		breakdown.remove("none");
 
 		// security: on the dataspace, and optionally on the breakdown
-		DataLogSecurity.check(state, dataspace, breakdown);
+		DataLogSecurity.check(state, d, breakdown);
 
 		// num results
 		int numTerms = state.get(numRows, 1000);		
@@ -112,10 +115,10 @@ public class DataServlet implements IServlet {
 		ESStorage ess = (ESStorage) dl.getStorage();
 //		ESStorage ess = Dep.get(ESStorage.class);
 		
-		ESHttpClient esc = ess.client(dataspace);		
+		ESHttpClient esc = ess.client(d);		
 
 		// collect all the info together
-		ESDataLogSearchBuilder essb = new ESDataLogSearchBuilder(esc, dataspace);		
+		ESDataLogSearchBuilder essb = new ESDataLogSearchBuilder(esc, d);		
 		essb.setBreakdown(breakdown)
 			.setQuery(filter)
 			.setNumResults(numTerms)

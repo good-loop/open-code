@@ -6,6 +6,7 @@ import java.io.IOException;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.Dataspace;
 import com.winterwell.utils.Dep;
+import com.winterwell.utils.Key;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Dt;
@@ -38,7 +39,8 @@ public class TrackingPixelServlet implements IServlet {
 	/**
 	 * GL "tracking" as an app for You-Again
 	 */
-	public static final String APP = "trk";	
+	public static final String APP = "trk";
+	private static final StringField D = new StringField(LgServlet.DATASPACE.name);	
 	
 
 
@@ -115,7 +117,7 @@ public class TrackingPixelServlet implements IServlet {
 
 			// Apply default dataspace "trk" if none specified
 			if (state.get(LgServlet.DATASPACE) == null) {
-				state.put(new StringField(LgServlet.DATASPACE.name), APP);
+				state.put(D, APP);
 			}
 			// Count it (fastLog will check for isOpen() on the request and not try to send a response)
 			LgServlet.fastLog(state);
