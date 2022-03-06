@@ -9,11 +9,17 @@ import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.Dep;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
+import com.winterwell.utils.gui.GuiUtils;
+import com.winterwell.utils.log.Log;
 import com.winterwell.utils.web.WebUtils;
 import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.WebEx;
 import com.winterwell.web.ajax.JSend;
 import com.winterwell.web.ajax.JThing;
+import com.winterwell.web.data.XId;
+import com.winterwell.youagain.client.App2AppAuthClient;
+import com.winterwell.youagain.client.AuthToken;
+import com.winterwell.youagain.client.YouAgainClient;
 
 /**
  * Status: WIP 
@@ -59,6 +65,21 @@ public class CrudClient<T> {
 	 */
 	public void setJwt(String jwt) {
 		this.jwt = jwt;
+	}
+	
+
+	public void doAuth(String appName, String product) {
+		YouAgainClient yac = new YouAgainClient(appName, product);
+		AuthToken token = yac.loadLocal(new XId(appName+"@app"));
+		if (token == null) {
+			App2AppAuthClient a2a = yac.appAuth();
+			String appAuthPassword = GuiUtils.askUser("Password for "+appName); 
+			token = a2a.registerIdentityTokenWithYA(appName, appAuthPassword);
+			yac.storeLocal(token);
+		}
+		Log.d("init.auth", "AuthToken set from loadLocal .token folder "+token.getXId());
+//		Dep.set(AuthToken.class, token);		
+		setJwt(token.getToken());
 	}
 	
 	/**
