@@ -1,5 +1,6 @@
 package com.winterwell.web.ajax;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import com.winterwell.utils.Dep;
 import com.winterwell.utils.ReflectionUtils;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.WrappedException;
+import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.web.IHasJson;
 import com.winterwell.utils.web.WebUtils2;
 
@@ -153,7 +155,9 @@ implements INotSerializable, IHasJson // serialize the json not this wrapper
 			return java;
 		} catch (Throwable ex) {
 			// add in extra info
-			throw new WrappedException(ex.toString()+" Cause POJO: "+StrUtils.ellipsize(sjson, 200)+ReflectionUtils.getSomeStack(6), ex);
+			throw new WrappedException(ex.toString()+" Cause POJO: "+StrUtils.ellipsize(sjson, 200)
+				+" "+Containers.subList(Arrays.asList(ex.getStackTrace()), 0, 8), 
+				ex);
 		}
 	}
 	
