@@ -101,7 +101,7 @@ public abstract class CrudServlet<T> implements IServlet {
 		String safename = FileUtils.safeFilename(wart+item.getId(), false);
 		File f = new File(dir, item.getClass().getSimpleName()+"/"+safename);
 		if ( ! f.getParentFile().isDirectory()) {
-			f.getParentFile().mkdir(); // create the repo/Type folder if needed
+			f.getParentFile().mkdirs(); // create the repo/Type folder if needed
 		}
 		return f;
 	}
