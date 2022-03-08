@@ -34,6 +34,7 @@ import com.winterwell.web.data.XId;
 
 public class AppUtilsTest {
 
+	
 	@Test
 	public void testMakeESFilterFromSearchQuery_regex() {
 		String q = "user:/.+@trk/"; // filter anon trk users
@@ -41,8 +42,8 @@ public class AppUtilsTest {
 		List ptre = sq.getParseTree();
 		BoolQueryBuilder esf = AppUtils.makeESFilterFromSearchQuery(sq, null, null);
 		Map esmap = (Map) esf.getUnderlyingMap().get("bool");
-		System.out.println(esmap);
-		System.out.println(esf);
+//		System.out.println(esmap);
+//		System.out.println(esf);
 		assert esmap.toString().equals("{must=[{regexp={user={value=.+@trk}}}]}") : esmap.toString();
 	}
 	
@@ -54,9 +55,8 @@ public class AppUtilsTest {
 		assert ptre.toString().equals("[and, {due={before=2020-01-01}}]") : ptre;
 		BoolQueryBuilder esf = AppUtils.makeESFilterFromSearchQuery(sq, null, null);
 		Map esmap = (Map) esf.getUnderlyingMap().get("bool");
-		System.out.println(esmap);
-		System.out.println(esf);
-		assert esmap.toString().equals("TODO");
+//		System.out.println(esmap);
+		assert esmap.toString().equals("{must=[{range={due={to=2020-01-01T00:00:00Z, include_upper=true}}}]}") : esmap;
 	}
 	
 	@Test

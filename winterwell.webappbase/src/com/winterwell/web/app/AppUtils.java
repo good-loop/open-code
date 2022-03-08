@@ -139,22 +139,40 @@ public class AppUtils {
 	
 	/**
 	 * 
-	 * @param path
+	 * @param path If multiple indexes are listed, e.g. [foo, foo.draft], then they will be tried in order.
 	 * @param klass
 	 * @param version
 	 * @return object or null for 404
 	 */
 	public static <X> X get(ESPath path, Class<X> klass, AtomicLong version) {
 		ESHttpClient client = new ESHttpClient(Dep.get(ESConfig.class));
-		GetRequest s = new GetRequest(client);
-		return get2(path, klass, version, s);
+		for(String index : path.indices) {
+			ESPath pathi = new ESPath(new String[] {index}, path.id); // NB: ES get-by-ID can only take one index
+			GetRequest s = new GetRequest(client);
+			X got = get2(pathi, klass, version, s);
+			if (got != null) {
+				return got;
+			}
+		}
+		return null;
 	}
 	
+	/**
+	 * TODO only supports one index
+	 * @param <X>
+	 * @param path
+	 * @param klass
+	 * @param version
+	 * @param s
+	 * @return
+	 */
 	public static <X> X get2(ESPath path, Class<X> klass, AtomicLong version, GetRequest s) {
-		// Minor TODO both indices in one call
-		s.setIndices(path.indices[0]).setType(path.type).setId(path.id);
+		if (path.indices.length > 1) Log.e("AppUtils", "(swallowed) get2 should only use one index "+path); // ??upgrade to an assert
+		String index = path.indices[0]; // NB: ES get-by-ID must be one index only
+		s.setIndex(index);
+		s.setId(path.id);
 		if (version==null) s.setSourceOnly(true);
-//		s.setDebug(true);
+//			s.setDebug(true);
 		GetResponse sr = s.get();
 		if (sr.isSuccess()) {
 			if (klass!=null) {
@@ -174,11 +192,6 @@ public class AppUtils {
 		Exception error = sr.getError();
 		if (error!=null) {
 			if (error instanceof WebEx.E404) {
-				// was version=draft?
-				if (path.indices.length > 1) {
-					ESPath path2 = new ESPath(Arrays.copyOfRange(path.indices, 1, path.indices.length), path.type, path.id);
-					return get(path2, klass);
-				}
 				// 404
 				return null;
 			}
@@ -186,6 +199,7 @@ public class AppUtils {
 		}
 		return null;
 	}
+	
 	
 	public static JThing doUnPublish(JThing thing, ESPath draftPath, ESPath pubPath, KStatus newStatus) {
 		Log.d("unpublish", draftPath+" "+pubPath+" "+newStatus);

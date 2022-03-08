@@ -52,8 +52,10 @@ public enum KStatus {
 	/** Special value for use only in url parameters. This covers the case that archived stuff should still show in some lists. */
 	PUB_OR_ARC,
 	
-	/** Special value for use only in url parameters. For lists where we want to see active and WIP items but not past/trashed ones. */
-	PUB_OR_DRAFT,
+	/** Special value for use only in url parameters. For lists where we want to see active and WIP items but not past/trashed ones. 
+	 * Returns PUBLISHED if possible, DRAFT if published does not exist.
+	 * */
+	PUB_OR_DRAFT,	
 	
 	/** this thing does not exist */
 	ABSENT;
