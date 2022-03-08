@@ -1190,7 +1190,7 @@ public class WebRequest implements IProperties, Closeable {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("WebRequest:user=" + user + ":action=" + action + ":req={");
+		StringBuilder sb = new StringBuilder("WebRequest:"+getRequestPath()+":user=" + user + ":action=" + action +":req={");
 		// obfuscate passwords
 		Map<String, Object> pmap = getParameterMap();
 		pmap.entrySet().forEach(e -> {			

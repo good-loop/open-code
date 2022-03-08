@@ -153,7 +153,7 @@ implements INotSerializable, IHasJson // serialize the json not this wrapper
 			return java;
 		} catch (Throwable ex) {
 			// add in extra info
-			throw new WrappedException(ex.toString()+" Cause POJO: "+StrUtils.ellipsize(sjson, 240), ex);
+			throw new WrappedException(ex.toString()+" Cause POJO: "+StrUtils.ellipsize(sjson, 200)+ReflectionUtils.getSomeStack(6), ex);
 		}
 	}
 	
