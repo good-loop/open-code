@@ -175,7 +175,7 @@ public class CompressDataLogIndexMain extends AMain<CompressDataLogIndexConfig> 
 			Log.i("Using modern version of ES: more efficient transform!");
 			trb.setBody(sourceIndex, destIndex, aggs, terms, "24h");
 		} else {
-			Log.w("Not using latest version of ES: painless script for transform...");
+			Log.e("Not using latest version of ES: painless script for transform...");
 			trb.setBodyWithPainless(sourceIndex, destIndex, aggs, terms, "24h");
 		}
 		// filter?

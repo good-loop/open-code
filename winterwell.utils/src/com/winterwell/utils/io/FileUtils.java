@@ -1563,7 +1563,10 @@ public class FileUtils {
 		name = name.replace("..", "_.");
 		name = name.replaceAll("[^ a-zA-Z0-9-_.~/\\\\]", "");
 		name = name.trim();
-		name = name.replaceAll("\\s+", "_");
+		name = name.replaceAll("\\s+", "_"); // this will catch \n \r as well as multiple spaces
+		// plain naughty
+		name = name.replace(";", "_");
+		// subdirs?
 		if (!allowSubDirs) {
 			name = name.replace("/", "_");
 			name = name.replace("\\", "_");
