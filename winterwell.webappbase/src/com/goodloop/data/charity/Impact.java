@@ -11,7 +11,7 @@ import com.winterwell.utils.time.Time;
  *
  */
 public class Impact {
-
+	
 	/**
 	 * Charity/NGO ID
 	 */
