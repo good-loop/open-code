@@ -5,6 +5,9 @@ import java.util.Arrays;
 import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.IDataLogAdmin;
+import com.winterwell.es.client.ESConfig;
+import com.winterwell.es.client.ESHttpClient;
+import com.winterwell.utils.Dep;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.log.LogFile;
 import com.winterwell.utils.time.TUnit;
@@ -59,7 +62,7 @@ public class DataLogServer extends AMain<DataLogConfig> {
 						"82.37.169.72" // ??which office
 						);
 				Log.d("init", "Set ourSkippedIPS from null to "+config.ourSkippedIPs+" (GL office)");
-			}			
+			}
 		}
 		
 		logFile = new LogFile(config.logFile)
@@ -70,6 +73,10 @@ public class DataLogServer extends AMain<DataLogConfig> {
 		// usual setup
 		super.init2(config);
 		init3_youAgain();
+		
+		// constructing a GeoLiteLocator involves parsing a 30mb CSV so do it once now		
+		Dep.setSupplier(GeoLiteLocator.class, true, () -> new GeoLiteLocator());
+		GeoLiteLocator gll = Dep.get(GeoLiteLocator.class);
 		
 		// register the tracking event
 		IDataLogAdmin admin = DataLog.getAdmin();

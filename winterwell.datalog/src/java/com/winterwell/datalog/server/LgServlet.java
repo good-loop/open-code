@@ -253,6 +253,18 @@ public class LgServlet {
 			}
 		}
 		
+		// Try and retrieve country code for originating IP
+		// TODO Why do we sometimes have multiple originating IPs?
+		// Is "first one with a valid country code" the right strategy? --Roscoe
+		for (Object ip2 : ips) {
+			if (ip2 == null || !(ip2 instanceof String)) continue;
+			String countryCode = Dep.get(GeoLiteLocator.class).getCountryCode((String) ip2);
+			if (countryCode != null) {
+				params.put("country", countryCode);
+				break;
+			}
+		}
+		
 		// screen out our IPs?
 		if ( ! accept(dataspace, tag, params)) {
 			Log.d("lg", "not accepted "+tag+" "+params);
