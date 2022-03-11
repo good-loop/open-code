@@ -15,32 +15,47 @@ public class GeoLiteLocator {
 	// Binary tree - convert an IP to binary and traverse until you hit a leaf, that's the (probable) country it's in.
 	static Node prefixes;
 	
+	public static final String GEOIP_FILES_PATH = "./geoip/";
+	public static final String LOCATIONS_CSV_NAME = "GeoLite2-Country-Locations-en.csv";
+	public static final String BLOCKS_CSV_NAME = "GeoLite2-Country-Blocks-IPv4.csv";
+	
 	public GeoLiteLocator() {
 		if (prefixes != null) return;
 		
 		prefixes = new Node();
-		
-		// GeoLite2 CSV mapping country ID numbers to names, continents, ISO codes etc
-		File locnsFile = new File("./GeoLite2-Country-Locations-en.csv");
-		// Header and sample row:
+		File locnsFile = new File(GEOIP_FILES_PATH, LOCATIONS_CSV_NAME);
+		File blocksFile = new File(GEOIP_FILES_PATH, BLOCKS_CSV_NAME);
+		this.constructPrefixTree(locnsFile, blocksFile);
+	}
+	
+	/**
+	 * Construct the binary IP prefix to country code search tree
+	 * @param locnsFile The GeoLite2 location descriptions file
+	 * @param blocksFile The GeoLite2 CIDR blocks file
+	 */
+	void constructPrefixTree(File locnsFile, File blocksFile) {
+		// Location desc file header and sample row:
 		// gogeoname_id,locale_code,continent_code,continent_name,country_iso_code,country_name,is_in_european_union
 		// 49518,en,AF,Africa,RW,Rwanda,0
+		// CIDR blocks file Header and sample row:
+		// network,geoname_id,registered_country_geoname_id,represented_country_geoname_id,is_anonymous_proxy,is_satellite_provider
+		// 1.0.0.0/24,2077456,2077456,,0,0
+		
+		if (!locnsFile.exists() || !blocksFile.exists()) {
+			// TODO FileNotFoundException?
+		}
 		
 		// First assemble a mapping of numeric country IDs to two-letter ISO country codes, as that's what we want to store
 		CSVReader locnsReader = new CSVReader(locnsFile);
-		
 		Map<String,String> locnToISOCode = new HashMap<String, String>();
 		for (Map<String, String> row : locnsReader.asListOfMaps()) {
 			locnToISOCode.put(row.get("geoname_id"), row.get("country_iso_code"));
 		}
 		locnsReader.close();
 		
-		// GeoLite2 CSV mapping CIDR IP blocks to country ID numbers (and some "this probably isn't really the country you think" flags)
-		File blocksFile = new File("./GeoLite2-Country-Blocks-IPv4.csv");
-		// Header and sample row:
-		// network,geoname_id,registered_country_geoname_id,represented_country_geoname_id,is_anonymous_proxy,is_satellite_provider
-		// 1.0.0.0/24,2077456,2077456,,0,0
-		
+		// New root node for search tree - will swap in once complete
+		Node newPrefixes = new Node();
+				
 		// Parse the blocks file and construct searchable tree
 		CSVReader blocksReader = new CSVReader(blocksFile);	
 		for (Map<String, String> row : blocksReader.asListOfMaps()) {
@@ -75,7 +90,7 @@ public class GeoLiteLocator {
 			}
 
 			// Put this country code in the tree under the specified network prefix
-			prefixes.put(networkBinary, countryCode);
+			newPrefixes.put(networkBinary, countryCode);
 		}
 		blocksReader.close();
 	}
@@ -107,11 +122,16 @@ public class GeoLiteLocator {
 		if (maybeCC != null && maybeCC instanceof String) return (String) maybeCC;
 		return "";
 	}
+
+	public void getLatestFiles() {
+		// TODO Auto-generated method stub
+		
+	}
 }
 
 /**
- * Binary tree for matching network prefixes to country codes.
- * I mean, it can probably do a lot of other things. But that's what it does here.
+ * Binary tree for matching network prefixes (as strings of '0'/'1') to country codes.
+ * I mean, it can probably be used for a lot of other things. But that's what it does here.
  * @author roscoe
  *
  */
@@ -125,8 +145,8 @@ class Node {
 	
 	public Object get(String address, int index) {
 		Object next = (address.charAt(index) == '0') ? zero : one;
-		if (next instanceof Node) return ((Node)next).get(address, index + 1);
-		return next;
+		if (!(next instanceof Node)) return next;
+		return ((Node)next).get(address, index + 1);
 	}
 	
 	public void put(String address, Object obj) {
