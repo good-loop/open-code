@@ -1,10 +1,14 @@
 package com.winterwell.datalog.server;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.winterwell.utils.io.CSVReader;
+import com.winterwell.utils.log.Log;
 
 /**
  * Consumes MaxMind's free GeoLite2 IPv4 CIDR-to-country CSVs and gives basic IP-to-country geolocation 
@@ -25,15 +29,26 @@ public class GeoLiteLocator {
 		prefixes = new Node();
 		File locnsFile = new File(GEOIP_FILES_PATH, LOCATIONS_CSV_NAME);
 		File blocksFile = new File(GEOIP_FILES_PATH, BLOCKS_CSV_NAME);
-		this.constructPrefixTree(locnsFile, blocksFile);
+		
+		try {
+			this.constructPrefixTree(locnsFile, blocksFile);
+		} catch (FileNotFoundException | ParseException e) {
+			// TODO More detailed error handling
+			Log.w("GeoLiteLocator", "Missing or misformatted CSV files during init - normal for first run on new server");
+		}
 	}
+	
+	/**
+
+	 */
 	
 	/**
 	 * Construct the binary IP prefix to country code search tree
 	 * @param locnsFile The GeoLite2 location descriptions file
 	 * @param blocksFile The GeoLite2 CIDR blocks file
+	 * @throws IOException If the CSV changes 
 	 */
-	void constructPrefixTree(File locnsFile, File blocksFile) {
+	void constructPrefixTree(File locnsFile, File blocksFile) throws ParseException, FileNotFoundException {
 		// Location desc file header and sample row:
 		// gogeoname_id,locale_code,continent_code,continent_name,country_iso_code,country_name,is_in_european_union
 		// 49518,en,AF,Africa,RW,Rwanda,0
@@ -42,11 +57,18 @@ public class GeoLiteLocator {
 		// 1.0.0.0/24,2077456,2077456,,0,0
 		
 		if (!locnsFile.exists() || !blocksFile.exists()) {
-			// TODO FileNotFoundException?
+			throw new FileNotFoundException("Cannot init GeoLiteLocator: One or both of " + LOCATIONS_CSV_NAME + " or " + BLOCKS_CSV_NAME + " is missing");
 		}
 		
 		// First assemble a mapping of numeric country IDs to two-letter ISO country codes, as that's what we want to store
 		CSVReader locnsReader = new CSVReader(locnsFile);
+		
+		// Ensure file is in expected format
+		if (!locnsReader.getHeaders().contains("geoname_id") || !locnsReader.getHeaders().contains("country_iso_code")) {
+			locnsReader.close();
+			throw new ParseException("Cannot init GeoLiteLocator: locations file " + locnsFile.getPath() + " missing at least one header of [geoname_id, country_iso_code]", 0);
+		}
+				
 		Map<String,String> locnToISOCode = new HashMap<String, String>();
 		for (Map<String, String> row : locnsReader.asListOfMaps()) {
 			locnToISOCode.put(row.get("geoname_id"), row.get("country_iso_code"));
@@ -57,42 +79,42 @@ public class GeoLiteLocator {
 		Node newPrefixes = new Node();
 				
 		// Parse the blocks file and construct searchable tree
-		CSVReader blocksReader = new CSVReader(blocksFile);	
+		CSVReader blocksReader = new CSVReader(blocksFile);
+		
+		// Ensure file is in expected format
+		if (!blocksReader.getHeaders().contains("network") || !blocksReader.getHeaders().contains("geoname_id")) {
+			blocksReader.close();
+			throw new ParseException("Cannot init GeoLiteLocator: blocks file " + blocksFile.getPath() + " missing at least one header of [network, geoname_id]", 0);
+		}
+		
 		for (Map<String, String> row : blocksReader.asListOfMaps()) {
 			// Split "128.64.32.16/28" into network and prefix-length parts
 			String[] cidr = row.get("network").split("/");
 			String network = cidr[0];
 			
-			String networkBinary = ipToBinary(network);
-			
-			// Truncate binary string to prefix length
-			String prefixLengthString = cidr[1];
-			Integer prefixLength = Integer.parseInt(prefixLengthString);
-			if (prefixLength > networkBinary.length()) {
-				System.out.println("PROBLEM: network " + row.get("network") + " as binary " + networkBinary + " prefix length " + prefixLengthString);
-			}
-			networkBinary = networkBinary.substring(0, prefixLength);
+			// Convert decimal-dot IP to binary string & truncate to CIDR prefix length
+			String networkBinary = ipToBinary(network).substring(0, Integer.parseInt(cidr[1]));
 			
 			// Find corresponding ISO country code
 			String countryCode;
 			
 			// Some networks correspond to known proxies or satellite ISPs, so country code isn't useful
-			String isProxy = row.get("is_anonymous_proxy");
-			String isSatellite = row.get("is_satellite_provider");
-			if (!"0".equals(isProxy)) {
+			if (!"0".equals(row.get("is_anonymous_proxy"))) {
 				countryCode = "PROXY";
-			} else if (!"0".equals(isSatellite)) {
+			} else if (!"0".equals(row.get("is_satellite_provider"))) {
 				countryCode = "SAT";
 			} else {
 				// Looks like a real country!
-				String geonameId = row.get("geoname_id");
-				countryCode = locnToISOCode.get(geonameId);				
+				countryCode = locnToISOCode.get(row.get("geoname_id"));				
 			}
 
 			// Put this country code in the tree under the specified network prefix
 			newPrefixes.put(networkBinary, countryCode);
 		}
 		blocksReader.close();
+		
+		// Construction complete, swap in updated prefix tree
+		prefixes = newPrefixes;
 	}
 	
 	private String zeroes = "00000000"; // for padding
@@ -121,11 +143,6 @@ public class GeoLiteLocator {
 		Object maybeCC = prefixes.get(ipToBinary(ip));
 		if (maybeCC != null && maybeCC instanceof String) return (String) maybeCC;
 		return "";
-	}
-
-	public void getLatestFiles() {
-		// TODO Auto-generated method stub
-		
 	}
 }
 

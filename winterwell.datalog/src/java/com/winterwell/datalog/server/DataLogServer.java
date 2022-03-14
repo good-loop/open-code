@@ -1,6 +1,8 @@
 package com.winterwell.datalog.server;
 
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;
@@ -74,9 +76,13 @@ public class DataLogServer extends AMain<DataLogConfig> {
 		super.init2(config);
 		init3_youAgain();
 		
+		// Prepare GeoLiteLocator to attach IP-inferred country codes to events
 		// constructing a GeoLiteLocator involves parsing a 30mb CSV so do it once now		
 		Dep.setSupplier(GeoLiteLocator.class, true, () -> new GeoLiteLocator());
 		GeoLiteLocator gll = Dep.get(GeoLiteLocator.class);
+		// Make sure it's up to date now, and check for updates every 24 hours
+		GeoLiteUpdateTask glut = new GeoLiteUpdateTask(gll);
+		new Timer().scheduleAtFixedRate(glut, 0, (24 * 60 * 60 * 1000L));
 		
 		// register the tracking event
 		IDataLogAdmin admin = DataLog.getAdmin();
