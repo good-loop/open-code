@@ -75,6 +75,8 @@ public class WinterwellProjectFinder implements IFn<String, File> {
 			// NB: winterwell-code is typically cloned as code, so let's check both options
 			possDirs.add(new File(wdir, "bobwarehouse/code/"+_projectName));
 			possDirs.add(new File(wdir, "bobwarehouse/winterwell-code/"+_projectName));
+			// local, sibling to current dir
+			possDirs.add(new File("..", _projectName).getAbsoluteFile());
 			// only the warehouse? For robustly repeatable builds
 //			possDirs.add(new File(wdir, "open-code/"+_projectName));
 //			possDirs.add(new File(wdir, "code/"+_projectName));
