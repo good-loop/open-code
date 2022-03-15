@@ -33,6 +33,8 @@ public class DataLogServer extends AMain<DataLogConfig> {
 	 * @deprecated why not use config? wiring with LgServlet is a bit clumsy
 	 */
 	static DataLogConfig settings;
+	
+	Timer geoLiteUpdateTimer;
 
 	public DataLogServer() {
 		super("datalog", DataLogConfig.class);
@@ -82,7 +84,9 @@ public class DataLogServer extends AMain<DataLogConfig> {
 		GeoLiteLocator gll = Dep.get(GeoLiteLocator.class);
 		// Make sure it's up to date now, and check for updates every 24 hours
 		GeoLiteUpdateTask glut = new GeoLiteUpdateTask(gll);
-		new Timer().scheduleAtFixedRate(glut, 0, (24 * 60 * 60 * 1000L));
+		// store timer in case the JVM tries to garbage collect it
+		geoLiteUpdateTimer = new Timer();
+		geoLiteUpdateTimer.scheduleAtFixedRate(glut, 0, (24 * 60 * 60 * 1000L));
 		
 		// register the tracking event
 		IDataLogAdmin admin = DataLog.getAdmin();

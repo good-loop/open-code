@@ -26,6 +26,7 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.ConfigFactory;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
+import com.winterwell.web.ConfigException;
 import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.WebEx;
 import com.winterwell.web.app.Logins;
@@ -71,7 +72,8 @@ public class GeoLiteUpdateTask extends TimerTask {
 		// Get our MaxMind license key from the logins file...
 		String licenseKey = Logins.get("maxmind.com").apiSecret;
 		if (Utils.isBlank(licenseKey)) {
-			// TODO Probably just means this server's logins repo is behind..
+			// Probably just means this server's logins repo is behind, but make sure someone knows
+			Log.e(LOGTAG, "Can't run: no apiSecret entry for maxmind.com in misc logins file?");
 			return;
 		}
 		String csvUrl = CSV_URL.replace("$LICENSE_KEY", licenseKey);
@@ -110,7 +112,7 @@ public class GeoLiteUpdateTask extends TimerTask {
 		refHashMatcher.find();
 		if (!downloadedHash.contains(refHashMatcher.group())) {
 			// TODO Retry download at least once on hash mismatch
-			Log.w(LOGTAG, "Downloaded GeoLite2 zip didn't match reference SHA256 hash, aborting");
+			Log.e(LOGTAG, "Downloaded GeoLite2 zip didn't match reference SHA256 hash, aborting");
 			tmpFile.delete();
 			return;
 		}
@@ -130,8 +132,8 @@ public class GeoLiteUpdateTask extends TimerTask {
 			blocksPath = findBlocksPath.group();
 			locnsPath = findLocnsPath.group();	
 		} catch (Exception e) {
-			// TODO Unexpected filenames can cause failure here
-			Log.w(LOGTAG, "Couldn't find expected files in new GeoLite2 zip");
+			// This probably means the ZIP file content layout has changed & we need to rewrite.
+			Log.e(LOGTAG, "Couldn't find expected files in new GeoLite2 zip");
 			tmpFile.delete();
 			return;
 		}
@@ -161,10 +163,10 @@ public class GeoLiteUpdateTask extends TimerTask {
 			FileUtils.move(locnsTemp, locnsDest);
 			FileUtils.move(tmpFile, ZIP_FILE);
 			Log.d("Success! GeoLiteLocator has been updated.");
-		} catch (FileNotFoundException | ParseException e) {
-			// TODO Throw something, probably email someone
-			// FileNotFoundException probably means filenames inside ZIP have changed
-			// ParseException means CSV header names have changed
+		} catch (FileNotFoundException e) {
+			Log.e(LOGTAG, "Downloaded new GeoLite2 ZIP but missing expected file: " + e);
+		} catch (ParseException e) {
+			Log.e(LOGTAG, "Downloaded new GeoLite2 ZIP but found unexpected CSV headers:" + e);
 		} finally {
 			// Clean up any files still left
 			FileUtils.deleteDir(newCsvDir);

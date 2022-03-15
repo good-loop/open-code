@@ -11,11 +11,14 @@ import com.winterwell.utils.io.CSVReader;
 import com.winterwell.utils.log.Log;
 
 /**
- * Consumes MaxMind's free GeoLite2 IPv4 CIDR-to-country CSVs and gives basic IP-to-country geolocation 
+ * Consumes MaxMind's free GeoLite2 IPv4 CIDR-to-country CSVs and gives basic IP-to-country geolocation
+ * @testedBy GeoLiteLocatorTest
  * @author roscoe
  *
  */
 public class GeoLiteLocator {
+	static final String LOGTAG = "GeoLiteLocator";
+	
 	// Binary tree - convert an IP to binary and traverse until you hit a leaf, that's the (probable) country it's in.
 	static Node prefixes;
 	
@@ -32,9 +35,10 @@ public class GeoLiteLocator {
 		
 		try {
 			this.constructPrefixTree(locnsFile, blocksFile);
-		} catch (FileNotFoundException | ParseException e) {
-			// TODO More detailed error handling
-			Log.w("GeoLiteLocator", "Missing or misformatted CSV files during init - normal for first run on new server");
+		} catch (FileNotFoundException e) {
+			Log.e(LOGTAG, "Init: Missing or misformatted CSV file during init (normal for first run on new server): " + e.toString());
+		} catch (ParseException e) {
+			Log.e(LOGTAG, "Init: Failed to parse saved GeoLite2 CSV files: " + e.toString());
 		}
 	}
 	
@@ -56,17 +60,18 @@ public class GeoLiteLocator {
 		// network,geoname_id,registered_country_geoname_id,represented_country_geoname_id,is_anonymous_proxy,is_satellite_provider
 		// 1.0.0.0/24,2077456,2077456,,0,0
 		
-		if (!locnsFile.exists() || !blocksFile.exists()) {
-			throw new FileNotFoundException("Cannot init GeoLiteLocator: One or both of " + LOCATIONS_CSV_NAME + " or " + BLOCKS_CSV_NAME + " is missing");
-		}
+		// throw these separately, we want to know which has failed
+		if (!locnsFile.exists()) throw new FileNotFoundException(locnsFile.getAbsolutePath());
+		if (!blocksFile.exists()) throw new FileNotFoundException(blocksFile.getAbsolutePath());
 		
 		// First assemble a mapping of numeric country IDs to two-letter ISO country codes, as that's what we want to store
 		CSVReader locnsReader = new CSVReader(locnsFile);
-		
+
 		// Ensure file is in expected format
+		locnsReader.setHeaders(locnsReader.next());
 		if (!locnsReader.getHeaders().contains("geoname_id") || !locnsReader.getHeaders().contains("country_iso_code")) {
 			locnsReader.close();
-			throw new ParseException("Cannot init GeoLiteLocator: locations file " + locnsFile.getPath() + " missing at least one header of [geoname_id, country_iso_code]", 0);
+			throw new ParseException("Cannot init GeoLiteLocator: locations file " + locnsFile.getAbsolutePath() + " missing at least one header of [geoname_id, country_iso_code]", 0);
 		}
 				
 		Map<String,String> locnToISOCode = new HashMap<String, String>();
@@ -82,36 +87,43 @@ public class GeoLiteLocator {
 		CSVReader blocksReader = new CSVReader(blocksFile);
 		
 		// Ensure file is in expected format
+		blocksReader.setHeaders(blocksReader.next());
 		if (!blocksReader.getHeaders().contains("network") || !blocksReader.getHeaders().contains("geoname_id")) {
 			blocksReader.close();
 			throw new ParseException("Cannot init GeoLiteLocator: blocks file " + blocksFile.getPath() + " missing at least one header of [network, geoname_id]", 0);
 		}
 		
-		for (Map<String, String> row : blocksReader.asListOfMaps()) {
-			// Split "128.64.32.16/28" into network and prefix-length parts
-			String[] cidr = row.get("network").split("/");
-			String network = cidr[0];
-			
-			// Convert decimal-dot IP to binary string & truncate to CIDR prefix length
-			String networkBinary = ipToBinary(network).substring(0, Integer.parseInt(cidr[1]));
-			
-			// Find corresponding ISO country code
-			String countryCode;
-			
-			// Some networks correspond to known proxies or satellite ISPs, so country code isn't useful
-			if (!"0".equals(row.get("is_anonymous_proxy"))) {
-				countryCode = "PROXY";
-			} else if (!"0".equals(row.get("is_satellite_provider"))) {
-				countryCode = "SAT";
-			} else {
-				// Looks like a real country!
-				countryCode = locnToISOCode.get(row.get("geoname_id"));				
+		
+		try {
+			for (Map<String, String> row : blocksReader.asListOfMaps()) {
+				// Split "128.64.32.16/28" into network and prefix-length parts
+				String[] cidr = row.get("network").split("/");
+				String network = cidr[0];
+				
+				// Convert decimal-dot IP to binary string & truncate to CIDR prefix length
+				String networkBinary = ipToBinary(network).substring(0, Integer.parseInt(cidr[1]));
+				
+				// Find corresponding ISO country code
+				String countryCode;
+				
+				// Some networks correspond to known proxies or satellite ISPs, so country code isn't useful
+				if (!"0".equals(row.get("is_anonymous_proxy"))) {
+					countryCode = "PROXY";
+				} else if (!"0".equals(row.get("is_satellite_provider"))) {
+					countryCode = "SAT";
+				} else {
+					// Looks like a real country!
+					countryCode = locnToISOCode.get(row.get("geoname_id"));
+				}
+				// Put this country code in the tree under the specified network prefix
+				newPrefixes.put(networkBinary, countryCode);
 			}
-
-			// Put this country code in the tree under the specified network prefix
-			newPrefixes.put(networkBinary, countryCode);
+		} catch (IllegalArgumentException e) {
+			Log.e(LOGTAG, "Bad data in GeoLite2 CSV: Encountered overlapping CIDR blocks");
+			return; // leave prefixes as an empty node - will return "" for everything.
+		} finally {
+			blocksReader.close();
 		}
-		blocksReader.close();
 		
 		// Construction complete, swap in updated prefix tree
 		prefixes = newPrefixes;
@@ -138,8 +150,9 @@ public class GeoLiteLocator {
 	 * If this IP falls within a known network prefix, return its probable ISO country code.
 	 * @param ip eg "62.30.12.102"
 	 * @return eg "GB". Never null, empty string for failure.
+	 * @throws NumberFormatException in the case of a malformed IP
 	 */
-	public String getCountryCode(String ip) {
+	public String getCountryCode(String ip) throws NumberFormatException {
 		Object maybeCC = prefixes.get(ipToBinary(ip));
 		if (maybeCC != null && maybeCC instanceof String) return (String) maybeCC;
 		return "";
@@ -156,44 +169,75 @@ class Node {
 	Object zero;
 	Object one;
 	
+	/**
+	 *  Traverse in until a leaf node is reached. This can happen before the end of the address string.
+	 * @param address String containing only '1' and '0' (ie matching "^[01]*$")
+	 * @return The leaf node
+	 */
 	public Object get(String address) {
 		return get(address, 0);
 	}
 	
+	/**
+	 *  Traverse in until a leaf node is reached. This can happen before the end of the address string.
+	 * @param address String containing only '1' and '0' (ie matching "^[01]*$")
+	 * @param index Current progress into the address string
+	 * @return The leaf node
+	 */
 	public Object get(String address, int index) {
-		Object next = (address.charAt(index) == '0') ? zero : one;
+		Object next = (address.charAt(index) == '1') ? one : zero;
 		if (!(next instanceof Node)) return next;
 		return ((Node)next).get(address, index + 1);
 	}
 	
+	/**
+	 * Store a value at a binary address in the tree. Will create all intermediate nodes.
+	 * @param address String containing only '1' and '0' (ie matching "^[01]*$")
+	 * @param obj The object to store
+	 */
 	public void put(String address, Object obj) {
 		put(address, obj, 0);
 	}
 	
+	/**
+	 * Store a value at a binary address in the tree. Will create all intermediate nodes.
+	 * @param address String containing only '1' and '0' (ie matching "^[01]*$")
+	 * @param obj The object to store
+	 * @param index Current progress into the address string
+	 */
 	public void put(String address, Object obj, int index) {
+		boolean nextBit = (address.charAt(index) == '1');
 		// last index? store obj at this.zero or this.one as appropriate
 		if (index == address.length() - 1) {
-			if (address.charAt(index) == '0') {
-				zero = obj;
-			} else {
+			// Writing a leaf node over an internal node? Something's wrong with the dataset.
+			if ((nextBit && (one instanceof Node)) || (!nextBit && (zero instanceof Node))) {
+				throw new IllegalArgumentException("Tried to store a prefix which would overwrite a more specific one");
+			}
+			if (nextBit) {
 				one = obj;
+			} else {
+				zero = obj;
 			}
 			return;
 		}
-		Node nextNode;
-		if (address.charAt(index) == '0') {
-			nextNode = (Node) zero;
-			if (nextNode == null) {
-				nextNode = new Node();
-				zero = nextNode;
-			}
-		} else {
-			nextNode = (Node) one;
+		Object nextNode;
+		if (nextBit) {
+			nextNode = one;
 			if (nextNode == null) {
 				nextNode = new Node();
 				one = nextNode;
 			}
+		} else {
+			nextNode = zero;
+			if (nextNode == null) {
+				nextNode = new Node();
+				zero = nextNode;
+			}
 		}
-		nextNode.put(address, obj, index + 1);
+		// Writing an internal node over a leaf node? Something's wrong with the dataset.
+		if (!(nextNode instanceof Node)) {
+			throw new IllegalArgumentException("Tried to store a prefix which would fall within a more general one");
+		}
+		((Node)nextNode).put(address, obj, index + 1);
 	}
 }

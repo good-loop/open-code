@@ -27,6 +27,7 @@ import com.winterwell.utils.Dep;
 import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.StrUtils;
+import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.log.Log;
@@ -254,14 +255,17 @@ public class LgServlet {
 		}
 		
 		// Try and retrieve country code for originating IP
-		// TODO Why do we sometimes have multiple originating IPs?
-		// Is "first one with a valid country code" the right strategy? --Roscoe
+		// TODO Is there an order to these? Which is most likely to be the actual client?
 		for (Object ip2 : ips) {
-			if (ip2 == null || !(ip2 instanceof String)) continue;
-			String countryCode = Dep.get(GeoLiteLocator.class).getCountryCode((String) ip2);
-			if (countryCode != null) {
-				params.put("country", countryCode);
-				break;
+			if (!(ip2 instanceof String)) continue;
+			try {
+				String countryCode = Dep.get(GeoLiteLocator.class).getCountryCode((String) ip2);
+				if (!Utils.isBlank(countryCode)) {
+					params.put("country", countryCode);
+					break;
+				}
+			} catch (NumberFormatException e) {
+				Log.w("LgServlet", "Couldn't resolve country for bad IP \"" + ip2 + "\"");
 			}
 		}
 		
