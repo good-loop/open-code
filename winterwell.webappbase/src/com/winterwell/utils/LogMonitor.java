@@ -2,7 +2,10 @@ package com.winterwell.utils;
 
 import java.io.File;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -12,6 +15,7 @@ import javax.mail.internet.InternetAddress;
 import org.apache.commons.lang3.StringUtils;
 
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.time.Time;
 import com.winterwell.web.app.Emailer;
 import com.winterwell.web.email.EmailConfig;
 import com.winterwell.web.email.SimpleMessage;
@@ -22,27 +26,43 @@ public class LogMonitor {
 	
 	private static ArrayList<String> alertList = new ArrayList<String>();
 	
+	private static LocalDateTime getDateTime(String line) {
+		String lastLineDateTime = line.substring(0, 24);
+		return LocalDateTime.parse(lastLineDateTime, DateTimeFormatter.ofPattern("MMM d, u h:m:s a", Locale.ENGLISH));
+	}
+	
 	public static void main(String[] args) throws InterruptedException {
-		Proc proc = new Proc("tail -f /home/wing/Desktop/sogive.log.1");
-		proc.start();
-		// proc.waitfor() is not working
-		TimeUnit.SECONDS.sleep(1);
-		proc.close();
-		String out = proc.getOutput();
-		String[] lines = out.split(System.getProperty("line.separator"));
-		for (String line : lines) {
-			if (StringUtils.indexOfAny(line, ignoreKeywords) != -1) return;
-			if (StringUtils.indexOfAny(line, alertKeywords) != -1) {
-				alertList.add(line);
+		Proc proc = new Proc("tail -f -n 100 /home/wing/Desktop/read.txt");
+		String outputString = new String();
+		LocalDateTime lastDateTime = null;
+		
+		while (true) {
+			proc.start();
+			// proc.waitfor() is not working
+			TimeUnit.SECONDS.sleep(2);
+			outputString = proc.getOutput();
+			proc.close();
+			String[] outputLines = outputString.split(System.getProperty("line.separator"));
+			
+			// Record time of last line
+			lastDateTime = getDateTime(outputLines[outputLines.length -1]);
+			System.out.println(lastDateTime);
+			
+			for (String line : outputLines) {
+				if (getDateTime(line).isBefore(lastDateTime)) continue;
+				if (StringUtils.indexOfAny(line, ignoreKeywords) != -1) continue;
+				if (StringUtils.indexOfAny(line, alertKeywords) != -1) {
+					alertList.add(line);
+				}
 			}
+			
+			System.out.println(alertList.size());
 		}
 		
-		System.out.println(alertList.size());
 		
-		// If there are things to alert
-		if (alertList.size() > 0) {
-			// TODO Send Email
-		}
+		
+		
+		// TODO Send Email
 	}
 	
 	public Emailer getEmailer() {
