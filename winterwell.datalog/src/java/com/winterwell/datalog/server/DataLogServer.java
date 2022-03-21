@@ -1,10 +1,15 @@
 package com.winterwell.datalog.server;
 
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.winterwell.datalog.DataLog;
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.IDataLogAdmin;
+import com.winterwell.es.client.ESConfig;
+import com.winterwell.es.client.ESHttpClient;
+import com.winterwell.utils.Dep;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.log.LogFile;
 import com.winterwell.utils.time.TUnit;
@@ -28,6 +33,8 @@ public class DataLogServer extends AMain<DataLogConfig> {
 	 * @deprecated why not use config? wiring with LgServlet is a bit clumsy
 	 */
 	static DataLogConfig settings;
+	
+	Timer geoLiteUpdateTimer;
 
 	public DataLogServer() {
 		super("datalog", DataLogConfig.class);
@@ -59,7 +66,7 @@ public class DataLogServer extends AMain<DataLogConfig> {
 						"82.37.169.72" // ??which office
 						);
 				Log.d("init", "Set ourSkippedIPS from null to "+config.ourSkippedIPs+" (GL office)");
-			}			
+			}
 		}
 		
 		logFile = new LogFile(config.logFile)
@@ -70,6 +77,16 @@ public class DataLogServer extends AMain<DataLogConfig> {
 		// usual setup
 		super.init2(config);
 		init3_youAgain();
+		
+		// Prepare GeoLiteLocator to attach IP-inferred country codes to events
+		// constructing a GeoLiteLocator involves parsing a 30mb CSV so do it once now		
+		Dep.setSupplier(GeoLiteLocator.class, true, () -> new GeoLiteLocator());
+		GeoLiteLocator gll = Dep.get(GeoLiteLocator.class);
+		// Make sure it's up to date now, and check for updates every 24 hours
+		GeoLiteUpdateTask glut = new GeoLiteUpdateTask(gll);
+		// store timer in case the JVM tries to garbage collect it
+		geoLiteUpdateTimer = new Timer();
+		geoLiteUpdateTimer.scheduleAtFixedRate(glut, 0, (24 * 60 * 60 * 1000L));
 		
 		// register the tracking event
 		IDataLogAdmin admin = DataLog.getAdmin();

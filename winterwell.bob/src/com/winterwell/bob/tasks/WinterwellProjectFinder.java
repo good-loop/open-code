@@ -20,6 +20,9 @@ import com.winterwell.utils.log.Log;
 public class WinterwellProjectFinder implements IFn<String, File> {
 
 
+	private static final String LOGTAG = "WinterwellProjectFinder";
+	
+	
 	private static volatile boolean initFlag;
 
 	public WinterwellProjectFinder() {
@@ -72,13 +75,15 @@ public class WinterwellProjectFinder implements IFn<String, File> {
 			// NB: winterwell-code is typically cloned as code, so let's check both options
 			possDirs.add(new File(wdir, "bobwarehouse/code/"+_projectName));
 			possDirs.add(new File(wdir, "bobwarehouse/winterwell-code/"+_projectName));
+			// local, sibling to current dir
+			possDirs.add(new File("..", _projectName).getAbsoluteFile());
 			// only the warehouse? For robustly repeatable builds
 //			possDirs.add(new File(wdir, "open-code/"+_projectName));
 //			possDirs.add(new File(wdir, "code/"+_projectName));
 //			possDirs.add(new File(wdir, _projectName));
 		} catch(Exception ex) {
 			// no WINTERWELL_HOME
-			Log.w("BuildWinterwellProject", "No WINTERWELL_HOME found "+ex);			
+			Log.w(LOGTAG, "No WINTERWELL_HOME found "+ex);			
 		}		
 		// Bug seen May 2020: beware of basically empty dirs
 		for (File pd : possDirs) {
@@ -91,7 +96,7 @@ public class WinterwellProjectFinder implements IFn<String, File> {
 			}
 		}
 		// failed
-		Log.e("BuildWinterwellProject", "Could not find project directory for "+_projectName+" Tried "+possDirs);
+		Log.e(LOGTAG, "Could not find project directory for "+_projectName+" Tried "+possDirs);
 		return null;
 	}
 
@@ -125,7 +130,9 @@ public class WinterwellProjectFinder implements IFn<String, File> {
 			"git@github.com:/good-loop/adserver",
 		"elasticsearch-java-client",
 			"https://github.com/good-loop/elasticsearch-java-client.git",
-		"juice",
+		"jerbil",
+			"https://github.com/winterstein/jerbil",
+		"juice",		
 			"https://github.com/good-loop/juice",
 		"play.good-loop.com",
 			"https://github.com/good-loop/play.good-loop.com.git",
