@@ -24,6 +24,8 @@ import com.winterwell.utils.IFn;
  * Note: This is mostly a convenience wrapper for using {@link LinkedHashMap}
  * with synchronized + Stat counters.
  * 
+ * See also: Guava's CacheBuilder which gives you options like time-based caches.
+ * 
  * TODO remove persistence?? Add a remove listener framework instead. TODO use
  * reference queues to clean out those nulls
  * 

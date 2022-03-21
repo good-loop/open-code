@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -170,7 +171,15 @@ public abstract class CrudServlet<T> implements IServlet {
 		getThingStateOrDB(state);
 
 		// return json?		
-		if (jthing != null) {						
+		if (jthing != null) {			
+			// security filter?
+			List<ESHit<T>> hit = Arrays.asList(new ESHit(jthing));
+			YouAgainClient yac = Dep.get(YouAgainClient.class);
+			List<AuthToken> tokens = yac.getAuthTokens(state);
+			List<ESHit<T>> hitSafe = doList2_securityFilter(hit, state, tokens, yac);
+			if (hitSafe.isEmpty()) {
+				throw new WebEx.E403("User "+state.getUserId()+" cannot access "+state.getSlug());
+			}			
 			// privacy: potentially filter some stuff from the json!
 			JThing<T> cleansed = cleanse(jthing, state);			
 			// Editor safety
@@ -265,7 +274,6 @@ public abstract class CrudServlet<T> implements IServlet {
 	 */
 	protected void doSecurityCheck(WebRequest state) throws SecurityException {
 		YouAgainClient ya = Dep.get(YouAgainClient.class);
-		ReflectionUtils.setPrivateField(state, "debug", true); // FIXME
 		List<AuthToken> tokens = ya.getAuthTokens(state);
 		if (state.getAction() == null) {
 			return;
@@ -1346,7 +1354,7 @@ public abstract class CrudServlet<T> implements IServlet {
 
 
 	/**
-	 * Remove sensitive details for privacy - override to do anything!
+	 * Remove sensitive details (like password or budget) for privacy - override to do anything!
 	 * 
 	 * This is (currently) only used with the _list endpoint!
 	 * TODO expand to get-by-id requests too -- but carefully, as there's more risk of breaking stuff.

@@ -183,6 +183,9 @@ public class RateCounter {
 		return cycles == 0;
 	}
 
+	/**
+	 * @param n Add n to the count
+	 */
 	public void plus(int i) {
 		// if (ttl == null) { // FIXME delete soon
 		// // old version seen 25th Nov 2011 :(
