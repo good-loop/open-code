@@ -881,6 +881,21 @@ public abstract class CrudServlet<T> implements IServlet {
 	 * @throws WebEx.E401
 	 */
 	protected void securityHack_teamGoodLoop(WebRequest state) throws WebEx.E401 {
+		boolean ok = isGLSecurityHack(state);
+		if (ok) {
+			return;
+		}
+		// No - sod off
+		throw new WebEx.E401("This is for Team Good-Loop - Please ask for access");
+	}
+
+
+	/**
+	 * HACK
+	 * @param state
+	 * @return true if they have a good-loop.com auth token
+	 */
+	protected boolean isGLSecurityHack(WebRequest state) {
 		YouAgainClient yac = Dep.get(YouAgainClient.class);
 		List<AuthToken> tokens = yac.getAuthTokens(state);
 		for (AuthToken authToken : tokens) {
@@ -889,7 +904,7 @@ public abstract class CrudServlet<T> implements IServlet {
 				// app2app also, but nothing else (eg Twitter)
 				if (authToken.getXId().isService("app")) {
 					if (name.endsWith("good-loop.com")) {
-						return;
+						return true;
 					}
 				}
 				continue;
@@ -900,16 +915,14 @@ public abstract class CrudServlet<T> implements IServlet {
 					Log.w(LOGTAG(), "not verified "+authToken);
 				}
 				// That will do for us for now
-				return;
+				return true;
 			}
 			// hack: Alexander, Pete, Amanda, Emilia
 			if ("alexander.scurlock@gmail.com info@frankaccounting.co.uk amanda_shields@hotmail.co.uk em@kireli.studio".contains(name)) {
-				return;
+				return true;
 			}
 		}
-		// TODO use YA shares to allow other emails through
-		// No - sod off
-		throw new WebEx.E401("This is for Team Good-Loop - Please ask for access");
+		return false;
 	}
 
 
