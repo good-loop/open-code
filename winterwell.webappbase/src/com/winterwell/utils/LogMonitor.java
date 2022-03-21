@@ -15,6 +15,8 @@ import javax.mail.internet.InternetAddress;
 import org.apache.commons.lang3.StringUtils;
 
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.time.RateCounter;
+import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.web.app.Emailer;
 import com.winterwell.web.email.EmailConfig;
@@ -55,6 +57,7 @@ public class LogMonitor {
 					alertList.add(line);
 				}
 			}
+			rc = new RateCounter(TUnit.HOUR.dt);
 			
 			System.out.println(alertList.size());
 		}
