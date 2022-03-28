@@ -17,7 +17,7 @@ public class ChatRoundaboutConfig implements ISiteConfig {
 	TimeOfDay crossTeamTime = new TimeOfDay("11:30am");
 
 	@Option
-	TimeOfDay inTeamTime = new TimeOfDay("11:00am");
+	TimeOfDay inTeamTime = new TimeOfDay("12:00pm");
 
 	@Option
 	Dt duration = new Dt(10, TUnit.MINUTE);
