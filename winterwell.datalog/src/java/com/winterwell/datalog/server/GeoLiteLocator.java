@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.winterwell.utils.io.CSVReader;
 import com.winterwell.utils.log.Log;
@@ -25,6 +27,9 @@ public class GeoLiteLocator {
 	public static final String GEOIP_FILES_PATH = "./geoip/";
 	public static final String LOCATIONS_CSV_NAME = "GeoLite2-Country-Locations-en.csv";
 	public static final String BLOCKS_CSV_NAME = "GeoLite2-Country-Blocks-IPv4.csv";
+	
+	// So we can reject malformed IPs
+    Pattern IP_REGEX = Pattern.compile("\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b");
 	
 	public GeoLiteLocator() {
 		if (prefixes != null) return;
@@ -153,8 +158,17 @@ public class GeoLiteLocator {
 	 * @throws NumberFormatException in the case of a malformed IP
 	 */
 	public String getCountryCode(String ip) throws NumberFormatException {
-		Object maybeCC = prefixes.get(ipToBinary(ip));
-		if (maybeCC != null && maybeCC instanceof String) return (String) maybeCC;
+		Matcher m = IP_REGEX.matcher(ip);
+		if (!m.find()) {
+			Log.w(LOGTAG, "Couldn't validate IP for geolocation: \"" + ip + "\"");	
+		}
+		try {
+			Object maybeCC = prefixes.get(ipToBinary(m.group()));
+			if (maybeCC != null && maybeCC instanceof String) return (String) maybeCC;	
+		} catch (IndexOutOfBoundsException e) {
+			Log.w(LOGTAG, "IP address ended before finding country code: " + ip);
+		}
+		
 		return "";
 	}
 }
@@ -185,6 +199,7 @@ class Node {
 	 * @return The leaf node
 	 */
 	public Object get(String address, int index) {
+		if (address.length() <= index) return null;
 		Object next = (address.charAt(index) == '1') ? one : zero;
 		if (!(next instanceof Node)) return next;
 		return ((Node)next).get(address, index + 1);
