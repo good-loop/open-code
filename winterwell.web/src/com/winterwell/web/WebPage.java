@@ -75,7 +75,7 @@ public class WebPage implements Appendable, IBuildStrings {
 	}
 
 	@Override
-	public final Appendable append(CharSequence csq) {
+	public final WebPage append(CharSequence csq) {
 		contents.append(csq);
 		return this;
 	}
