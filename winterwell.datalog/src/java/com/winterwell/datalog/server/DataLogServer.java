@@ -79,9 +79,9 @@ public class DataLogServer extends AMain<DataLogConfig> {
 		init3_youAgain();
 		
 		// Prepare GeoLiteLocator to attach IP-inferred country codes to events
-		// constructing a GeoLiteLocator involves parsing a 30mb CSV so do it once now		
-		Dep.setSupplier(GeoLiteLocator.class, true, () -> new GeoLiteLocator());
-		GeoLiteLocator gll = Dep.get(GeoLiteLocator.class);
+		// constructing a GeoLiteLocator involves parsing a 30mb CSV so do it once now
+		GeoLiteLocator gll = new GeoLiteLocator();
+		Dep.set(GeoLiteLocator.class, gll);
 		// Make sure it's up to date now, and check for updates every 24 hours
 		GeoLiteUpdateTask glut = new GeoLiteUpdateTask(gll);
 		// store timer in case the JVM tries to garbage collect it
