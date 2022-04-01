@@ -45,6 +45,7 @@ public class ShareServlet implements IServlet {
 		
 		String desc = state.get("desc"); // 155 chars??
 		String tweep = state.get("tweep");
+		String card = state.get("card"); // twitter card type - not description!
 		
 		page.setTitle(title);		
 //		<meta name="description" content="Page description. No longer than 155 characters." />
@@ -59,7 +60,7 @@ public class ShareServlet implements IServlet {
 //		   <meta property="article:published_time" content="2014-08-12T00:01:56+00:00" />
 //		    <meta property="article:author" content="CNN Karla Cripps" />
 
-		page.appendToHeader("<meta name='twitter:card' value='"+WebUtils2.attributeEncode(desc)+"'>");
+		page.appendToHeader("<meta name='twitter:card' value='"+WebUtils2.attributeEncode(card)+"'>");
 		page.appendToHeader("<meta name='twitter:site' content='"+WebUtils2.attributeEncode(tweep)+"'>");
 		page.appendToHeader("<meta name='twitter:title' content='"+WebUtils2.attributeEncode(title)+"'>");
 		page.appendToHeader("<meta name='twitter:description' content='"+WebUtils2.attributeEncode(desc)+"'>");
