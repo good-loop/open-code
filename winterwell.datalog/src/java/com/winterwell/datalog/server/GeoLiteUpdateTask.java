@@ -28,6 +28,7 @@ import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.web.ConfigException;
 import com.winterwell.web.FakeBrowser;
+import com.winterwell.web.LoginDetails;
 import com.winterwell.web.WebEx;
 import com.winterwell.web.app.Logins;
 
@@ -70,13 +71,13 @@ public class GeoLiteUpdateTask extends TimerTask {
 		Log.d(LOGTAG, "Checking for fresh GeoLite2 CSV...");
 		
 		// Get our MaxMind license key from the logins file...
-		String licenseKey = Logins.get("maxmind.com").apiSecret;
-		if (Utils.isBlank(licenseKey)) {
+		LoginDetails ld = Logins.get("maxmind.com");
+		if (ld == null || Utils.isBlank(ld.apiSecret)) {
 			// Probably just means this server's logins repo is behind, but make sure someone knows
 			Log.e(LOGTAG, "Can't run: no apiSecret entry for maxmind.com in misc logins file?");
 			return;
 		}
-		String csvUrl = CSV_URL.replace("$LICENSE_KEY", licenseKey);
+		String csvUrl = CSV_URL.replace("$LICENSE_KEY", ld.apiSecret);
 		
 		try {
 			// Check the new CSV bundle's Last-Modified header...
@@ -106,7 +107,7 @@ public class GeoLiteUpdateTask extends TimerTask {
 		File tmpFile = fb.getFile(csvUrl);
 		
 		// Compare reference SHA256 to that of downloaded file
-		String referenceHash = fb.getPage(CHECKSUM_URL.replace("$LICENSE_KEY", licenseKey));
+		String referenceHash = fb.getPage(CHECKSUM_URL.replace("$LICENSE_KEY", ld.apiSecret));
 		String downloadedHash = Proc.run("sha256sum " + tmpFile.getPath());
 		Matcher refHashMatcher = HASH_PATTERN.matcher(referenceHash);
 		refHashMatcher.find();
