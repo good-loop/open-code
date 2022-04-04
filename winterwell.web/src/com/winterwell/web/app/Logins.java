@@ -90,7 +90,22 @@ public class Logins {
 		// what do we have?
 		List<String> keys = Containers.filter(dflt.logins.keySet(), k -> k.startsWith(_domain));
 		if (keys.isEmpty()) {
-			return null;
+			ConfigBuilder cb = ConfigFactory.get().getConfigBuilder(Logins.class);
+			File f = new File(loginsDir, "logins."+domain+".properties");
+			if (FileUtils.isSafe(f.getName()) && f.isFile()) {
+				cb.set(f);
+				Logins l2 = cb.get();
+				for(String k2 : l2.logins.keySet()) {
+					if ( ! dflt.logins.containsKey(k2)) {
+						String v2 = l2.logins.get(k2);
+						dflt.logins.put(k2, v2);
+					}
+				}
+				// refilter the keys
+				keys = Containers.filter(dflt.logins.keySet(), k -> k.startsWith(_domain));
+			} else {
+				return null;
+			}
 		}
 		LoginDetails ld = new LoginDetails(domain);
 		for (String k : keys) {

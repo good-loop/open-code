@@ -219,6 +219,7 @@ public class Dictionary implements IDictionary {
 
 	@Override
 	public String getMeaning(String word) {
+		if (word==null) return null;
 		word = toCanonical(word);
 		String m = dict.get(word);
 		if (m==null) return null;

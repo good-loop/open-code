@@ -1059,6 +1059,7 @@ public class FakeBrowser {
 	}
 
 	/**
+	 * Convenience for {@link #post(String, String, String)} with content-type: application/json 
 	 * See WebUtils2.generateJSON() and WebUtils2.parseJSON()
 	 * @param url
 	 * @param json
