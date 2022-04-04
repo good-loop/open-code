@@ -161,14 +161,14 @@ public class GeoLiteLocator {
 		Matcher m = IP_REGEX.matcher(ip);
 		if (!m.find()) {
 			Log.w(LOGTAG, "Couldn't validate IP for geolocation: \"" + ip + "\"");	
+		} else {
+			try {
+				Object maybeCC = prefixes.get(ipToBinary(m.group()));
+				if (maybeCC != null && maybeCC instanceof String) return (String) maybeCC;
+			} catch (IndexOutOfBoundsException e) {
+				Log.w(LOGTAG, "IP address ended before finding country code: " + ip);
+			}
 		}
-		try {
-			Object maybeCC = prefixes.get(ipToBinary(m.group()));
-			if (maybeCC != null && maybeCC instanceof String) return (String) maybeCC;	
-		} catch (IndexOutOfBoundsException e) {
-			Log.w(LOGTAG, "IP address ended before finding country code: " + ip);
-		}
-		
 		return "";
 	}
 }
