@@ -489,5 +489,15 @@ public class JettyLauncher {
 //		Connector[] conns = server.getConnectors();
 		return s4p;
 	}
+
+	public void close() {
+		if (server==null) return;
+		try {
+			getServer().stop();
+			server = null;
+		} catch (Exception e) {
+			throw Utils.runtime(e);
+		}		
+	}
 	
 }
