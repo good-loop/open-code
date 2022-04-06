@@ -619,4 +619,20 @@ public final class YouAgainClient {
 		return roles;
 	}
 
+	/**
+	 * 
+	 * @param tokens
+	 * @param xid
+	 * @return true if tokens contains a (TODO verified) token for xid
+	 */
+	public boolean hasAuthTokenFor(List<AuthToken> tokens, XId xid) {
+		for (AuthToken authToken : tokens) {
+			if (xid.equals(authToken.xid)) {
+				// TODO check for verified and in-date
+				return true;
+			}
+		}
+		return false;
+	}
+
 }
