@@ -1369,8 +1369,6 @@ public abstract class CrudServlet<T> implements IServlet {
 	/**
 	 * Remove sensitive details (like password or budget) for privacy - override to do anything!
 	 * 
-	 * This is (currently) only used with the _list endpoint!
-	 * TODO expand to get-by-id requests too -- but carefully, as there's more risk of breaking stuff.
 	 * 
 	 * @param thing Best NOT to modify this directly. Make a copy.
 	 * @param state
