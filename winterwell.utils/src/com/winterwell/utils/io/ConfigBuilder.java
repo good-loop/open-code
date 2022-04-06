@@ -71,13 +71,14 @@ public class ConfigBuilder {
 		convertors.put(klass, fn);
 	}
 	
+	static final String[] sens = "login password pwd token auth key secret private".split(" ");
+	
 	/**
 	 * 
 	 * @param k
 	 * @return true if k should be protected
 	 */
-	public static boolean protectPasswords(String k) {
-		String[] sens = "login password pwd token auth key secret private".split(" ");
+	public static boolean protectPasswords(String k) {		
 		String kl = k.toLowerCase();
 		for(String sen : sens) {
 			if (kl.contains(sen)) {
