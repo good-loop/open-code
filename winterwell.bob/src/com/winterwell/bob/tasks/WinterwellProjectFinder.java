@@ -50,6 +50,10 @@ public class WinterwellProjectFinder implements IFn<String, File> {
 		if ("portal".equals(_projectName)) {
 			_projectName = "adserver";
 		}
+		// HACK my-data is in my-loop
+		if ("my-data".equals(_projectName)) {
+			_projectName = "my-loop";
+		}
 		List<File> possDirs = new ArrayList();
 		// are we in the project dir?
 		if (FileUtils.getWorkingDirectory().getName().equals(_projectName)) {
