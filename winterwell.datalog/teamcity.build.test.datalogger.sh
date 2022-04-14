@@ -1,7 +1,7 @@
 #!/bin/bash
 ssh winterwell@baker.good-loop.com bash <<EOF 
 /home/winterwell/config/build-scripts/builder.sh \
-BUILD_TYPE="production" \
+BUILD_TYPE="CI" \
 PROJECT_NAME="datalogger" \
 NAME_OF_SERVICE="lg" \
 BRANCH_NAME="master" \
