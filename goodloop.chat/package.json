@@ -21,7 +21,6 @@
     "md5": "^2.3.0",
     "promise-value": "^1.2.10",
     "react": "^16.13.1",
-    "react-autocomplete": "^1.8.1",
     "react-chartjs2": "^1.2.1",
     "react-dom": "^16.13.1",
     "react-dropzone": "^11.1.0",
