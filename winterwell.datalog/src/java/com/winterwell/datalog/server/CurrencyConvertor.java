@@ -135,12 +135,18 @@ public class CurrencyConvertor {
 			}
 			cache.put(date.toISOStringDateOnly(), rate);
 			rateFromCache = rate;
-		}
+		} // ./rateFromCache
 		String currencyConversion = from + "2" + to;
-		double conversionVal = MathUtils.toNum(rateFromCache.getProp(currencyConversion));
+		double conversionVal = MathUtils.toNum(rateFromCache.getProp(currencyConversion));		
 		if (conversionVal==0) {
-			Log.d("CurrencyConvertor", "No data for currency:"+from+" date: " +date+" - using hardcoded FX");
-			return convert2_hardCoded(amount);
+			// inverse?
+			String invcurrencyConversion = to + "2" + from;
+			double invconversionVal = MathUtils.toNum(rateFromCache.getProp(invcurrencyConversion));	
+			if (invconversionVal==0) {
+				Log.d("CurrencyConvertor", "No data for currency:"+from+" date: " +date+" - using hardcoded FX");
+				return convert2_hardCoded(amount);
+			}
+			conversionVal = 1/invconversionVal;
 		}
 		return amount*conversionVal;
 	}

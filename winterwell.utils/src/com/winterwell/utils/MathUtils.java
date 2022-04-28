@@ -241,23 +241,6 @@ public class MathUtils {
 		}		
 	}
 
-	/**
-	 * Less lenient Long flavoured version of {@link #getNumber(Object)}.
-	 * Throws exceptions on fail.
-	 * @param num Must not be null. Can be a Number or String
-	 * @return long 
-	 * 
-	 * @see #getNumber(Object)
-	 * @see #num(Object)
-	 * @see StrUtils#isNumber(String)
-	 */
-	public static long numLong(Object _num) throws NumberFormatException {
-		if (_num instanceof Number) {
-			return ((Number) _num).longValue();
-		}
-		String num = _num.toString();
-		return Long.valueOf(num);
-	}
 	
 	
 	/**
@@ -614,6 +597,26 @@ public class MathUtils {
 		if (object instanceof Number) return ((Number) object).longValue();
 		return Long.valueOf((String)object);
 	}
+	
+	/**
+	 * @deprecated Overlaps with toLong() use that instead
+	 * Less lenient Long flavoured version of {@link #getNumber(Object)}.
+	 * Throws exceptions on fail.
+	 * @param num Must not be null. Can be a Number or String
+	 * @return long 
+	 * 
+	 * @see #getNumber(Object)
+	 * @see #num(Object)
+	 * @see StrUtils#isNumber(String)
+	 */
+	public static long numLong(Object _num) throws NumberFormatException {
+		if (_num instanceof Number) {
+			return ((Number) _num).longValue();
+		}
+		String num = _num.toString();
+		return Long.valueOf(num);
+	}
+	
 
 	/**
 	 * Remove NaN and infinity from data
