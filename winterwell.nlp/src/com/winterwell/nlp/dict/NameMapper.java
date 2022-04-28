@@ -1,4 +1,4 @@
-package com.winterwell.moneyscript.lang;
+package com.winterwell.nlp.dict;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.winterwell.nlp.dict.Dictionary;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.TodoException;
 import com.winterwell.utils.containers.ArraySet;
@@ -36,13 +35,14 @@ public class NameMapper {
 	 * @param rowNames
 	 * @return
 	 */
-	public String run2_ourRowName(String rowName, Dictionary rowNames) {
+	public String run2_ourRowName(String rowName) {
+		Dictionary rowNames = ourNames;
 		// mapping?
 		if (mappingImportRow2ourRow != null) {
 			String mappedName = Containers.getLenient(mappingImportRow2ourRow, rowName);
 			if (mappedName!=null) {
 				// try correcting for slight mismatches
-				String mn2 = run2_ourRowName2_noLookup(rowName, rowNames);
+				String mn2 = run2_ourRowName2_noLookup(rowName);
 				if (mn2==null) {
 					return mappedName;
 				}
@@ -53,14 +53,15 @@ public class NameMapper {
 			}
 		}
 		// no set mapping -- work it out if we can
-		String mappedName = run2_ourRowName2_noLookup(rowName, rowNames);
+		String mappedName = run2_ourRowName2_noLookup(rowName);
 		if (mappedName==null) {
 			Log.d(LOGTAG, "Unmapped row: "+rowName);
 		}
 		return mappedName;
 	}
 	
-	String run2_ourRowName2_noLookup(String rowName, Dictionary rowNames) {
+	String run2_ourRowName2_noLookup(String rowName) {
+		Dictionary rowNames = ourNames;
 		// exact match
 		if (rowNames.contains(rowName)) {
 			return rowNames.getMeaning(rowName);
@@ -83,7 +84,7 @@ public class NameMapper {
 			
 			assert rn2.length() < rowNameCanon.length();
 			if ( ! rn2.isBlank()) {
-				String found = run2_ourRowName(rn2, rowNames);
+				String found = run2_ourRowName(rn2);
 				if (found!=null) {
 					return found;
 				}
