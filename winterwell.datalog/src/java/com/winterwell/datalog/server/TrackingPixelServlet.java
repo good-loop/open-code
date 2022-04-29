@@ -75,7 +75,7 @@ public class TrackingPixelServlet implements IServlet {
 		if (yac != null) {
 			List<AuthToken> authTokens = yac.getAuthTokens(state);
 			if ( ! authTokens.isEmpty()) {
-				// TODO prefer verified and recent tokens				
+				// TODO prefer verified and recent tokens. Also prefer email.			
 				uid = authTokens.get(0).xid.toString();
 				return uid;
 			}			
