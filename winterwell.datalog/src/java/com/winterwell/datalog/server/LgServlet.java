@@ -24,6 +24,7 @@ import com.winterwell.datalog.DataLogRemoteStorage;
 import com.winterwell.datalog.Dataspace;
 import com.winterwell.json.JSONObject;
 import com.winterwell.utils.Dep;
+import com.winterwell.utils.IProperties;
 import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.StrUtils;
@@ -49,6 +50,8 @@ import com.winterwell.web.fields.BoolField;
 import com.winterwell.web.fields.DoubleField;
 import com.winterwell.web.fields.JsonField;
 import com.winterwell.web.fields.SField;
+import com.winterwell.youagain.client.AuthToken;
+import com.winterwell.youagain.client.YouAgainClient;
 
 import ua_parser.Client;
 import ua_parser.Parser;
@@ -381,7 +384,7 @@ public class LgServlet {
 			return params; // dont add tracking params for our own server calls
 		}
 		params.putIfAbsent("ua", ua);
-		// Replace $user with tracking-id, and $
+		// Replace $user with tracking-id, and $		
 		params.putIfAbsent("user", trckId);			
 		// ip: $ip
 		params.putIfAbsent("ip", state.getRemoteAddr());
