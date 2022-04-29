@@ -2,10 +2,12 @@ package com.winterwell.datalog.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import com.winterwell.datalog.DataLogConfig;
 import com.winterwell.datalog.Dataspace;
 import com.winterwell.utils.Dep;
+import com.winterwell.utils.IProperties;
 import com.winterwell.utils.Key;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.log.Log;
@@ -17,6 +19,7 @@ import com.winterwell.web.app.WebRequest;
 import com.winterwell.web.data.XId;
 import com.winterwell.web.fields.StringField;
 import com.winterwell.youagain.client.AuthToken;
+import com.winterwell.youagain.client.YouAgainClient;
 
 /**
  * Call via <img src='https://lg.good-loop.com/pxl' style='position:absolute;bottom:0px;left:0px;width:1px;height:1px;' />
@@ -57,7 +60,7 @@ public class TrackingPixelServlet implements IServlet {
 	 * </p>
 	 * 
 	 * @param state Can be null (returns null)
-	 * @return A nonce@trk XId. 
+	 * @return A nonce@trk XId or a logged-in user XId. 
 	 * 
 	 * Repeated calls will return the same uid. 
 	 */
@@ -67,7 +70,18 @@ public class TrackingPixelServlet implements IServlet {
 		if (uid!=null) {
 			return uid;
 		}
-		uid = Utils.getRandomString(20)+"@trk";
+		
+		YouAgainClient yac = Dep.getWithDefault(YouAgainClient.class, null);
+		if (yac != null) {
+			List<AuthToken> authTokens = yac.getAuthTokens(state);
+			if ( ! authTokens.isEmpty()) {
+				// TODO prefer verified and recent tokens				
+				uid = authTokens.get(0).xid.toString();
+				return uid;
+			}			
+		}		
+		
+		uid = Utils.getRandomString(20)+"@trk";		
 		DataLogConfig dls = Dep.get(DataLogConfig.class);
 		// Do not track?
 		boolean dnt = state.isDoNotTrack();
