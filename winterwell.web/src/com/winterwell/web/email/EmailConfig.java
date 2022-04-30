@@ -5,6 +5,9 @@ import com.winterwell.web.LoginDetails;
 
 public class EmailConfig {
 
+	/**
+	 * ??SMTP or IMAP??
+	 */
 	@Option
 	public String emailServer; 
 	
