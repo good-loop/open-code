@@ -46,6 +46,9 @@ public class CrudClient<T> {
 		this.endpoint = endpoint;
 	}
 	
+	public String getEndpoint() {
+		return endpoint;
+	}
 	
 	/**
 	 * Without this, expect an auth error!
@@ -68,13 +71,22 @@ public class CrudClient<T> {
 	}
 	
 
+	/**
+	 * 
+	 * @param appName e.g. "good-loop"
+	 * @param product e.g. "myapp.example.com"
+	 */
 	public void doAuth(String appName, String product) {
 		YouAgainClient yac = new YouAgainClient(appName, product);
-		AuthToken token = yac.loadLocal(new XId(appName+"@app"));
+		AuthToken token = yac.loadLocal(new XId(product+"@app"));
+		if (token == null) {
+			// try for a more general issuer-level token?
+			token = yac.loadLocal(new XId(appName+"@app"));
+		}
 		if (token == null) {
 			App2AppAuthClient a2a = yac.appAuth();
 			String appAuthPassword = GuiUtils.askUser("Password for "+appName); 
-			token = a2a.registerIdentityTokenWithYA(appName, appAuthPassword);
+			token = a2a.registerIdentityTokenWithYA(product, appAuthPassword);
 			yac.storeLocal(token);
 		}
 		Log.d("init.auth", "AuthToken set from loadLocal .token folder "+token.getXId());
