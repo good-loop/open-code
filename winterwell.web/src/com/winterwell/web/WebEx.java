@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.StrUtils;
+import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.data.XId;
 
@@ -138,11 +139,15 @@ public class WebEx extends RuntimeException {
 	public static class RateLimitException extends E40X {
 		private static final long serialVersionUID = 1L;
 		public RateLimitException(String msg) {
-			super(400, msg);
+			super(429, msg);
 		}
 		public RateLimitException(XId user, String msg) {
-			super(400, StrUtils.joinWithSkip(" ", user,  msg));
+			super(429, StrUtils.joinWithSkip(" ", user,  msg));
 		}
+		/**
+		 * (if known) when to retry
+		 */
+		public Time retry;
 	}
 	
 	/**
