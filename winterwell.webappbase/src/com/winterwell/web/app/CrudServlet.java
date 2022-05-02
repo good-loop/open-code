@@ -1031,7 +1031,7 @@ public abstract class CrudServlet<T> implements IServlet {
 				hits.add(h);
 			} catch(Throwable ex) {
 				// log, swallow, and carry on
-				Log.e("crud", "cause: "+h+" "+ex+" source: "+h.getSource()+" "+Printer.toString(ex, true));
+				Log.e("crud", "cause: "+h+" "+ex); // less info actually -- we can look it up from the server if we need it +" source: "+h.getSource()+" "+Printer.toString(ex, true));
 			}
 		}
 		return hits;		
