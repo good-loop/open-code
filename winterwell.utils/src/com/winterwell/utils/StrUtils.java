@@ -713,8 +713,7 @@ public class StrUtils {
 	 * @param text
 	 */
 	public static String newLine(String text) {
-		if (text.length() == 0)
-			return text;
+		if (text==null || text.isEmpty()) return "";
 		char last = text.charAt(text.length() - 1);
 		if (last == '\r' || last == '\n')
 			return text;
