@@ -51,7 +51,7 @@ import com.winterwell.web.ExternalServiceException;
  * This is designed to be used with {@link SMTPClient} and {@link IMAPClient}.
  * 
  * @author daniel
- * @testedby  SimpleMessageTest}
+ * @testedby  SimpleMessageTest
  */
 public class SimpleMessage extends MimeMessage {
 
