@@ -13,11 +13,12 @@ public class ChatRoundaboutConfig implements ISiteConfig {
 		return 8713;
 	}
 
+	// TODO 10am is 11am? Check TimeZone Bug
 	@Option
-	TimeOfDay crossTeamTime = new TimeOfDay("11:30am");
+	TimeOfDay crossTeamTime = new TimeOfDay("10:30am");
 
 	@Option
-	TimeOfDay inTeamTime = new TimeOfDay("12:00pm");
+	TimeOfDay inTeamTime = new TimeOfDay("10:00am");
 
 	@Option
 	Dt duration = new Dt(10, TUnit.MINUTE);
