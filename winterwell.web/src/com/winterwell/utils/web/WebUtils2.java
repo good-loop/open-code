@@ -1622,12 +1622,21 @@ public class WebUtils2 extends WebUtils {
 		return (X) new JSON().parse(new JSON.StringSource(json));
 	}
 	/**
-	 * Convenience for JSON.toJSON
+	 * @deprecated Use {@link #stringify(Object)} instead to match js
+	 * Convenience for JSON.toJSON 
 	 * @param <X>
 	 * @param json
 	 * @return e.g. Map
 	 */
 	public static String generateJSON(Object pojo) {
+		return new JSON().toJSON(pojo);
+	}
+	
+	/**
+	 * Generate JSON from a java object. Convenience for JSON.toJSON
+	 * @return json
+	 */
+	public static String stringify(Object pojo) {
 		return new JSON().toJSON(pojo);
 	}
 }

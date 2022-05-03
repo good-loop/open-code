@@ -36,7 +36,7 @@ public class NameMapper {
 	 * @return
 	 */
 	public String run2_ourRowName(String rowName) {
-		Dictionary rowNames = ourNames;
+		if (rowName==null) throw new NullPointerException();
 		// mapping?
 		if (mappingImportRow2ourRow != null) {
 			String mappedName = Containers.getLenient(mappingImportRow2ourRow, rowName);
