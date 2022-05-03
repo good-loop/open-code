@@ -42,6 +42,7 @@ import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.web.Cooldown;
 import com.winterwell.utils.web.SimpleJson;
 import com.winterwell.utils.web.WebUtils;
@@ -235,6 +236,12 @@ public class FakeBrowser {
 	private boolean followRedirects = true;
 	
 	private boolean debug;
+
+	private Dt minRetryPause;
+	
+	public void setMinRetryPause(Dt minPause) {
+		this.minRetryPause = minPause;
+	}
 	
 	/**
 	 * Sets whether HTTP redirects (requests with response code 3xx) should be automatically followed. 
@@ -387,8 +394,10 @@ public class FakeBrowser {
 				break; // no retries
 			} catch (Exception ex) {
 				// pause, unless that was our last try (in which case we'll exit the for loop and throw an exception)
-				if (t < tries-1) {					
-					Utils.sleep(t*t*100);
+				if (t < tries-1) {	
+					long pause = t*t*100;
+					if (minRetryPause!=null) pause += minRetryPause.getMillisecs();
+					Utils.sleep(pause + t*t*100);
 				}
 				err = ex;
 			} finally {
