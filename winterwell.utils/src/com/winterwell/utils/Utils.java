@@ -61,7 +61,7 @@ public final class Utils {
 	public static void check4null(Object... args) throws NullPointerException {
 		for (int i = 0; i < args.length; i++) {
 			if (args[i] == null)
-				throw new NullPointerException("Argument " + i + " in "
+				throw new NullPointerException("Argument " + i+ " in "
 						+ Printer.toString(args));
 		}
 	}
