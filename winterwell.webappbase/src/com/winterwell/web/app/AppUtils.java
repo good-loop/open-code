@@ -697,6 +697,12 @@ public class AppUtils {
 		r2.check();
 	}
 
+	/**
+	 * 
+	 * @param k
+	 * @param mapping
+	 * @return {name, "@id", id, ...reflection...}
+	 */
 	public static ESType estypeForClass(Class k, Map mapping) {
 		final ESType dtype = new ESType();
 		if (mapping != null) {
@@ -708,11 +714,13 @@ public class AppUtils {
 		}
 		
 		// some common props
-		dtype.property("name", new ESType().text()
-								// enable keyword based sorting
-								.field("raw", "keyword"));
+		if (ReflectionUtils.hasField(k, "name")) {
+			dtype.property("name", new ESType().text()
+									// enable keyword based sorting on names
+									.field("raw", "keyword"));
+		}
 		// ID, either thing.org or sane version
-		dtype.property("@id", ESType.keyword);
+		dtype.property("@id", ESType.keyword); // deprecated
 		dtype.property("id", ESType.keyword);
 		// shares NB: these dont use the ESKeyword annotation to avoid a dependency in YAC
 		if (ReflectionUtils.hasField(k, "shares")) {
