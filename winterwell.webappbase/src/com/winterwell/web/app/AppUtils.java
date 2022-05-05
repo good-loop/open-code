@@ -598,10 +598,14 @@ public class AppUtils {
 		} else {
 			// the index exists! use a temp index (otherwise the put below will fail like the one above)
 			index = index+".fix";
-			if ( ! es.admin().indices().indexExists(index)) {
-				CreateIndexRequest pi = es.admin().indices().prepareCreate(index);
-				// NB: no alias yet - the old version is still in place
-				IESResponse r = pi.get().check();
+			for(int i=0; i<3; i++) {
+				String indexi = index + (i==0? "" : (i+1)); 
+				if ( ! es.admin().indices().indexExists(indexi)) {
+					CreateIndexRequest pi = es.admin().indices().prepareCreate(indexi);
+					// NB: no alias yet - the old version is still in place
+					IESResponse r = pi.get().check();
+					index = indexi;
+				}
 			}
 		}
 		// setup the right mapping
