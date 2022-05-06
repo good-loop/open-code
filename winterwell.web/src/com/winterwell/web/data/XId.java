@@ -166,7 +166,7 @@ public final class XId implements Serializable, IHasJson, CharSequence, Comparab
 		int i = id.lastIndexOf('@');
 		// handle unescaped web inputs -- with some log noise 'cos we don't want this
 		if (i==-1 && id.contains("%40")) {
-			Log.e("XId", "(handling smoothly) Unescaped url id: "+id);
+			Log.w("XId", "(handling smoothly) Unescaped url id: "+id);
 			id = WebUtils2.urlDecode(id);
 			i = id.lastIndexOf('@');
 		}
