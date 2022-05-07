@@ -36,7 +36,7 @@ code: Number // optional numeric code for errors
  * @author daniel
  *
  */
-public class JSend implements IHasJson {
+public class JSend<X> implements IHasJson {
 
 	public JSend() {	
 	}
@@ -57,7 +57,7 @@ public class JSend implements IHasJson {
 		this(new JThing(dataPOJO));
 	}
 
-	public JSend(JThing data) {
+	public JSend(JThing<X> data) {
 		this.data = data;
 		setStatus(KAjaxStatus.success);
 	}
@@ -76,7 +76,7 @@ public class JSend implements IHasJson {
 		return this;
 	}
 
-	public JThing getData() {
+	public JThing<X> getData() {
 		if (data==null && status!=KAjaxStatus.success) {
 			check();
 		}
@@ -87,7 +87,7 @@ public class JSend implements IHasJson {
 		return data.map();
 	}
 
-	public JSend check() {
+	public JSend<X> check() {
 		if (status==KAjaxStatus.success) {
 			return this;
 		}

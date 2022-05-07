@@ -197,5 +197,9 @@ public class CrudClient<T> {
 		JSend jsend = jsend(fb, response);
 		return jsend;
 	}
+
+	public Class<T> getType() {
+		return type;
+	}
 	
 }

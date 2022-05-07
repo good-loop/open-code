@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.winterwell.utils.Printer;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.TodoException;
 import com.winterwell.utils.containers.ArraySet;
@@ -64,15 +65,21 @@ public class NameMapper {
 		Dictionary rowNames = ourNames;
 		// exact match
 		if (rowNames.contains(rowName)) {
-			return rowNames.getMeaning(rowName);
+			String m = rowNames.getMeaning(rowName);
+			if (m==null) {
+				// bleurgh
+				String[] matches = rowNames.getMeanings(rowName);
+				Log.d(LOGTAG, "(skip match) Ambiguous name matches for "+rowName+" to "+Printer.str(matches));
+			}
+			return m;
 		}
 		// match ignoring case+
 		String rowNameCanon = StrUtils.toCanonical(rowName);
 		if (rowNames.contains(rowNameCanon)) {
 			return rowNames.getMeaning(rowNameCanon);
 		}
-		// match on ascii
-		String rowNameAscii = rowNameCanon.replaceAll("[^a-zA-Z0-9]", "");
+		// match on ascii, no spaces
+		String rowNameAscii = rowNameCanon.replaceAll("[^a-zA-Z0-9 ]", "");
 		if ( ! rowNameAscii.isEmpty() && rowNames.contains(rowNameAscii)) {
 			return rowNames.getMeaning(rowNameAscii);
 		}
@@ -125,6 +132,73 @@ public class NameMapper {
 		return null;
 	}
 	
+	public List<String> getAmbiguous(String rowName) {
+		Dictionary rowNames = ourNames;
+		// exact match
+		if (rowNames.contains(rowName)) {
+			String m = rowNames.getMeaning(rowName);
+			if (m==null) {
+				// bleurgh
+				String[] matches = rowNames.getMeanings(rowName);
+				return Containers.asList(matches);
+			}
+			return Collections.singletonList(m);
+		}
+		// match ignoring case+
+		String rowNameCanon = StrUtils.toCanonical(rowName);
+		if (rowNames.contains(rowNameCanon)) {
+			String[] matches = rowNames.getMeanings(rowNameCanon);
+			return Containers.asList(matches);
+		}
+		// match on ascii
+		String rowNameAscii = rowNameCanon.replaceAll("[^a-zA-Z0-9]", "");
+		if ( ! rowNameAscii.isEmpty() && rowNames.contains(rowNameAscii)) {
+			String[] matches = rowNames.getMeanings(rowNameAscii);
+			return Containers.asList(matches);
+		}
+		// try removing "total" since MS group rows are totals
+		if (rowNameCanon.contains("total")) {			
+			String rn2 = rowNameCanon.replace("total", "").trim();
+			// Xero exports hack for e.g. "Total 01 Property"
+			rn2 = rn2.replaceFirst("^\\d+", "").trim();
+			
+			assert rn2.length() < rowNameCanon.length();
+			if ( ! rn2.isBlank()) {
+				String found = run2_ourRowName(rn2);
+				if (found!=null) {
+					return Collections.singletonList(found);
+				}
+			}
+			Log.d(LOGTAG, "Unmatched total: "+rn2);
+		}
+		// Allow a first-word or starts-with match if it is unambiguous e.g. Alice = Alice Smith
+		ArraySet<String> matches = new ArraySet();
+		String firstWord = rowNameCanon.split(" ")[0];
+		for(String existingName : rowNames) {
+			String existingNameFW = StrUtils.toCanonical(existingName).split(" ")[0];
+			if (firstWord.equals(existingNameFW)) {
+				matches.add(rowNames.getMeaning(existingName));
+			}
+		}
+		if ( ! matches.isEmpty()) {
+			return matches.asList();
+		}
+		// starts-with?
+		for(String existingName : rowNames) {
+			if (rowName.startsWith(existingName)) {
+				matches.add(rowNames.getMeaning(existingName));
+			} else if (existingName.startsWith(rowName)) {
+				matches.add(rowNames.getMeaning(existingName));
+			}
+		}
+		if ( ! matches.isEmpty()) {
+			return matches.asList();
+		}
+		// Nothing left but "Nope"
+		return null;
+	}
+	
+	
 
 	public void putTheirsOurs(String rowName, String ourRowName) {
 		// TODO Auto-generated method stub
@@ -157,6 +231,10 @@ public class NameMapper {
 
 	public List<String> getTheirAmbiguous() {
 		return theirAmbiguous;
+	}
+
+	public Dictionary getDict() {
+		return ourNames;
 	}
 
 }
