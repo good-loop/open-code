@@ -310,6 +310,10 @@ public final class Utils {
 	 */
 	public static String getNonce() {
 		long rnd = getRandom().nextLong();
+		return getNonce2_base64(rnd);
+	}
+
+	public static String getNonce2_base64(long rnd) {
 		ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
 	    buffer.putLong(rnd);
 		byte[] src = buffer.array();

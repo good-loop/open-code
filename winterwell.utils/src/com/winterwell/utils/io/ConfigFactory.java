@@ -184,6 +184,8 @@ winterwell/logins/stripe.properties
 				machine
 		};		
 		List<File> files = new ArrayList();
+		// explicitly set
+		files.addAll(extraPropFiles);
 		// WW logins
 		try {
 			files.add(new File(FileUtils.getWinterwellDir(), "logins/logins."+appName+".properties"));
@@ -199,6 +201,12 @@ winterwell/logins/stripe.properties
 		}
 		return files;
 	}	
+	
+	List<File> extraPropFiles = new ArrayList<>();
+	
+	public void addPropFile(File file) {
+		extraPropFiles.add(file);
+	}
 
 	/**
 	 * Note: on first use, also call {@link #setArgs(String[])}

@@ -102,6 +102,12 @@ public class NameMapper {
 		ArraySet<String> matches = new ArraySet();
 		String firstWord = rowNameCanon.split(" ")[0];
 		for(String existingName : rowNames) {
+			// WWF (UK) != WWF UK bug seen May 2022??
+			String canonExistingName = StrUtils.toCanonical(existingName);
+			if (canonExistingName.equals(rowNameCanon)) {
+				return rowNames.getMeaning(existingName); // huh - how are we not running toCanonical on input??	
+			}
+			
 			String existingNameFW = existingName.split(" ")[0];
 			if (firstWord.equals(existingNameFW)) {
 				matches.add(rowNames.getMeaning(existingName));
