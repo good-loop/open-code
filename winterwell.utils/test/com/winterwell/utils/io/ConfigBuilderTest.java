@@ -8,6 +8,7 @@ import java.util.Properties;
 import org.junit.Test;
 
 import com.winterwell.utils.containers.ArrayMap;
+import com.winterwell.utils.time.Time;
 
 import junit.framework.TestCase;
 
@@ -23,6 +24,22 @@ public class ConfigBuilderTest extends TestCase {
 		parser.set(props);
 		assert settings.maybe;
 	}
+	
+
+	@Test
+	public void testTime() throws IOException {
+		TestSettings settings = new TestSettings();
+		{
+			ConfigBuilder parser = new ConfigBuilder(settings);
+			Properties props = new Properties();
+			props.put("when", "2 hours ago");
+			props.put("logdir", "/home/daniel/temp");
+			parser.set(props);
+			TestSettings s = parser.get();
+			assert s.when != null;;
+		}
+	}
+
 
 	
 	@Test
@@ -114,10 +131,13 @@ public class ConfigBuilderTest extends TestCase {
 
 
 class TestSettings {
-
+	
 	@Option
 	public Boolean maybe;
 
+	@Option
+	public Time when;
+	
 	@Option
 	public Map map = new ArrayMap("a","b");
 	
