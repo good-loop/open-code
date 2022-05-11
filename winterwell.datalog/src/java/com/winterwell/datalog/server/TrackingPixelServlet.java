@@ -60,7 +60,7 @@ public class TrackingPixelServlet implements IServlet {
 	 * </p>
 	 * 
 	 * @param state Can be null (returns null)
-	 * @return A nonce@trk XId or a logged-in user XId. 
+	 * @return A nonce@trk XId or a logged-in user XId or "anon@trk" 
 	 * 
 	 * Repeated calls will return the same uid. 
 	 */
@@ -81,21 +81,21 @@ public class TrackingPixelServlet implements IServlet {
 			}			
 		}		
 		
-		uid = Utils.getRandomString(20)+"@trk";		
 		DataLogConfig dls = Dep.get(DataLogConfig.class);
 		// Do not track?
 		boolean dnt = state.isDoNotTrack();
 		if (dnt) {
-			// still set it (so repeated calls to this method within one server call return the same id)
-			state.setCookie(trkid, uid, new Dt(0,TUnit.MILLISECOND), dls.COOKIE_DOMAIN);			
-		} else {
-			Dt expiry = TUnit.MONTH.dt;
-			// Do we have explicit consent? -- see WebRequest.isDoNotTrack() as called above
-			if ("C".equals(state.getResponse().getHeader("Tk"))) {
-				expiry = TUnit.YEAR.dt;
-			}
-			state.setCookie(trkid, uid, expiry, dls.COOKIE_DOMAIN);
+			return "anon@trk";
+//			// still set it (so repeated calls to this method within one server call return the same id)
+//			state.setCookie(trkid, uid, new Dt(0,TUnit.MILLISECOND), dls.COOKIE_DOMAIN);
 		}
+		uid = Utils.getRandomString(20)+"@trk";		
+		Dt expiry = TUnit.MONTH.dt;
+		// Do we have explicit consent? -- see WebRequest.isDoNotTrack() as called above
+		if ("C".equals(state.getResponse().getHeader("Tk"))) {
+			expiry = TUnit.YEAR.dt;
+		}
+		state.setCookie(trkid, uid, expiry, dls.COOKIE_DOMAIN);		
 		return uid;
 	}
 	

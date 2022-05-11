@@ -275,6 +275,8 @@ public class WebRequest implements IProperties, Closeable {
 			+ REDIRECT_REQUEST_BACK;
 
 	private static final SField NONCE = new SField("nonce");
+
+	private static final SField DNT = new SField("DNT");
 	
 	private String action;
 	
@@ -1273,7 +1275,9 @@ public class WebRequest implements IProperties, Closeable {
 	public boolean isDoNotTrack() {
 		// cookie first, so site settings can override
 		String dntc = getCookie("DNT"); // allow GL tracking everywhere?
-//		if (dntc==null) dntc = getCookie("DNT-"+WebUtils.getDomain(getReferer()));
+		if (dntc==null) {
+			dntc = get(DNT);
+		}
 		if (dntc != null) {
 			if ("0".equals(dntc.trim())) {
 				// https://www.w3.org/TR/tracking-dnt/#tracking-status-value
