@@ -14,7 +14,10 @@ import java.util.Currency;
  */
 public enum KCurrency {
 
-	GBP("£"), USD("$"), AUD("A$"), EUR("€"), MXN("MX$"), JPY("￥"), CNY("￥"),
+	GBP("£"), USD("$"), AUD("A$"), EUR("€"), MXN("MX$"), JPY("￥"),
+	/** Canadian dollar */
+	CAD("C$"),
+	CNY("￥"),
 	
 	/**
 	 * HACK: allow Money objects to also represent %s and other multipliers. 

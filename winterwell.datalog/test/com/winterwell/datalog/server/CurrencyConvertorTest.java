@@ -69,6 +69,21 @@ public class CurrencyConvertorTest {
 		System.out.println(usd);
 	}
 	
+	@Test
+	public void testConvertHardCoded() throws IOException {
+		init();
+		
+		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.CAD, new Time());
+		double usd = cc.convert2_hardCoded(10);
+		System.out.println(usd);
+		assert usd > 11;
+		
+		CurrencyConvertor cc2 = new CurrencyConvertor(KCurrency.CAD, KCurrency.GBP, new Time());
+		double gbp = cc2.convert2_hardCoded(10);
+		System.out.println(gbp);
+		assert gbp < 9;
+	}
+	
 	public void testLoadwithCache() throws IOException {
 		init();
 		Time today = new Time();

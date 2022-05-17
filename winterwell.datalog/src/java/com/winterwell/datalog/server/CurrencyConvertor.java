@@ -17,6 +17,7 @@ import com.winterwell.datalog.Dataspace;
 import com.winterwell.json.JSONObject;
 import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.MathUtils;
+import com.winterwell.utils.TodoException;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Cache;
@@ -60,9 +61,18 @@ public class CurrencyConvertor {
 	 * @param cidDntn
 	 * @return
 	 */
-	private double convert2_hardCoded(double cidDntn) {
+	double convert2_hardCoded(double cidDntn) {
 		String currencyConversion = from + "_" + to;
 		Double conversionVal = CURRENCY_CONVERSION.get(currencyConversion);
+		if (conversionVal==null) {
+			// inverse?
+			String invcurrencyConversion = to + "_" + from;
+			Double invconversionVal = CURRENCY_CONVERSION.get(invcurrencyConversion);	
+			if (invconversionVal==null) {
+				throw new TodoException("Setup currency conversion for "+currencyConversion);
+			}
+			conversionVal = 1/invconversionVal;
+		}
 		return cidDntn*conversionVal;
 	}
 	
@@ -74,16 +84,11 @@ public class CurrencyConvertor {
 	static final Map<String,Double> CURRENCY_CONVERSION = new ArrayMap(
 		"GBP_USD", 1.365,
 		"GBP_AUD", 1.885,
-		"USD_AUD", 1.380,
-		"USD_GBP", 0.732,
-		"AUD_GBP", 0.530,
-		"AUD_USD", 0.724,
-		"EUR_GBP", 0.86,
 		"GBP_EUR", 1.16,
-		"EUR_AUD", 1.62,
-		"AUD_EUR", 0.62,
-		"EUR_USD", 1.17,
-		"USD_EUR", 0.85
+		"GBP_CAD", 1.58,
+		"USD_AUD", 1.380,
+		"USD_EUR", 0.85,
+		"EUR_AUD", 1.62
 	);
 	
 	// Turns out do not need this part
