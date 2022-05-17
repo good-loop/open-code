@@ -117,7 +117,7 @@ public class AppUtils {
 		
 	
 	/**
-	 * Convenience for {@link #get(ESPath, Class)} using Dep.get(IESRouter)
+	 * Convenience for {@link #get(ESPath(), Class)} using Dep.get(IESRouter) and PUBLISHED
 	 * @param id
 	 * @param klass
 	 * @return
