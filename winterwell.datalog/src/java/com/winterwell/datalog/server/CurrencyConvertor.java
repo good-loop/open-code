@@ -24,13 +24,15 @@ import com.winterwell.utils.containers.Cache;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
+import com.winterwell.utils.time.TimeUtils;
+import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.LoginDetails;
 import com.winterwell.web.app.Logins;
 
 /**
  * FIXME load and stash data
  * @author Wing, daniel
- * @tesedby {@link CurrencyConvertorTest}
+ * @testedby {@link CurrencyConvertorTest}
  */
 public class CurrencyConvertor {
 
@@ -126,6 +128,7 @@ public class CurrencyConvertor {
 		if (rateFromCache == null) {
 			DataLogEvent rate = loadCurrDataFromES(date);
 			if (rate == null) {
+				// looking for today's rate?
 				if (date.toISOStringDateOnly().equals(new Time().toISOStringDateOnly())) {
 					rate = fetchCurrRate();
 					if (rate == null) {
@@ -140,77 +143,96 @@ public class CurrencyConvertor {
 			}
 			cache.put(date.toISOStringDateOnly(), rate);
 			rateFromCache = rate;
-		} // ./rateFromCache
-		String currencyConversion = from + "2" + to;
-		double conversionVal = MathUtils.toNum(rateFromCache.getProp(currencyConversion));		
+		} // ./rateFromCache		
+		
+		double conversionVal = convertES2_conversionRate(rateFromCache, from, to);
 		if (conversionVal==0) {
-			// inverse?
-			String invcurrencyConversion = to + "2" + from;
-			double invconversionVal = MathUtils.toNum(rateFromCache.getProp(invcurrencyConversion));	
-			if (invconversionVal==0) {
-				Log.d("CurrencyConvertor", "No data for currency:"+from+" date: " +date+" - using hardcoded FX");
-				return convert2_hardCoded(amount);
-			}
-			conversionVal = 1/invconversionVal;
+			// fallback
+			return convert2_hardCoded(amount);
 		}
 		return amount*conversionVal;
+	}
+
+	private double convertES2_conversionRate(DataLogEvent rateFromCache, KCurrency _from, KCurrency _to) {
+		String fromXtoY = _from + "2" + _to;
+		// Direct?
+		double conversionVal = MathUtils.toNum(rateFromCache.getProp(fromXtoY));		
+		if (conversionVal!=0) {
+			return conversionVal;
+		}
+		// inverse?
+		String invcurrencyConversion = _to + "2" + _from;
+		double invconversionVal = MathUtils.toNum(rateFromCache.getProp(invcurrencyConversion));	
+		if (invconversionVal!=0) {
+			conversionVal = 1/invconversionVal;		
+			return conversionVal;
+		}
+		// via USD
+		if (_to != KCurrency.USD && _from!=KCurrency.USD) {
+			double from2USD = convertES2_conversionRate(rateFromCache, _from, KCurrency.USD);
+			double USD2to = convertES2_conversionRate(rateFromCache, KCurrency.USD,_to);
+			if (from2USD!=0 && USD2to!=0) {
+				conversionVal = from2USD*USD2to;
+				return conversionVal;
+			}
+		}
+		Log.d("CurrencyConvertor", "No data for currency:"+_from+" date: " +date+" - using hardcoded FX");
+		return 0;
 	}
 	
 	private static final String currrate = "currrate";
 	
+	/**
+	 * fetch and save-to-remote
+	 * @return
+	 * @throws IOException
+	 */
 	public DataLogEvent fetchCurrRate() throws IOException {
 		// We can only fetch rate in base currency of EUR due to using free tier API Key
-//		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key="+getAPIKey().apiKey+"&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY"); 
-		URL urlForGetRequest = new URL("https://api.exchangerate.host/latest?base=EUR");
-		
-		// Minor: FakeBrowser handles http connections nicely
-		HttpURLConnection con = (HttpURLConnection) urlForGetRequest.openConnection();
-		con.setRequestMethod("GET");
-		String orgRate = new String();
-		try(BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "utf-8"))) {
-		    StringBuilder response = new StringBuilder();
-		    String responseLine = null;
-		    while ((responseLine = br.readLine()) != null) {
-		        response.append(responseLine.trim());
-		    }
-		    orgRate = response.toString();
-		} catch (Exception e) {
-			Log.d("CurrencyConvertor", e);
-			return null;
-		}
-		
+//		URL urlForGetRequest = new URL("http://api.exchangeratesapi.io/v1/latest?access_key="+getAPIKey().apiKey+"&symbols=USD,GBP,AUD,MXN,JPY,HKD,CNY");
+		FakeBrowser fb = new FakeBrowser();
+		String orgRate = fb.getPage("https://api.exchangerate.host/latest?base=EUR");				
 		JSONObject obj = new JSONObject(orgRate);
 		
-		// Doing Math
+		// Doing Math		
 		JSONObject rates = obj.getJSONObject("rates");
+		// we use USD as our base currency, and store everything as XXX2USD
+		// assume: arbitrage on X->EUR->USD vs X->USD is small and ignorable, as is X->USD->Y vs X->Y
 		Double EUR2USD = MathUtils.toNum(rates.get("USD"));
-		Double GBP2USD = 1 / MathUtils.toNum(rates.get("GBP")) * EUR2USD;
-		Double AUD2USD = 1 / MathUtils.toNum(rates.get("AUD")) * EUR2USD;
-		Double MXN2USD = 1 / MathUtils.toNum(rates.get("MXN")) * EUR2USD;
-		Double JPY2USD = 1 / MathUtils.toNum(rates.get("JPY")) * EUR2USD;
-		Double CNY2USD = 1 / MathUtils.toNum(rates.get("CNY")) * EUR2USD;
-		Double HKD2USD = 1 / MathUtils.toNum(rates.get("HKD")) * EUR2USD;
-		
+		Map objMap = new ArrayMap("EUR2USD", EUR2USD);
+		for(KCurrency currency : KCurrency.values()) {
+			if (currency==KCurrency.USD) continue; // don't need USD2USD
+			if ( ! rates.has(currency.name())) {
+				continue; // skip
+			}			
+			double EUR2XXX = MathUtils.toNum(rates.get(currency.name()));
+			double XXX2USD = (1 / EUR2XXX) * EUR2USD;
+			objMap.put(currency.name()+"2USD", XXX2USD);
+		}
+				
 		// long timestamp = Instant.now().getEpochSecond(); // Don't need timestamp now
 		
-		Map objMap = new ArrayMap(
-				"EUR2USD", EUR2USD, 
-				"GBP2USD", GBP2USD);
 		DataLogEvent event = new DataLogEvent("fx", 1, currrate, objMap);
 		DataLogRemoteStorage.saveToRemoteServer(event);
 		
-		con.disconnect();
 		return event;
 	}
+	
 
 	DataLogEvent loadCurrDataFromES(Time loadingDate) {
 		DataLogHttpClient dlc = new DataLogHttpClient(new Dataspace("fx"));
+		Time startDay = TimeUtils.getStartOfDay(loadingDate);
+		Time endDay = TimeUtils.getEndOfDay(loadingDate);
+		dlc.setPeriod(startDay, endDay);
 		dlc.initAuth("good-loop.com");
-		SearchQuery sq = new SearchQuery("evt:"+currrate+" AND time:"+loadingDate.toISOStringDateOnly());
+		SearchQuery sq = new SearchQuery("evt:"+currrate);
 		dlc.setDebug(true);
-		List<DataLogEvent> rate = dlc.getEvents(sq , 1);
-		
-		if (rate.size() == 0) return null;
+		// get a few (should just be 1)
+		List<DataLogEvent> rate = dlc.getEvents(sq , 5);		
+		if (rate.size() == 0) {
+			return null;
+		}
+		// ??pick the closest to time? But we should only store one per day
 		return rate.get(0);
 	}
 	

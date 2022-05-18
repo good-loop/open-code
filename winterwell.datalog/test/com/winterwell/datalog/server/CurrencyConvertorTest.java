@@ -23,6 +23,7 @@ import com.winterwell.es.client.GetRequest;
 import com.winterwell.json.JSONObject;
 import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.Dep;
+import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
@@ -31,25 +32,40 @@ import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 
 public class CurrencyConvertorTest {
-
+	
+	@Test
 	public void testFetchSaveLoad() throws IOException {
 		init();
 
-		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.USD, new Time());
+		Time now = new Time();
+		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.GBP, KCurrency.USD, now);
 		DataLogEvent e = cc.fetchCurrRate();
 		Printer.out(e);
 		Utils.sleep(1500);
 		
-		DataLogEvent e2 = cc.loadCurrDataFromES(new Time());
+		DataLogEvent e2 = cc.loadCurrDataFromES(now);
 		assert e != null;
 		assert e2 != null;
 		System.out.println(e);
 		System.out.println(e.getProp("GBP2USD"));
 		System.out.println(e2);
 		System.out.println(e2.getProp("GBP2USD"));
-		assert e.getProp("GBP2USD").	equals(e2.getProp("GBP2USD")) : e2;
+		assert e.getProp("GBP2USD").equals(e2.getProp("GBP2USD")) : e+" vs "+e2;
+	}
+	
+	@Test
+	public void testConvertCAD2GBP() throws IOException {
+		init();
+
+		CurrencyConvertor cc = new CurrencyConvertor(KCurrency.CAD, KCurrency.GBP, new Time());
+		DataLogEvent e = cc.fetchCurrRate();
+		Printer.out(e);
+		Utils.sleep(1500);
+		double gbp = cc.convertES(1);
+		assert MathUtils.approx(gbp, 1/1.58);
 	}
 
+	@Test
 	public void testLoad() throws IOException {
 		init();
 
