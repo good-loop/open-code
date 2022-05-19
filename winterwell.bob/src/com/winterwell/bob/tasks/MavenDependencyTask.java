@@ -147,7 +147,7 @@ public class MavenDependencyTask extends BuildTask {
 	}
 	
 	@Override
-	protected void doTask() throws Exception {
+	public void doTask() throws Exception {
 		// files
 		// output  jars into ./dependencies by default		
 		getOutputDirectory();
