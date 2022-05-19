@@ -144,11 +144,11 @@ public class Dictionary implements IDictionary {
 	 * @param meaning Use "" if there is no translation as such.
 	 */
 	public void add(String word, String meaning) {
-		// lowercase whilst loading
-		word = toCanonical(word);
 		if (Utils.isBlank(word)) {
 			return;
 		}
+		// lowercase whilst loading
+		word = toCanonical(word);		
 		meaning = toCanonicalMeaning(meaning);			
 		String old = dict.put(word, meaning);
 		// Multiple meanings?

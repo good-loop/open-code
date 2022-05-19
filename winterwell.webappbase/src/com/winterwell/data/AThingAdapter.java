@@ -11,6 +11,8 @@ import com.winterwell.gson.JsonSerializationContext;
 import com.winterwell.gson.JsonSerializer;
 
 /**
+ * @deprecated Status: Not used?!
+ * 
  * serialize: adds "@type"
  * 
  * deserialize: calls init()
