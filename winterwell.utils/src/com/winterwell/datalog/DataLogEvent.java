@@ -163,6 +163,8 @@ public final class DataLogEvent implements Serializable, IHasJson
 			"revagent", Double.class,
 			"currency", String.class, // deprecated
 			"curr", String.class, // use this instead of currency
+			"EUR2USD", Double.class, // see CurrencyConvertor 
+			"GBP2USD", Double.class, // TODO more??
 			"w", Integer.class, // width
 			"h", Integer.class, // height
 			"size", String.class, // size could be e.g. "300x250", "billboard", or a number. So lets just store it as a keyword.
