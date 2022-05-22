@@ -64,6 +64,10 @@ public class BuildHacks {
 		
 		// explicitly listed
 		String hostname = getFullHostname();
+		// HACK issue seen on enchantedtray May 2022
+		if (hostname.endsWith(".home")) {
+			hostname = hostname.substring(0, hostname.length()-5);
+		}
 		Log.d("init", "serverType for host "+hostname+" ...?");
 		if (LOCAL_MACHINES.contains(hostname)) {
 			Log.i("init", "Treating "+hostname+" as serverType = "+KServerType.LOCAL);
