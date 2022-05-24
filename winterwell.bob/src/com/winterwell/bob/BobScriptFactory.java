@@ -17,6 +17,11 @@ import com.winterwell.utils.containers.Pair2;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 
+/**
+ * TODO explore using https://burningwave.github.io/core/ to compile classes instead
+ * @author daniel
+ *
+ */
 public class BobScriptFactory {
 
 	private static final String LOGTAG = "BobScriptFactory";
@@ -188,7 +193,7 @@ public class BobScriptFactory {
 				compile.doTask();	
 				FileUtils.close(compile);
 			} catch(Exception fex2) {
-				Log.d(LOGTAG, "Trief sniffing Eclipse .classpath - compile also failed: "+fex2);
+				Log.d(LOGTAG, "Tried sniffing Eclipse .classpath - compile also failed: "+fex2);
 				throw fex;
 			}
 		}
