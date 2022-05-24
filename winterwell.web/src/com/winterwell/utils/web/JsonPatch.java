@@ -246,6 +246,10 @@ public class JsonPatch implements IHasJson {
 	 * @param key 
 	 */
 	private void set(JsonPatchOp diff, final Map<String, ?> jobj, Object value, String... key) {
+		// paranoia
+		if (jobj==null && value==null) {
+			return; // no-op
+		}
 		// drill down
 		Map obj = jobj;
 		for(int i=0,n=key.length-1; i<n; i++) {
