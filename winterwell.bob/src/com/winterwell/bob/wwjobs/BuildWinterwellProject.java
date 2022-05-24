@@ -343,9 +343,9 @@ public class BuildWinterwellProject extends BuildTask {
 				isTopLocalBuild = true;
 			}
 		}
-		if (isTopLocalBuild) {
-			setScpToWW(true);
-		}
+//		if (isTopLocalBuild) { off by default
+//			setScpToWW(true);
+//		}
 	}
 	
 	@Override
