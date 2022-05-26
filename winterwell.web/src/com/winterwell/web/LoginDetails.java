@@ -13,6 +13,7 @@ import com.winterwell.utils.Key;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.io.Option;
 
 /**
  * Login details for a service such as smtp. These objects should contain the
@@ -29,11 +30,16 @@ public class LoginDetails implements IProperties, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	@Option
 	public final String loginName;
 
+	@Option
 	public final String password;
 	
+	@Option
 	public String apiKey;
+	
+	@Option
 	public String apiSecret;
 
 	/**

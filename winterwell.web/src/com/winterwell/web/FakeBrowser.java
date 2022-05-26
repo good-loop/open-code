@@ -1078,6 +1078,11 @@ public class FakeBrowser {
 		return post(url, CONTENT_TYPE_JSON, json);
 	}
 
+	public FakeBrowser setContentType(String contentType) {
+		 setRequestHeader("Content-Type", contentType);
+		 return this;
+	}
+
 	
 }
 

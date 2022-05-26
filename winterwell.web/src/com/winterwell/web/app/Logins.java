@@ -87,12 +87,14 @@ public class Logins {
 	public static LoginDetails get(String domain) {
 		assert ! Utils.isBlank(domain);
 		String _domain = domain.replace('.', '_');
+		LoginDetails ld = new LoginDetails(domain);
 		// what do we have?
 		List<String> keys = Containers.filter(dflt.logins.keySet(), k -> k.startsWith(_domain));
 		if (keys.isEmpty()) {
-			ConfigBuilder cb = ConfigFactory.get().getConfigBuilder(Logins.class);
 			File f = new File(loginsDir, "logins."+domain+".properties");
 			if (FileUtils.isSafe(f.getName()) && f.isFile()) {
+				// is it a set of logins.domain.X key/values?
+				ConfigBuilder cb = ConfigFactory.get().getConfigBuilder(Logins.class);
 				cb.set(f);
 				Logins l2 = cb.get();
 				for(String k2 : l2.logins.keySet()) {
@@ -101,13 +103,17 @@ public class Logins {
 						dflt.logins.put(k2, v2);
 					}
 				}
+				// is it a LoginDetails object?
+				ConfigBuilder cb2 = new ConfigBuilder(ld);
+				cb2.set(f);
+				LoginDetails ld2 = cb2.get();
+				ld = ld2;
 				// refilter the keys
 				keys = Containers.filter(dflt.logins.keySet(), k -> k.startsWith(_domain));
 			} else {
 				return null;
 			}
-		}
-		LoginDetails ld = new LoginDetails(domain);
+		}		
 		for (String k : keys) {
 			String f = k.substring(_domain.length()+1);
 			ReflectionUtils.setPrivateField(ld, f, dflt.logins.get(k));
