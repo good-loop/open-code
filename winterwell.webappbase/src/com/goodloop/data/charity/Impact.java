@@ -25,6 +25,7 @@ public class Impact {
 	
 	/**
 	 * e.g. "tree(s)"
+	 * 
 	 */
 	String name;
 	
