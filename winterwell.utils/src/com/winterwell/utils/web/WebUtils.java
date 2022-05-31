@@ -1336,6 +1336,11 @@ public class WebUtils {
 			p2.waitFor(TUnit.MINUTE.getMillisecs());		
 		
 			if ( ! pngOut.exists()) {
+				// helpful error output
+				if (p2.getError().contains("operation not allowed by the security policy")) {
+					throw new IOException("Failed to create " + pngOut + "\t"
+							+ p2.getError()+"\nMaybe edit /etc/ImageMagick-7/policy.xml - see https://stackoverflow.com/questions/52998331/imagemagick-security-policy-pdf-blocking-conversion");					
+				}
 				throw new IOException("Failed to create " + pngOut + "\t"
 						+ p2.getError());
 			}

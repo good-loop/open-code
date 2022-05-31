@@ -50,6 +50,15 @@ public class WebUtilsTest extends TestCase {
 	}
 	
 
+	public void testRenderToPNG_MyGoodLoop() throws IOException {
+		File f = new File("test-out/testRenderToPNG_MyGoodLoop.png");
+		f.getParentFile().mkdirs();
+		String u = "https://my.good-loop.com";
+		WebUtils.renderUrlToPng(u, f);
+		WebUtils.display(f);
+	}
+	
+	
 	public void testRenderUrlToPdf_usingChrome_ourReactPage() throws IOException {
 		String a = "http://my.good-loop.com/#campaign/merrick_k9s_for_heroes_q4_2020";
 		File pdfout = new File("temp/ihub-merrick.pdf");
