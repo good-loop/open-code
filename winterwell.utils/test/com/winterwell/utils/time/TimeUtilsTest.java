@@ -152,6 +152,21 @@ public class TimeUtilsTest {
 		}
 	}
 	
+
+	@Test
+	public void parseExperimental_Month() {
+		{
+			String s = "August";
+			Time t = TimeUtils.parseExperimental(s);
+			assert t.getMonth() == 8 : t;
+		}
+		{
+			String s = "January";
+			Time t = TimeUtils.parseExperimental(s);
+			assert t.getMonth() == 1 : t;
+		}
+	}
+	
 	@Test
 	public void parseExperimental_iso() {
 		{
