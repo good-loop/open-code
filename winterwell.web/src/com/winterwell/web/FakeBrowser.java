@@ -63,7 +63,7 @@ import lgpl.haustein.Base64Encoder;
  * man-in-the-middle detection. At the very least this should be optional.
  * 
  * @author daniel
- * @testedby  FakeBrowserTest}
+ * @testedby  FakeBrowserTest
  */
 public class FakeBrowser {
 
@@ -254,9 +254,18 @@ public class FakeBrowser {
 	}
 
 	private void disconnect() {
-		if (connection == null)
+		if (connection == null) {
 			return;
+		}			
 		// Do we also need to call close on the streams??
+		// NB: Added after seeing some weird internet connection related issues May 30th 2022
+		try {
+			FileUtils.close(connection.getInputStream());
+			FileUtils.close(connection.getOutputStream());
+			FileUtils.close(connection.getErrorStream());
+		} catch(Exception ex) {
+			// ignore
+		}
 		connection.disconnect();
 		connection = null;
 	}
@@ -334,7 +343,7 @@ public class FakeBrowser {
 	 * Convenience for {@link #getPage(String, Map)} with no parameters.
 	 */
 	public String getPage(String uri) throws WrappedException {
-		return getPage(uri, null);
+		return getPage2(uri, null, 0);
 	}
 
 	/**

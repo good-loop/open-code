@@ -10,8 +10,8 @@ import com.winterwell.utils.log.Log;
 
 public class FakeBrowserTest {
 
-	@Test
-	public void testISBN() {
+//	@Test
+	public void offtestISBN() {
 		FakeBrowser fb = new FakeBrowser();
 		String p = fb.getPage("https://isbnsearch.org/search?s=time+travellers");
 		assert p.contains("egency") : p;
