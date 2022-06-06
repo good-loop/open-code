@@ -470,6 +470,7 @@ public final class IMAPClient implements Closeable {
 					msgs.length);
 			// Wrap as SimpleMessage -- and check they do fit the filter (remote filtering is unreliable).
 			for (Message message : msgs) {
+				Log.d(LOGTAG, ".... getEmails "+message.getSubject()+"...");
 //				Log.d(LOGTAG, user+" getEmails check "+message.getSubject()+" "+message.getSentDate()+"...");
 				// fast check the date before we fetch any data
 				if (receivedAfter!=null && message.getReceivedDate()!=null) {
