@@ -20,7 +20,12 @@ import com.winterwell.web.WebEx;
 import com.winterwell.web.ajax.JSend;
 import com.winterwell.web.ajax.JThing;
 import com.winterwell.web.data.XId;
-
+/**
+ * 
+ * @testedby ShareClientTest
+ * @author daniel
+ *
+ */
 public final class ShareClient {
 
 	public static final String ACTION_SHARE = "share";

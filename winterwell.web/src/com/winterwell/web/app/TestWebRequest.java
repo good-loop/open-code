@@ -3,6 +3,7 @@ package com.winterwell.web.app;
 import java.net.URI;
 import java.util.Map;
 
+import com.winterwell.utils.Key;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.test.TestHttpServletRequest;
@@ -51,6 +52,10 @@ public class TestWebRequest extends WebRequest {
 			throw Utils.runtime(ex);
 		}
 			
+	}
+
+	public void setJWTToken(String jwt) {
+		put(new Key("test.jwt"), jwt);
 	}
 	
 }

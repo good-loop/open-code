@@ -324,7 +324,7 @@ public final class YouAgainClient {
 
 				// decode the token
 				JWTDecoder dec = getDecoder();
-				dec.debug = state.debug;
+				dec.debug = state==null? false : state.debug;
 				DecodedJWT decd = dec.decryptJWT(jt);
 				token.xid = new XId(decd.getSubject(), false);
 				token.verified = true;
