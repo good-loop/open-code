@@ -55,6 +55,7 @@ import com.winterwell.web.email.SimpleMessage;
  * 
  * @version 1.1.0
  * @author daniel
+ * @link ChatRoundaboutMain
  *
  */
 public class ChatRoundabout  {
@@ -70,21 +71,31 @@ public class ChatRoundabout  {
 	/**
 	 * Convert staff.csv into an ArrayList of two items
 	 */
-	private List<Employee> emailList() {
+	public List<Employee> emailList() {
 		ArrayList<Employee> emailList = new ArrayList<>();
 		
-		CSVReader r = new CSVReader(new File("data/staff.csv"));
+		CSVReader r = new CSVReader(new File("data/AllStaffList_20220651135153.csv"));
+//		for (String[] row : r) {
+//			if (row.length < 5) continue;
+//			if ( ! (""+row[4]).equalsIgnoreCase("employee")) {
+//				Log.d(LOGTAG, "skip non-employee "+row[0]);
+//				continue;
+//			}
+//			String name = row[0];
+//			String office = row[2];
+//			String team = Containers.get(row, 5);
+//
+//			emailList.add(new Employee(name, office, team));
+//		}
 		for (String[] row : r) {
 			if (row.length < 5) continue;
-			if ( ! (""+row[4]).equalsIgnoreCase("employee")) {
-				Log.d(LOGTAG, "skip non-employee "+row[0]);
-				continue;
-			}
-			String name = row[0];
-			String office = row[2];
-			String team = Containers.get(row, 5);
+			else if (row[0].equals("Employee Id")) continue;
+			String firstName = row[1];
+			String lastName = row[2];
+			String office = row[3].split(" ")[0];
+			String team = row[4];
 
-			emailList.add(new Employee(name, office, team));
+			emailList.add(new Employee(firstName, lastName, office, team));
 		}
 		Log.d(LOGTAG, "All employees: "+emailList);
 		return emailList;
