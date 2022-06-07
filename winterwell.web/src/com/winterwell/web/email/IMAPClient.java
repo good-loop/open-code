@@ -441,6 +441,8 @@ public final class IMAPClient implements Closeable {
 	}
 
 	/**
+	 * Warning: gmail can be really slow to return emails!
+	 * TODO a streaming / lazy version
 	 * 
 	 * @param searchTerm
 	 * @param receivedAfter Can be null. If set, this should also be part of searchTerm!

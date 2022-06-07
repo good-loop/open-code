@@ -95,7 +95,12 @@ public class HttpServletWrapper extends HttpServlet {
 					+ state.toString();
 			ex = new WrappedException(s, ex);
 		}
-		String exs = Printer.toString(ex, true);
+		// send a stacktrace? Yes, except for e.g. "not logged in"
+		boolean incStacktrace = true;
+		if (ex instanceof WebEx && ((WebEx) ex).code < 500) {
+			incStacktrace = state.debug; // bad request - no stacktrace unless requested with debug=true
+		}
+		String exs = Printer.toString(ex, incStacktrace);
 		
 		WebEx wex = WebUtils2.runtime(ex);
 		if (wex.code >= 500) {

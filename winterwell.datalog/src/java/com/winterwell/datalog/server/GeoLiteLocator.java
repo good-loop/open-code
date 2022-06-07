@@ -39,7 +39,9 @@ public class GeoLiteLocator {
 		File blocksFile = new File(GEOIP_FILES_PATH, BLOCKS_CSV_NAME);
 		
 		try {
+			Log.d(LOGTAG, "new GeoLiteLocator - prefix tree...");
 			this.constructPrefixTree(locnsFile, blocksFile);
+			Log.d(LOGTAG, "...new GeoLiteLocator - prefix tree - Done");
 		} catch (FileNotFoundException e) {
 			Log.e(LOGTAG, "Init: Missing or misformatted CSV file during init (normal for first run on new server): " + e.toString());
 		} catch (ParseException e) {

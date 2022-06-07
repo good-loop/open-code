@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jetty.util.ajax.JSON;
 
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.Warning;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.log.Log;
@@ -19,7 +20,12 @@ import com.winterwell.web.WebEx;
 import com.winterwell.web.ajax.JSend;
 import com.winterwell.web.ajax.JThing;
 import com.winterwell.web.data.XId;
-
+/**
+ * 
+ * @testedby ShareClientTest
+ * @author daniel
+ *
+ */
 public final class ShareClient {
 
 	public static final String ACTION_SHARE = "share";
@@ -60,7 +66,7 @@ public final class ShareClient {
 				return Arrays.stream((Object[]) shares).map(share -> (String) SimpleJson.get(share, "item")).collect(Collectors.toList());
 			}
 		} catch (WebEx.E401 e401) {
-			Log.d("ShareClient.getSharedWith", e401);
+			Log.i("ShareClient.getSharedWith", new Warning(e401.toString()));
 			return Collections.emptyList();	
 		}
 		return Collections.emptyList();

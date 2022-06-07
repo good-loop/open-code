@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 import org.w3c.dom.Document;
@@ -22,6 +23,7 @@ import com.winterwell.utils.FailureException;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.StrUtils;
+import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ITree;
 import com.winterwell.utils.containers.Tree;
 import com.winterwell.utils.gui.GuiUtils;
@@ -577,6 +579,11 @@ public class WebUtilsTest extends TestCase {
 
 	
 	public void testGetDomain() {
+		{
+			String d1 = WebUtils.getDomain("good-loop"); // null
+			String d2 = WebUtils.getDomain("my.good-loop.com");
+			assert ! Objects.equals(d1, d2);
+		}
 		{
 			String d1 = WebUtils.getDomain("good-loop.com");
 			String d2 = WebUtils.getDomain("my.good-loop.com");
