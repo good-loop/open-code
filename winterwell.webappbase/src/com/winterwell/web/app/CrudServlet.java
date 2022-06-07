@@ -786,7 +786,6 @@ public abstract class CrudServlet<T> implements IServlet {
 		// Build the query!
 		SearchResponse sr = doList2(q, prefix, status, sort, size,from, period, state, tokens);
 		
-//		Map<String, Object> jobj = sr.getParsedJson();
 		// Let's deal with ESHit and JThings
 		List<ESHit<T>> _hits = sr.getHits(type);
 
@@ -864,7 +863,9 @@ public abstract class CrudServlet<T> implements IServlet {
 	}
 	
 	/**
-	 * Override to apply security filtering
+	 * Override to apply security filtering. 
+	 * 
+	 * NB: This is called by both /_list and by /id, so both share the same security check 
 	 * @param hits2
 	 * @param state 
 	 * @param tokens 
@@ -1116,9 +1117,6 @@ public abstract class CrudServlet<T> implements IServlet {
 		// Call the DB
 		SearchResponse sr = s.get();
 		
-//		if (stateOrNull!=null && stateOrNull.debug) { TODO debug is quiet on the front end
-//			stateOrNull.addMessage(new AjaxMsg(KNoteType.debug, "ES", s.getCurl()));
-//		}
 		
 		return sr;
 	}
