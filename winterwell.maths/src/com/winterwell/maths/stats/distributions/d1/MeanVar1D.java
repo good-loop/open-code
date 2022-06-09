@@ -193,4 +193,11 @@ public class MeanVar1D extends ADistribution1D implements
 				);
 	}
 
+	/**
+	 * Convenience for mean * count
+	 */
+	public double getTotal() {
+		return getMean()*getCount();
+	}
+
 }

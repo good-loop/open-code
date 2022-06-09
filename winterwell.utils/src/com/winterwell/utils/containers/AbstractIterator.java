@@ -18,6 +18,8 @@ import com.winterwell.utils.threads.IProgress;
  * safety-features. We might want to switch (but then we get an extra
  * dependency).
  * 
+ * TODO refactor to match the Google utils class. Then deprecate in favour of it.
+ * 
  * @author Daniel
  * 
  */

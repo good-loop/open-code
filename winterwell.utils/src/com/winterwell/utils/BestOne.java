@@ -5,6 +5,7 @@ package com.winterwell.utils;
  * 
  * NB: The update step favours the incumbent -- i.e. you have to score higher to
  * replace them; equal isn't enough.
+ * If you need fair random tie-breaking, use {@link Best}
  * 
  * @see Best which keeps a top list
  * @author daniel

@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import com.winterwell.utils.containers.AbstractIterator;
+
 public class LazyList<X> extends AbstractList<X> implements List<X> {
 	
 	private final List<X> base = new ArrayList<>();

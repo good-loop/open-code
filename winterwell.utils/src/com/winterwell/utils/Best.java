@@ -6,7 +6,8 @@ import java.util.List;
 import com.winterwell.utils.containers.TopNList;
 
 /**
- * @deprecated Best and TopNList cover most use-cases
+ * @deprecated BestOne and TopNList cover most use-cases. 
+ * If you need fair random tie-breaking, then use this.
  * Simple utility class to find the highest-scoring item(s).
  * 
  * @see BestOne which is faster but only returns the first best item
