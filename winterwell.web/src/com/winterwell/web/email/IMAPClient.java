@@ -5,7 +5,10 @@ import java.security.GeneralSecurityException;
 import java.security.cert.CertPathBuilderException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -22,6 +25,7 @@ import javax.mail.search.ComparisonTerm;
 import javax.mail.search.ReceivedDateTerm;
 import javax.mail.search.SearchTerm;
 
+
 //import com.sun.mail.imap.IMAPFolder;
 //import com.sun.mail.imap.IMAPMessage;
 //import com.sun.mail.imap.IMAPStore;
@@ -31,7 +35,9 @@ import com.winterwell.utils.Key;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.TimeOut;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.containers.AbstractIterator;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.StopWatch;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.XStreamUtils;
@@ -98,10 +104,6 @@ public final class IMAPClient implements Closeable {
 
 	private boolean usingSSL = true;
 
-	/**
-	 * If > 0, cap the number of returned results to this.
-	 */
-	private int max;
 
 	private boolean gmail;
 
@@ -421,10 +423,10 @@ public final class IMAPClient implements Closeable {
 	 */
 	public List<SimpleMessage> getEmails() {
 		Message[] msgs = getEmailHeaders();
-		if (max>0 && msgs.length > max) {
-			Log.d(LOGTAG, "Cap at max "+max+" of "+msgs.length);
-			msgs = Arrays.copyOf(msgs, max);
-		}
+//		if (max>0 && msgs.length > max) {
+//			Log.d(LOGTAG, "Cap at max "+max+" of "+msgs.length);
+//			msgs = Arrays.copyOf(msgs, max);
+//		}
 		return getEmails(msgs);
 	}
 	
@@ -432,14 +434,20 @@ public final class IMAPClient implements Closeable {
 		List<SimpleMessage> mails = new ArrayList<SimpleMessage>(headers.length);
 		for (Message msg : headers) {
 			mails.add(SimpleMessage.create(msg));
-			if (max>0 && mails.size() >= max) {
-				Log.d(LOGTAG, "Stop at max "+max+" of "+headers.length);
-				break;
-			}
+//			if (max>0 && mails.size() >= max) {
+//				Log.d(LOGTAG, "Stop at max "+max+" of "+headers.length);
+//				break;
+//			}
 		}
 		return mails;
 	}
 
+	Comparator<Message> sort;
+	
+	public void setSort(Comparator<Message> sort) {
+		this.sort = sort;
+	}
+	
 	/**
 	 * Warning: gmail can be really slow to return emails!
 	 * TODO a streaming / lazy version
@@ -463,46 +471,65 @@ public final class IMAPClient implements Closeable {
 		if (folder == null || !folder.isOpen()) {
 			openFolder(null);
 		}
+		Message[] msgs;
 		try {
 			// Attributes & Flags for all messages ..			
-			Message[] msgs = folder.search(searchTerm);
+			msgs = folder.search(searchTerm);			
 			Log.d(LOGTAG, user+" getEmails found "+msgs.length+" with remote-filter "+XStreamUtils.serialiseToXml(searchTerm)+". Local filtering...");
-			// Return them
-			List<SimpleMessage> mails = new ArrayList<SimpleMessage>(
-					msgs.length);
-			// Wrap as SimpleMessage -- and check they do fit the filter (remote filtering is unreliable).
-			for (Message message : msgs) {
-				Log.d(LOGTAG, ".... getEmails "+message.getSubject()+"...");
-//				Log.d(LOGTAG, user+" getEmails check "+message.getSubject()+" "+message.getSentDate()+"...");
-				// fast check the date before we fetch any data
-				if (receivedAfter!=null && message.getReceivedDate()!=null) {
-					Time rd = new Time(message.getReceivedDate());
-					if (rd.isBefore(receivedAfter)) {
-						System.out.print(".");
-						continue; // APril 2016: GMail ignores the date search term :(
-					}
-				}
-				// pull down the whole message
-//				Log.d(LOGTAG, user+" getEmails create SimpleMessage (may fetch data) "+message);
-				SimpleMessage sm = SimpleMessage.create(message);
-				// Check it matches the search term -- the remote server can ignore them!
-				if (searchTerm!=null && ! searchTerm.match(sm)) {
-//					Log.d(LOGTAG, user+" getEmails Skip "+sm.getMessageID()+" "+sm.getSubject()+" !~ "+searchTerm);
-					continue;
-				}
-				mails.add(sm);
-				
-				if (max>0 && mails.size() >= max) {
-					Log.d(LOGTAG, user+" getEmails Stop at max "+max+" of "+msgs.length);
-					break;
-				}
-			}
-			Log.d(LOGTAG, user+" ...getEmails done. Returning "+mails.size()+" of "+msgs.length+". Filter: "+XStreamUtils.serialiseToXml(searchTerm));
-			return mails;
 		} catch (Exception e) {
 			Log.e(LOGTAG, e);
 			throw Utils.runtime(e);
 		}
+		// Sort here? 
+		if (sort!=null) {
+			Collections.sort(Arrays.asList(msgs), sort);
+		}
+		
+		// Use LazyList to avoid the slowness of gmail (or at least, pipe it down the line)
+		Iterator<SimpleMessage> it = new AbstractIterator<SimpleMessage>() {
+			int i;
+
+			@Override
+			public SimpleMessage next2() {
+				try {
+					while(i<msgs.length) {
+						Message message = msgs[i];
+						i++;
+						// Wrap as SimpleMessage -- and check they do fit the filter (remote filtering is unreliable).
+						Log.d(LOGTAG, ".... getEmails "+message.getSubject()+"...");
+	//					Log.d(LOGTAG, user+" getEmails check "+message.getSubject()+" "+message.getSentDate()+"...");
+						// fast check the date before we fetch any data
+						if (receivedAfter!=null && message.getReceivedDate()!=null) {
+							Time rd = new Time(message.getReceivedDate());
+							if (rd.isBefore(receivedAfter)) {
+								System.out.print(".");
+								continue; // APril 2016: GMail ignores the date search term :(
+							}
+						}
+						// pull down the whole message
+	//					Log.d(LOGTAG, user+" getEmails create SimpleMessage (may fetch data) "+message);
+						SimpleMessage sm = SimpleMessage.create(message);
+						// Check it matches the search term -- the remote server can ignore them!
+						if (searchTerm!=null && ! searchTerm.match(sm)) {
+	//						Log.d(LOGTAG, user+" getEmails Skip "+sm.getMessageID()+" "+sm.getSubject()+" !~ "+searchTerm);
+							continue;
+						}
+						return sm;
+	//					if (max>0 && mails.size() >= max) {
+	//						Log.d(LOGTAG, user+" getEmails Stop at max "+max+" of "+msgs.length);
+	//						break;
+	//					}
+					}
+					return null;
+				} catch(Exception ex) {
+					throw Utils.runtime(ex);
+				}
+			}				
+		};
+		// Return them
+		List<SimpleMessage> mails = new LazyList(it).setSize(msgs.length);
+		Log.d(LOGTAG, user+" ...getEmails done. Returning "+mails.size()+". Filter: "+XStreamUtils.serialiseToXml(searchTerm));
+		return mails;		
 	}
 
 	/**
@@ -547,10 +574,10 @@ public final class IMAPClient implements Closeable {
 			if (date.before(rd)) {
 				emails.add(SimpleMessage.create(msg));
 			}
-			if (max>0 && emails.size() >= max) {
-				Log.d(LOGTAG, "LocalSearch: Stop at max "+max+" of a possible "+msgs.length);
-				break;
-			}
+//			if (max>0 && emails.size() >= max) {
+//				Log.d(LOGTAG, "LocalSearch: Stop at max "+max+" of a possible "+msgs.length);
+//				break;
+//			}
 		}
 		return emails;
 	}
@@ -559,22 +586,22 @@ public final class IMAPClient implements Closeable {
 			throws MessagingException {
 		ReceivedDateTerm sinceDate = new ReceivedDateTerm(ComparisonTerm.GT, date);
 		List<SimpleMessage> emails = getEmails(sinceDate, new Time(date));
-		// check for bugs in remote search
-		for (SimpleMessage msg : emails.toArray(new SimpleMessage[0])) {
-//			sinceDate.match(msg); Do we need the extra lenience below?
-			Date rd = msg.getReceivedDate();
-			if (rd==null) {
-				// Bit of a Hack: allow for 1 day in transit
-				rd = msg.getSentDate();
-				if (rd!=null) rd = new Date(rd.getTime() + TUnit.DAY.millisecs);
-			}
-			if (rd!=null && date.after(rd)) {
-				emails.remove(msg);
-				Log.report(
-						"Error using remote IMAP search (fixed by local filter)",
-						Level.FINE);
-			}
-		}
+		// NB: remote search can have bugs on filtering, but we also do local filtering inside #getEmails()
+//		for (SimpleMessage msg : emails.toArray(new SimpleMessage[0])) {
+////			sinceDate.match(msg); Do we need the extra lenience below?
+//			Date rd = msg.getReceivedDate();
+//			if (rd==null) {
+//				// Bit of a Hack: allow for 1 day in transit
+//				rd = msg.getSentDate();
+//				if (rd!=null) rd = new Date(rd.getTime() + TUnit.DAY.millisecs);
+//			}
+//			if (rd!=null && date.after(rd)) {
+//				emails.remove(msg);
+//				Log.report(
+//						"Error using remote IMAP search (fixed by local filter)",
+//						Level.FINE);
+//			}
+//		}
 		return emails;
 	}
 
@@ -835,10 +862,6 @@ public final class IMAPClient implements Closeable {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + ":" + user + "@" + host;
-	}
-
-	public void setMax(int perRunRequestLimit) {
-		this.max = perRunRequestLimit;
 	}
 
 	public IMAPClient setGMail(boolean b) {
