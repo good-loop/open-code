@@ -124,6 +124,9 @@ public class CurrencyConvertor {
 		if (amount==0) { // fast zero
 			return 0;
 		}
+		if (from==to) { // no-op
+			return amount;
+		}
 		DataLogEvent rateFromCache = cache.get(date.toISOStringDateOnly());
 		if (rateFromCache == null) {
 			DataLogEvent rate = loadCurrDataFromES(date);
