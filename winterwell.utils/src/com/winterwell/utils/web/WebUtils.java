@@ -1634,12 +1634,16 @@ public class WebUtils {
 	 * Note: this will encode special url chars like /
 	 * @param x
 	 *            can be null (returns ""). Will be turned into a String using
-	 *            String.valueOf()
+	 *            String.valueOf().
+	 *            List and Map are NOT supported - you almost certainly want to convert via json or csv-style first!
 	 * @testedby  WebUtilsTest#testUrlEncode()}
 	 */
 	public static String urlEncode(Object x) {
 		if (x == null)
 			return "";
+		if (x instanceof Map || x instanceof List) {
+			throw new UnsupportedOperationException("Converting List/Map by toString is bogus - Maybe convert to Json first?");
+		}
 		String s = String.valueOf(x);
 		try {
 			s = URLEncoder.encode(s, "UTF-8");

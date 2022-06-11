@@ -480,7 +480,7 @@ public class FakeBrowser {
 		String encodedData = WebUtils.urlEncode(vars);
 		return post(uri, MIME_TYPE_URLENCODED_FORM, encodedData);
 	}
-	
+		
 	/**
 	 * @param url
 	 * @param params
