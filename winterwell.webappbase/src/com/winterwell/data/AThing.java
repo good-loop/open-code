@@ -32,6 +32,14 @@ public class AThing implements IInit {
 	 */
 	Time lastModified; 
 	
+
+	/** Owner XID - users should only see their own tags
+	 * 
+	 * ??replace with shares ShareToken?? Or keep as a simpler alternative to ShareToken for many uses??
+	 * */
+	@ESKeyword
+	public String oxid;
+	
 	/**
 	 * 
 	 * @return

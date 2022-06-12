@@ -40,6 +40,21 @@ public final class ShareClient {
 	YouAgainClient yac;
 
 	/**
+	 * Convenience for {@link #getSharedWith(List, String)} that strips the prefix off.
+	 * TODO should this cache the results??
+	 * @param tokens
+	 * @param type
+	 * @return
+	 */
+	public List<String> getSharedWithItemIds(List<AuthToken> tokens, String type) {
+		assert ! type.isEmpty() && ! type.contains(":") : type;
+		String prefix = type+":";
+		List<String> sharedWith = getSharedWith(tokens, prefix);
+		List<String> sharedCampaigns = Containers.apply(sharedWith, sw -> sw.substring(prefix.length()));
+		return sharedCampaigns;
+	}
+	
+	/**
 	 * 
 	 * @param authToken TODO manage this better
 	 * @param prefix Optional

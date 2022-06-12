@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,6 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.winterwell.bob.tasks.GitTask;
 import com.winterwell.bob.wwjobs.BuildHacks;
 import com.winterwell.data.AThing;
+import com.winterwell.data.ISecurityByShares;
 import com.winterwell.data.KStatus;
 import com.winterwell.depot.IInit;
 import com.winterwell.es.ESPath;
@@ -46,6 +48,7 @@ import com.winterwell.utils.Utils;
 import com.winterwell.utils.WrappedException;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.containers.Pair;
 import com.winterwell.utils.io.CSVSpec;
 import com.winterwell.utils.io.CSVWriter;
 import com.winterwell.utils.io.FileUtils;
@@ -108,6 +111,8 @@ public abstract class CrudServlet<T> implements IServlet {
 	}
 
 	
+	
+	
 	protected String[] prefixFields = new String[] {"name"};
 	
 	protected boolean dataspaceFromPath;
@@ -153,7 +158,7 @@ public abstract class CrudServlet<T> implements IServlet {
 		
 		// list?
 		String slug = state.getSlug();
-		if (slug.endsWith("/_list") || LIST_SLUG.equals(slug)) {
+		if (isListRequest(slug)) {
 			doList(state);
 			return;
 		}
@@ -217,6 +222,11 @@ public abstract class CrudServlet<T> implements IServlet {
 		}
 	}
 	
+	protected boolean isListRequest(String slug) {
+		return slug.endsWith("/_list") || LIST_SLUG.equals(slug);
+	}
+
+
 	/**
 	 * Called after the servlet has returned a response. Usually does nothing.
 	 * Override to do slower tasks.
@@ -943,6 +953,70 @@ public abstract class CrudServlet<T> implements IServlet {
 		return hits2;
 	}
 	
+	
+
+
+	/**
+	 * Copy pasta from {@link GreenTagServlet}
+	 * @param hits2
+	 * @param state
+	 * @param tokens
+	 * @param yac
+	 * @return
+	 */
+	protected List<ESHit<T>> doList2_securityFilter2_filterByShares(
+			List<ESHit<T>> hits2, WebRequest state, List<AuthToken> tokens, YouAgainClient yac			
+	) {
+		// TODO should we get the shares first, then filter in the ES query?		
+		// TODO refactor into CrudServlet -- but oxid and campaign are GreenTag specific		
+		boolean isGL = isGLSecurityHack(state); // Let GL ad-ops & tech support see everything
+		if (isGL) {
+			return hits2;
+		}
+		
+		// HACK allow Impact Hub to load the Advertiser (but filter ListLoad _list calls for Green Tag Generator)
+		if ( ! isListRequest(state.getSlug())) {
+			return hits2;
+		}
+		if (hits2.isEmpty()) {
+			return hits2;
+		}
+		
+		// HACK only for ListLoad for now!!
+		if ( ! Utils.yes(state.get("filterByShares"))) {
+			return hits2;
+		}
+		
+		// shares
+		ISecurityByShares eg = (ISecurityByShares) hits2.get(0).getJThing().java();
+		Map<Class,String> shareBy_field4type = eg.getShareBy();		
+		XId uxid = state.getUserId();
+		Map<Class,List<String>> sharedType = new ArrayMap();
+		for(Class k : shareBy_field4type.keySet()) {
+			List<String> sharedCampaigns = yac.sharing().getSharedWithItemIds(tokens, k.getSimpleName());
+			sharedType.put(k, sharedCampaigns);
+		}
+		// filter by shares 
+		List<ESHit<T>> myHits = Containers.filter(hits2, hit -> {
+			T gtag = hit.getJThing().java();
+			// Yours?
+			String oxid = ((AThing)gtag).oxid;
+			if (uxid != null && uxid.toString().equals(oxid)) {
+				return true;
+			}
+			for(Class k : shareBy_field4type.keySet()) {
+				Object gtagValue = ReflectionUtils.getPrivateField(gtag, shareBy_field4type.get(k));
+				List<String> shared = sharedType.get(k);
+				if (gtagValue != null && shared.contains(gtagValue)) {
+					return true;
+				}
+			}			
+			return false;
+		});
+		
+		return myHits;
+	}
+
 
 	/**
 	 * This is NOT called by default, but sub-classes can choose to use it.
