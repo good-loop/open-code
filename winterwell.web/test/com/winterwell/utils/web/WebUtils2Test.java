@@ -11,11 +11,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.util.ajax.JSON;
+import org.junit.Assert;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.StrUtils;
+import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.time.TUnit;
@@ -28,6 +30,17 @@ import eu.medsea.mimeutil.MimeUtil;
 
 public class WebUtils2Test {
 
+
+	@Test
+	public void testStringify() {
+		Assert.assertEquals("\"foo\"", WebUtils2.stringify("foo"));
+		Assert.assertEquals("{\"foo\":1}", WebUtils2.stringify(new ArrayMap("foo",1)));
+//		Assert.assertEquals("{\"foo\":1}", WebUtils2.stringify(new MyPOJO())); // POJOs dont work - use gson
+		// or this for shallow pojo handling
+		Assert.assertEquals("{\"foo\":1}", WebUtils2.stringify(Containers.objectAsMap(new MyPOJO())));
+	}
+
+	
 	@Test
 	public void testOpenCalLink() {
 		WebUtils2.browseOnDesktop("https://meet.google.com/uri-pqhs-kzu");
@@ -158,4 +171,8 @@ class DummyServlet extends HttpServlet {
 		state.sendPage();
 	}
 	
+}
+
+class MyPOJO {
+	int foo = 1;
 }
