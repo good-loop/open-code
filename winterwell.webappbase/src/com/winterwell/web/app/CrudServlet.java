@@ -992,7 +992,9 @@ public abstract class CrudServlet<T> implements IServlet {
 		Map<Class,String> shareBy_field4type = eg.getShareBy();		
 		XId uxid = state.getUserId();
 		Map<Class,List<String>> sharedType = new ArrayMap();
-		for(Class k : shareBy_field4type.keySet()) {
+		for(Class k : shareBy_field4type.keySet()) {			
+			// FIXME This is not getting the same shares as the front-end request!!
+			// Different JWT tokens??
 			List<String> sharedCampaigns = yac.sharing().getSharedWithItemIds(tokens, k.getSimpleName());
 			sharedType.put(k, sharedCampaigns);
 		}
