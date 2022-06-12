@@ -29,8 +29,8 @@ implements Comparable<Money>, IHasJson, IInit {
 			.property("currency", new ESType().keyword())
 			.property("value", new ESType().keyword())
 			.property("value100p", new ESType().LONG())
-			// old data!
-			.property("value100", new ESType().DOUBLE()) 
+//			// old data!
+//			.property("value100", new ESType().DOUBLE()) 
 			// less core
 			.property("@type", new ESType().keyword().noAnalyzer())			
 			.property("start", new ESType().date())
@@ -43,8 +43,9 @@ implements Comparable<Money>, IHasJson, IInit {
 	// FIXME are these used??
 	private Time start;
 	private Time end;
+	
 	/**
-	 * use case?? Is this for SoGive??
+	 * @deprecated use case?? Is this for SoGive?? ??Can we remove it?
 	 */
 	private int year;
 	
@@ -75,6 +76,7 @@ implements Comparable<Money>, IHasJson, IInit {
 	@Deprecated // HACK to upgrade old objects
 	private Object value100;
 	
+	// don't store this in ES
 	private transient BigDecimal _value;
 
 	/**
@@ -83,9 +85,9 @@ implements Comparable<Money>, IHasJson, IInit {
 	@ESNoIndex
 	private String value;
 	
-	// The client uses raw to hold an interim value whilst the user is typing. I don't think we need to store it. ^DW June 2019
+	/* The client uses raw to hold an interim value whilst the user is typing. I don't think we need to store it. ^DW June 2019 */
 //	@Deprecated
-//	private String raw;
+//	private transient String raw;
 		
 	@Override
 	public int hashCode() {

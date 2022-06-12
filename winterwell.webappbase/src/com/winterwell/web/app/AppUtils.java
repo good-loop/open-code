@@ -13,6 +13,7 @@ import com.winterwell.bob.wwjobs.BuildHacks;
 import com.winterwell.data.AThing;
 import com.winterwell.data.KStatus;
 import com.winterwell.data.PersonLite;
+import com.winterwell.es.ESExclude;
 import com.winterwell.es.ESKeyword;
 import com.winterwell.es.ESNoIndex;
 import com.winterwell.es.ESPath;
@@ -860,6 +861,7 @@ public class AppUtils {
 		}
 		// ??anything else ES is liable to guess wrong??		
 		ESNoIndex esno = field.getAnnotation(ESNoIndex.class);
+		ESExclude esExclude = field.getAnnotation(ESExclude.class);
 //		// trust the defaults for some stuff 
 //		// BUT this breaks searching on a field before it has been indexed once
 //		if (ReflectionUtils.isaNumber(type) || boolean.class.equals(type) || Boolean.class.equals(type)) {
@@ -871,6 +873,9 @@ public class AppUtils {
 		if (est==null) est = new ESType(); 
 		if (esno != null) {
 			est = est.copy().noIndex(); // NB: copy for keyword, which is locked against edits
+		}
+		if (esExclude != null) {
+			est = est.copy().excludeFromSource();
 		}
 		return est;
 	}
