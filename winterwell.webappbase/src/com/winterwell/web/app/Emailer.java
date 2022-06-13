@@ -94,6 +94,13 @@ public class Emailer implements Closeable {
 		return closed;
 	}
 	
+	/**
+	 * A more sensible name for {@link #resetup()}
+	 */
+	public void open() {
+		resetup();
+	}
+	
 	public void resetup() {
 		if (smtpClient != null) {
 			close();
