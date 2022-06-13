@@ -56,6 +56,7 @@ public class Employee {
 			case "Natasha": emailHead="tash"; break;
 			case "Abdikarim": emailHead="karim"; break;
 			case "Wing Sang": emailHead="wing"; break;
+			case "Thomas": emailHead="tom"; break;
 			case "Claire": emailHead= (lastName.equals("Gleeson-Landry") ? "claire" : "clairedillon"); break;
 			default: emailHead=firstName.toLowerCase(); break;
 		}
