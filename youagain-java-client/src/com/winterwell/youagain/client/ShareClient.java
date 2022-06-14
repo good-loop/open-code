@@ -73,7 +73,7 @@ public final class ShareClient {
 	 * 
 	 * @param auths
 	 * @param prefix
-	 * @param app HACK allow an override
+	 * @param app HACK allow an override. Can we clean up the use of GL app names and drop this??
 	 * @return
 	 */
 	List<String> getSharedWith(List<AuthToken> auths, String prefix, String app) {
