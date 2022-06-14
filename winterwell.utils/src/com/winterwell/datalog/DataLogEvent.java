@@ -103,7 +103,7 @@ public final class DataLogEvent implements Serializable, IHasJson
 			"publisher", String.class,
 			"ad", String.class,
 			"vert", String.class,
-			"vertiser", String.class,
+			"vertiser", String.class, // advertiser
 			"bid", String.class, // Our Bid ID
 			"xbid", String.class, // someone elses (possibly broken) bid id
 			"variant", String.class,
