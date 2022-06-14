@@ -860,6 +860,15 @@ public abstract class CrudServlet<T> implements IServlet {
 		}
 		// put together the json response	
 		long total = sr.getTotal();
+		// ...adjust total
+		if (_hits.size() < size) {
+			total = hits2.size(); // we have all of them
+		} else {
+			double hitRatio = hits2.size() * 1.0/ size;
+			double total2 = total*hitRatio;
+			total = Math.round(total2);
+		}
+		
 		List<Map> items = Containers.apply(hits2, h -> h.getJThing().map());
 		String json = gson().toJson(
 				new ArrayMap(
