@@ -279,7 +279,7 @@ public class AppUtils {
 		ESHttpClient client = new ESHttpClient(Dep.get(ESConfig.class));
 		UpdateRequest up = client.prepareUpdate(publishPath);
 		up.setDoc(draft.map());
-		up.setRefresh(refresh);		
+		if (refresh!=null) up.setRefresh(refresh);		
 		up.setDocAsUpsert(true);
 		// NB: this doesn't return the merged item :(
 		IESResponse resp = up.get().check();
