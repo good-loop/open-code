@@ -999,7 +999,12 @@ public abstract class CrudServlet<T> implements IServlet {
 			// But this is using app=good-loop :(
 			// TODO can we safely change the YA config app to portal.good-loop.com??
 			// HACK just override for a moment
-			List<String> sharedCampaigns = yac.sharing().getSharedWithItemIds("portal.good-loop.com", tokens, k.getSimpleName());
+			// FIXME locked to portal!!
+			String app = yac.getIssuer();
+			if ("portal".equals(AMain.appName)) {
+				app = "portal.good-loop.com";
+			}
+			List<String> sharedCampaigns = yac.sharing().getSharedWithItemIds(app, tokens, k.getSimpleName());
 			sharedType.put(k, sharedCampaigns);
 		}
 		// filter by shares 
