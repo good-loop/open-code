@@ -995,7 +995,11 @@ public abstract class CrudServlet<T> implements IServlet {
 		for(Class k : shareBy_field4type.keySet()) {			
 			// FIXME This is not getting the same shares as the front-end request!!
 			// Different JWT tokens?? But why?? The front-end should send its JWTs with the request
-			List<String> sharedCampaigns = yac.sharing().getSharedWithItemIds(tokens, k.getSimpleName());
+			// Ah: the front-end and shares use app=portal.good-loop.com
+			// But this is using app=good-loop :(
+			// TODO can we safely change the YA config app to portal.good-loop.com??
+			// HACK just override for a moment
+			List<String> sharedCampaigns = yac.sharing().getSharedWithItemIds("portal.good-loop.com", tokens, k.getSimpleName());
 			sharedType.put(k, sharedCampaigns);
 		}
 		// filter by shares 
