@@ -100,6 +100,30 @@ public final class Time implements Serializable, Comparable<Time> {
 	}
 
 	/**
+	 * Convenience for when you dont know the type of t
+	 * @param t
+	 * @return
+	 */
+	public static Time make(Object t) {		
+		if (t instanceof Time) {
+			return (Time) t;
+		}
+		if (t instanceof Number) {
+			return new Time(((Number)t).longValue());
+		}
+		if (t instanceof String) {
+			return new Time((String)t);
+		}
+		if (t instanceof Date) {
+			return new Time((Date)t);
+		}
+		if (t instanceof Calendar) {
+			return new Time((Calendar)t);
+		}
+		throw new IllegalArgumentException("Unrecognised type: "+t.getClass()+" "+t);
+	}
+	
+	/**
 	 * Note: This does not behave the same as the (confusing) Date constructor.<br>
 	 * 
 	 * The Time will be midnight GMT (i.e. no daylight savings applied) at the

@@ -7,6 +7,7 @@ import com.winterwell.es.client.agg.Aggregation;
 import com.winterwell.es.client.agg.Aggregations;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.TodoException;
+import com.winterwell.utils.time.Dt;
 
 /**
  * 
@@ -31,6 +32,16 @@ public final class Breakdown {
 	 */
 	final KBreakdownOp op;
 	
+	/**
+	 * defaults to daily
+	 */
+	Dt interval;
+	
+	public Breakdown setInterval(Dt interval) {
+		this.interval = interval;
+		return this;
+	}
+	
 	public List<String> getBy() {
 		return Arrays.asList(by);
 	}
@@ -49,6 +60,11 @@ public final class Breakdown {
 		assert ! field.isEmpty();
 	}
 	
+	/**
+	 * Suitable for passing to the DataLog /data endpoint.
+	 * 
+	 * NB: Does not include interval 
+	 */
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

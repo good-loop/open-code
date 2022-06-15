@@ -124,8 +124,12 @@ public class AppUtils {
 	 * @return
 	 */
 	public static <X> X get(String id, Class<X> klass) {
+		return get(id, klass, KStatus.PUBLISHED);
+	}
+	
+	public static <X> X get(String id, Class<X> klass, KStatus status) {
 		assert id != null : "No ID for get "+klass;
-		ESPath path = Dep.get(IESRouter.class).getPath(klass, id, KStatus.PUBLISHED);
+		ESPath path = Dep.get(IESRouter.class).getPath(klass, id, status);
 		return get(path, klass);
 	}
 	
@@ -150,6 +154,7 @@ public class AppUtils {
 		for(String index : path.indices) {
 			ESPath pathi = new ESPath(new String[] {index}, path.id); // NB: ES get-by-ID can only take one index
 			GetRequest s = new GetRequest(client);
+			s.setDebug(DEBUG);
 			X got = get2(pathi, klass, version, s);
 			if (got != null) {
 				return got;

@@ -208,7 +208,9 @@ public class TestHttpServletResponse implements HttpServletResponse {
 	public ServletOutputStream getOutputStream() throws IOException {
 		Log.report("Using OutputStream");
 		assert writer == null;
-		sb = new StringBuilder();
+		if (sb==null) {
+			sb = new StringBuilder();
+		}
 		return new ServletOutputStream() {
 			@Override
 			public void print(String s) throws IOException {

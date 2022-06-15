@@ -1,5 +1,6 @@
 package com.winterwell.web.app;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public class TestWebRequest extends WebRequest {
 	public TestWebRequest() {
 		this(new TestHttpServletRequest(), new TestHttpServletResponse());
 	}
-
+	
 	@Override
 	public String getRemoteAddr() {
 		return Utils.or(remoteAddr, super.getRemoteAddr());
@@ -56,6 +57,12 @@ public class TestWebRequest extends WebRequest {
 
 	public void setJWTToken(String jwt) {
 		put(new Key("test.jwt"), jwt);
+	}
+
+	public String getResponseAsString() {
+		TestHttpServletResponse r = (TestHttpServletResponse) getResponse();
+		String s = r.getOutputBufferContents();
+		return s;
 	}
 	
 }

@@ -13,6 +13,7 @@ import com.winterwell.utils.Dep;
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.MathUtils;
 import com.winterwell.utils.Printer;
+import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
@@ -276,6 +277,93 @@ public class DataLogHttpClient {
 		return byX;
 	}
 	
+	
+	/**
+	 * 
+	 * Side effects: set examples
+	 * @param q
+	 * @param breakdown Must be a single breakdown.by (which can have multiple slices). E.g. 
+	 * breakdown.by = ["pub/vertiser/time"]
+	 * @return e.g. [pub, vertiser, time, count] 
+	 */
+	public List<Object[]> getBreakdownTable(SearchQuery q, Breakdown breakdown) {
+		// NB: copy pasta from #getBreakdown()
+		// Call DataServlet		
+		String b = breakdown==null? null : breakdown.toString();		
+		ArrayMap vars = new ArrayMap(
+				"dataspace", dataspace,				
+				"q", q.getRaw(), 
+				"breakdown", b,
+				"interval", breakdown.interval,
+				DataLogFields.START.name, startParam(),
+				DataLogFields.END.name, end==null? null : end.toISOString(),
+				"size", numExamples);
+		
+		// Call!
+		JSend jobj = get2_httpCall(vars);		
+		Map jobjMap = jobj.getDataMap();
+		
+		// e.g. by_cid buckets
+		if (breakdown.by.length != 1) {
+			throw new IllegalArgumentException(Printer.str(breakdown.by)+" Must be a single breakdown.by (which can have multiple slices). E.g. breakdown.by = [\"pub/vertiser/time\"]"); 
+		};
+		String[] headers = breakdown.by[0].split("/"); 
+		List<Object[]> rows = getBreakdownTable2(headers, 0, jobjMap, breakdown.field);
+		String[] headers2 = Arrays.copyOf(headers, headers.length+1);
+		headers2[headers2.length-1] = breakdown.field;
+		rows.add(0, headers2);
+
+		// ...count of docs
+		Object _allCount = SimpleJson.get(jobjMap, ESDataLogSearchBuilder.allCount);
+		if (_allCount instanceof Map) {	// HACK old code, Jan 2021
+			_allCount = ((Map)_allCount).get("count");
+		}
+		allCount = MathUtils.toNum(_allCount);
+		
+		// e.g. sum of "dntn"
+		Object _btotal = SimpleJson.get(jobjMap, breakdown.field);
+		if (_btotal != null) {
+			double bttl = MathUtils.toNum(_btotal);
+			totalFor.put(breakdown.field, bttl);
+		}
+
+		// ...examples
+		examples = Containers.asList((Object)SimpleJson.get(jobjMap, "examples"));
+		
+		return rows;
+	}
+	
+	private List<Object[]> getBreakdownTable2(String[] headers, int i, Map jobjMap, String field) {
+		String h = headers[i];
+		String byX = "by_"+StrUtils.join(Arrays.copyOfRange(headers, i, headers.length), "_");
+		Map resultsByX = (Map) jobjMap.get(byX);
+		List rows= new ArrayList();
+		List<Map> buckets = SimpleJson.getList(jobjMap, byX, "buckets");
+		if (buckets==null) {
+//			System.out.println(i); // ran out of data early in the tree??
+			return rows;
+		}		
+		for (Map bucket : buckets) {			
+			Object key = bucket.get("key");
+			if (i==headers.length-1) {
+				Object cnt = bucket.get(field);
+//				System.out.println(key);
+				Object[] keyRow = new Object[headers.length + 1];
+				keyRow[i] = key;
+				keyRow[i+1] = cnt;
+				rows.add(keyRow);
+			} else {
+				List<Object[]> keyRows = getBreakdownTable2(headers, i+1, bucket, field);
+				for (Object[] keyRow : keyRows) {
+					assert keyRow[i] == null;
+					keyRow[i] = key;
+				}
+				rows.addAll(keyRows);
+			}
+		}
+		return rows;
+	}
+
 	/**
 	 * The totals
 	 * {breakdown-by-KEY: total}
