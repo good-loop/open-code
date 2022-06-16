@@ -70,6 +70,27 @@ public class ESDataLogSearchBuilderTest {
 	}
 
 	
+
+	@Test
+	public void testRuntimeMapping() {
+		ESHttpClient esc = new ESHttpClient(new ESConfig());
+		ESDataLogSearchBuilder esdsb = new ESDataLogSearchBuilder(esc, new Dataspace("test"));
+		List<String> breakdown = Arrays.asList("pub/timeofday");
+		esdsb.setBreakdown(breakdown);
+		esdsb.setQuery(new SearchQuery(""));
+		
+		SearchRequest search = esdsb.prepareSearch();
+		search.setIndex("datalog.gl");
+		search.setDebug(true);		
+		// Search!
+		SearchResponse sr = search.get();		
+		Map aggregations = sr.getAggregations();
+		// strip out no0 filter wrappers
+		aggregations = esdsb.cleanJson(aggregations);
+		System.out.println(aggregations);
+	}
+
+	
 	@Test
 	public void testClean() {
 		{	// no breakdown

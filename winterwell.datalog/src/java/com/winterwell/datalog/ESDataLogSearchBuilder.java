@@ -2,11 +2,13 @@ package com.winterwell.datalog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jetty.util.ajax.JSON;
 
+import com.winterwell.es.ESType;
 import com.winterwell.es.client.ESHttpClient;
 import com.winterwell.es.client.SearchRequest;
 import com.winterwell.es.client.agg.Aggregation;
@@ -29,6 +31,12 @@ import com.winterwell.web.WebEx;
 import com.winterwell.web.app.AppUtils;
 
 /**
+ * Special Fields
+ * 
+ *  "time" => Aggregations.dateHistogram() using interval
+	"dateRange" => Aggregations.dateRange();
+	"timeofday" => turn time into hour of the day
+ * 
  * @testedby  ESDataLogSearchBuilderTest
  * @author daniel
  *
@@ -52,6 +60,7 @@ public class ESDataLogSearchBuilder {
 	List<String> breakdown;
 	private boolean doneFlag;
 	private ESHttpClient esc;
+	private Map<String,Map> runtimeMappings;
 	
 	/**
 	 * Were there missed documents?
@@ -91,6 +100,12 @@ public class ESDataLogSearchBuilder {
 		List<Aggregation> aggs = prepareSearch2_aggregations();
 		for (Aggregation aggregation : aggs) {
 			search.addAggregation(aggregation);
+		}
+		// runtime fields
+		if (runtimeMappings!=null) {
+			for(String rf : runtimeMappings.keySet()) {
+				search.addRuntimeMapping(rf, runtimeMappings.get(rf));
+			}
 		}
 		
 		// Set filter
@@ -162,6 +177,7 @@ public class ESDataLogSearchBuilder {
 		Aggregation leaf = null;
 		Aggregation previousLeaf = null;
 		String s_bucketBy = StrUtils.join(bucketBy, '_');
+		
 		for(String field : bucketBy) {
 			if (Utils.isBlank(field)) {
 				// "" -- use-case: you get this with top-level "sum all"
@@ -177,6 +193,16 @@ public class ESDataLogSearchBuilder {
 				Time prev2 = prev.minus(interval);
 				List<Time> times = Arrays.asList(start, prev2, prev, now);
 				leaf = Aggregations.dateRange("by_"+s_bucketBy, "time", times);
+			} else if (field.equals("timeofday")) {
+				// HACK turn time into hour of the day
+				// see https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html#date-histogram-aggregate-scripts
+				String runtimeField = "time.timeofday";
+				if (runtimeMappings==null) runtimeMappings = new ArrayMap();
+				runtimeMappings.put(runtimeField, new ArrayMap(
+					"type", "long", // NB: integer isn't supported
+					"script", "emit(doc['time'].value.hour)"
+						));
+				leaf = Aggregations.terms("by_"+s_bucketBy, runtimeField);
 			} else {
 				leaf = Aggregations.terms("by_"+s_bucketBy, field);
 				if (numResults>0) leaf.setSize(numResults);

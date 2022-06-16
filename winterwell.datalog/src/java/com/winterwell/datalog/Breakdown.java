@@ -3,10 +3,7 @@ package com.winterwell.datalog;
 import java.util.Arrays;
 import java.util.List;
 
-import com.winterwell.es.client.agg.Aggregation;
-import com.winterwell.es.client.agg.Aggregations;
 import com.winterwell.utils.StrUtils;
-import com.winterwell.utils.TodoException;
 import com.winterwell.utils.time.Dt;
 
 /**
@@ -50,6 +47,10 @@ public final class Breakdown {
 	 * 
 	 * @param by e.g. "pub" or ",pub" for top-level + breakdown-by-pub. Can be null
 	 * NB: a trailing comma will be ignored, but a leading one works.
+	 * 
+	 * There are some special values: "time", "dateRange", "timeofday"
+	 * See ESDataLogSearchBuilder
+	 * 
 	 * @param field e.g. "count" or "price"
 	 * @param operator e.g. "sum"
 	 */
