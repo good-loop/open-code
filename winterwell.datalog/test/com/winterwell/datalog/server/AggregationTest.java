@@ -15,6 +15,7 @@ import com.winterwell.es.client.IndexRequest;
 import com.winterwell.es.client.KRefresh;
 import com.winterwell.es.client.admin.CreateIndexRequest;
 import com.winterwell.es.client.admin.PutMappingRequest;
+import com.winterwell.es.client.agg.Aggregations;
 import com.winterwell.es.fail.ESIndexAlreadyExistsException;
 import com.winterwell.gson.FlexiGson;
 import com.winterwell.gson.JsonArray;
@@ -43,6 +44,7 @@ public class AggregationTest {
 		server.doMain(new String[0]);
 		ENDPOINT = "http://localhost:"+server.getConfig().getPort();
 	}
+	
 	
 	@Test
 	public void testAggregationByDomain() {

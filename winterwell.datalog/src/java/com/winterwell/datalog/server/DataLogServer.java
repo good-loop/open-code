@@ -24,7 +24,7 @@ import com.winterwell.web.app.KServerType;
  * TODO move to extends AMain
  * 
  * @author daniel
- *
+ * 
  */
 public class DataLogServer extends AMain<DataLogConfig> {
 

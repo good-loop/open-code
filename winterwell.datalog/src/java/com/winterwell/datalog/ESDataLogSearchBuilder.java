@@ -2,11 +2,13 @@ package com.winterwell.datalog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jetty.util.ajax.JSON;
 
+import com.winterwell.es.ESType;
 import com.winterwell.es.client.ESHttpClient;
 import com.winterwell.es.client.SearchRequest;
 import com.winterwell.es.client.agg.Aggregation;
@@ -29,7 +31,13 @@ import com.winterwell.web.WebEx;
 import com.winterwell.web.app.AppUtils;
 
 /**
- * @testedby  ESDataLogSearchBuilderTest}
+ * Special Fields
+ * 
+ *  "time" => Aggregations.dateHistogram() using interval
+	"dateRange" => Aggregations.dateRange();
+	"timeofday" => turn time into hour of the day
+ * 
+ * @testedby  ESDataLogSearchBuilderTest
  * @author daniel
  *
  */
@@ -42,6 +50,7 @@ public class ESDataLogSearchBuilder {
 	 */
 	private static final int MAX_OPS = 10;
 	private static final String LOGTAG = "ESDataLogSearchBuilder";
+	private static int sumOtherDocCount;
 	final Dataspace dataspace;
 	int numResults;
 	int numExamples; 
@@ -51,6 +60,15 @@ public class ESDataLogSearchBuilder {
 	List<String> breakdown;
 	private boolean doneFlag;
 	private ESHttpClient esc;
+	private Map<String,Map> runtimeMappings;
+	
+	/**
+	 * Were there missed documents?
+	 * @return hopefully 0
+	 */
+	public static int getSumOtherDocCount() {
+		return sumOtherDocCount;
+	}
 	
 	public ESDataLogSearchBuilder(ESHttpClient esc, Dataspace dataspace) {
 		this.dataspace = dataspace;
@@ -82,6 +100,12 @@ public class ESDataLogSearchBuilder {
 		List<Aggregation> aggs = prepareSearch2_aggregations();
 		for (Aggregation aggregation : aggs) {
 			search.addAggregation(aggregation);
+		}
+		// runtime fields
+		if (runtimeMappings!=null) {
+			for(String rf : runtimeMappings.keySet()) {
+				search.addRuntimeMapping(rf, runtimeMappings.get(rf));
+			}
 		}
 		
 		// Set filter
@@ -153,6 +177,7 @@ public class ESDataLogSearchBuilder {
 		Aggregation leaf = null;
 		Aggregation previousLeaf = null;
 		String s_bucketBy = StrUtils.join(bucketBy, '_');
+		
 		for(String field : bucketBy) {
 			if (Utils.isBlank(field)) {
 				// "" -- use-case: you get this with top-level "sum all"
@@ -168,6 +193,16 @@ public class ESDataLogSearchBuilder {
 				Time prev2 = prev.minus(interval);
 				List<Time> times = Arrays.asList(start, prev2, prev, now);
 				leaf = Aggregations.dateRange("by_"+s_bucketBy, "time", times);
+			} else if (field.equals("timeofday")) {
+				// HACK turn time into hour of the day
+				// see https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html#date-histogram-aggregate-scripts
+				String runtimeField = "time.timeofday";
+				if (runtimeMappings==null) runtimeMappings = new ArrayMap();
+				runtimeMappings.put(runtimeField, new ArrayMap(
+					"type", "long", // NB: integer isn't supported
+					"script", "emit(doc['time'].value.hour)"
+						));
+				leaf = Aggregations.terms("by_"+s_bucketBy, runtimeField);
 			} else {
 				leaf = Aggregations.terms("by_"+s_bucketBy, field);
 				if (numResults>0) leaf.setSize(numResults);
@@ -251,18 +286,31 @@ public class ESDataLogSearchBuilder {
 	 * @return cleaned aggregations
 	 */
 	public Map cleanJson(Map<String,Object> aggregations) {
-
 		Map aggs2 = Containers.applyToJsonObject(aggregations, ESDataLogSearchBuilder::cleanJson2);
 		// also top-level
 		Map aggs3 = (Map) cleanJson2(aggs2, null);
 		return aggs3;
 	}	
 	
+	/**
+	 * Visits each node.
+	 * NB: also checks for sum_other_doc_count - see https://www.elastic.co/guide/en/elasticsearch/reference/7.10/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-approximate-counts		
+
+	 * @param old
+	 * @param __path
+	 * @return new version of `old`
+	 */
 	static Object cleanJson2(Object old, List<String> __path) {
 		if ( ! (old instanceof Map)) {
 			return old;
 		}
 		Map mold = (Map) old;
+		// ?? how to handle missed buckets? At least we can log a warning
+		Number sodc = (Number) mold.get("sum_other_doc_count");
+		if (Utils.truthy(sodc)) {
+			Log.e(LOGTAG, "Uncounted buckets: sum_other_doc_count: "+sodc+" "+__path);
+			sumOtherDocCount += sodc.intValue(); 
+		}
 		// no doc_count (its misleading with compression)
 		mold.remove("doc_count");
 		

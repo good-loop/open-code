@@ -1047,7 +1047,13 @@ public class AppUtils {
 				filter = filter.mustNot(setFilter);
 				continue; // NB no "just one?" streamlining for mustNot
 			}
-			ESQueryBuilder kvFilter = parseTreeToQuery3_keyVal2(prop, val);
+			ESQueryBuilder kvFilter;
+			// handle special "*" anything value (note: more complex regexes are handled in 
+			if (ESQueryBuilders.ANY.equals(val)) {
+				kvFilter = ESQueryBuilders.existsQuery(prop);				
+			} else {
+				kvFilter = parseTreeToQuery3_keyVal2(prop, val);
+			}
 			// just one?
 			if (clause.size() == 1) {
 				return kvFilter; // no extra wrapping
@@ -1059,6 +1065,14 @@ public class AppUtils {
 	}
 
 
+	/**
+	 * 
+	 * @param prop
+	 * @param val Map {before|after|above|below: x}
+	 * or /regex/
+	 * or a simple value 
+	 * @return
+	 */
 	private static ESQueryBuilder parseTreeToQuery3_keyVal2(String prop, Object val) {		
 		ESQueryBuilder kvFilter;
 		// HACK due:before:
