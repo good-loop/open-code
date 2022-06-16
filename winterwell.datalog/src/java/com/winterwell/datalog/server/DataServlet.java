@@ -69,6 +69,9 @@ public class DataServlet implements IServlet {
 	
 	private static final String LOGTAG = "DataServlet";
 
+	/**
+	 * Returns a (slightly cleaned) ES output 
+	 */
 	@Override
 	public void process(WebRequest state) throws IOException {										
 		Dataspace d = state.get(DataLogFields.d);

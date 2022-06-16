@@ -13,11 +13,18 @@ import org.junit.Test;
 import com.winterwell.datalog.server.DataServletTest;
 import com.winterwell.es.client.ESConfig;
 import com.winterwell.es.client.ESHttpClient;
+import com.winterwell.es.client.SearchRequest;
+import com.winterwell.es.client.SearchResponse;
 import com.winterwell.es.client.agg.Aggregation;
+import com.winterwell.nlp.query.SearchQuery;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
+import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Dt;
+import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.web.WebUtils2;
+import com.winterwell.web.fields.DtField;
 
 /**
  * See also {@link DataServletTest}
@@ -40,6 +47,26 @@ public class ESDataLogSearchBuilderTest {
 		Aggregation a0 = aggs.get(0);
 		Printer.out(a0.toJson2());
 		assert ! s.contains("by_");
+	}
+	
+
+	@Test
+	public void testBuckets() {
+		ESHttpClient esc = new ESHttpClient(new ESConfig());
+		ESDataLogSearchBuilder esdsb = new ESDataLogSearchBuilder(esc, new Dataspace("test"));
+		List<String> breakdown = Arrays.asList("pub/time");
+		esdsb.setBreakdown(breakdown);
+		esdsb.setQuery(new SearchQuery(""));
+		
+		SearchRequest search = esdsb.prepareSearch();
+		search.setIndex("datalog.gl");
+		search.setDebug(true);		
+		// Search!
+		SearchResponse sr = search.get();		
+		Map aggregations = sr.getAggregations();
+		// strip out no0 filter wrappers
+		aggregations = esdsb.cleanJson(aggregations);
+		System.out.println(aggregations);
 	}
 
 	

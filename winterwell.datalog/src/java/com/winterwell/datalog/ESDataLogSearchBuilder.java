@@ -42,6 +42,7 @@ public class ESDataLogSearchBuilder {
 	 */
 	private static final int MAX_OPS = 10;
 	private static final String LOGTAG = "ESDataLogSearchBuilder";
+	private static int sumOtherDocCount;
 	final Dataspace dataspace;
 	int numResults;
 	int numExamples; 
@@ -51,6 +52,14 @@ public class ESDataLogSearchBuilder {
 	List<String> breakdown;
 	private boolean doneFlag;
 	private ESHttpClient esc;
+	
+	/**
+	 * Were there missed documents?
+	 * @return hopefully 0
+	 */
+	public static int getSumOtherDocCount() {
+		return sumOtherDocCount;
+	}
 	
 	public ESDataLogSearchBuilder(ESHttpClient esc, Dataspace dataspace) {
 		this.dataspace = dataspace;
@@ -251,18 +260,31 @@ public class ESDataLogSearchBuilder {
 	 * @return cleaned aggregations
 	 */
 	public Map cleanJson(Map<String,Object> aggregations) {
-
 		Map aggs2 = Containers.applyToJsonObject(aggregations, ESDataLogSearchBuilder::cleanJson2);
 		// also top-level
 		Map aggs3 = (Map) cleanJson2(aggs2, null);
 		return aggs3;
 	}	
 	
+	/**
+	 * Visits each node.
+	 * NB: also checks for sum_other_doc_count - see https://www.elastic.co/guide/en/elasticsearch/reference/7.10/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-approximate-counts		
+
+	 * @param old
+	 * @param __path
+	 * @return new version of `old`
+	 */
 	static Object cleanJson2(Object old, List<String> __path) {
 		if ( ! (old instanceof Map)) {
 			return old;
 		}
 		Map mold = (Map) old;
+		// ?? how to handle missed buckets? At least we can log a warning
+		Number sodc = (Number) mold.get("sum_other_doc_count");
+		if (Utils.truthy(sodc)) {
+			Log.e(LOGTAG, "Uncounted buckets: sum_other_doc_count: "+sodc+" "+__path);
+			sumOtherDocCount += sodc.intValue(); 
+		}
 		// no doc_count (its misleading with compression)
 		mold.remove("doc_count");
 		
