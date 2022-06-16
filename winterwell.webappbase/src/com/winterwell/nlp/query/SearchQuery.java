@@ -99,7 +99,10 @@ public class SearchQuery implements Serializable, IHasJson {
 	 */
 	private transient List parseTree;
 
-	String raw;
+	/**
+	 * ?? make final? or will that upset deserialisation? 
+	 */
+	private String raw;
 
 	/**
 	 * How does this class react to bad syntax? If true, it attempts detects it and

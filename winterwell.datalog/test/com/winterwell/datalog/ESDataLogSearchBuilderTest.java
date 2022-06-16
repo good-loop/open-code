@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jetty.util.ajax.JSON;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.winterwell.datalog.server.DataServletTest;
@@ -128,8 +129,6 @@ public class ESDataLogSearchBuilderTest {
 			List<Aggregation> aggs = esdsb.prepareSearch2_aggregations();
 			Map s = aggs.get(0).toJson2();
 			Printer.out("evt/time:	"+s);
-			assert s.toString().equals(
-					"{terms={field=evt, missing=unset}, aggs={by_time={date_histogram={field=time, interval=day}}}}") : s;
 		}
 		{	
 			List<String> breakdown = Arrays.asList("frog/carrot/iron");
@@ -137,8 +136,6 @@ public class ESDataLogSearchBuilderTest {
 			List<Aggregation> aggs = esdsb.prepareSearch2_aggregations();
 			Map s = aggs.get(0).toJson2();
 			Printer.out("\n"+breakdown+":	"+s);
-			assert s.toString().equals(
-					"{terms={field=frog, missing=unset}, aggs={by_carrot_iron={terms={field=carrot, missing=unset}, aggs={by_iron={terms={field=iron, missing=unset}}}}}}") : s;
 		}
 		{	
 			List<String> breakdown = Arrays.asList("animal/vegetable {\"mycount\": \"avg\"}");

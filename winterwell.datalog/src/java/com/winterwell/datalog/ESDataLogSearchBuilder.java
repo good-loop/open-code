@@ -29,7 +29,7 @@ import com.winterwell.web.WebEx;
 import com.winterwell.web.app.AppUtils;
 
 /**
- * @testedby  ESDataLogSearchBuilderTest}
+ * @testedby  ESDataLogSearchBuilderTest
  * @author daniel
  *
  */
