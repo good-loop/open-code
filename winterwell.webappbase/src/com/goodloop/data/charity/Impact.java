@@ -34,6 +34,12 @@ public class Impact {
 	double n = 1.0;
 	
 	/**
+	 * true: this is a commitment to X units impact per unit input (eg "10 trees per 1000 impressions")
+	 * false: this is an already-committed absolute quantity (eg "we have purchased 100,000 trees")
+	 */
+	Boolean isRate;
+	
+	/**
 	 * Where does this impact calculation come from? a url
 	 */
 	@ESNoIndex
