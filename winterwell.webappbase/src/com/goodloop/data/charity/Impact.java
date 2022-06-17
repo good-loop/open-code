@@ -1,6 +1,7 @@
 package com.goodloop.data.charity;
 
 import com.goodloop.data.Money;
+import com.winterwell.data.KStatus;
 import com.winterwell.es.ESKeyword;
 import com.winterwell.es.ESNoIndex;
 import com.winterwell.utils.time.Time;
@@ -24,20 +25,31 @@ public class Impact {
 	Time date;
 	
 	/**
-	 * e.g. "tree(s)"
-	 * 
+	 * e.g. "tree(s)
 	 */	
 	String name;
 	
 	Money amount;
 	
+	/**
+	 * How many units of this impact have been committed/bought?
+	 */
 	double n = 1.0;
 	
 	/**
-	 * true: this is a commitment to X units impact per unit input (eg "10 trees per 1000 impressions")
-	 * false: this is an already-committed absolute quantity (eg "we have purchased 100,000 trees")
+	 * Multiplier for proportional impacts (eg "10 trees per 1000 impressions" = 0.1)
 	 */
-	Boolean isRate;
+	Double rate;
+	
+	/**
+	 * Input for proportional impacts (eg "impressions", "clicks", "installs")
+	 */
+	String input;
+	
+	/**
+	 * DRAFT: this impact is still running and output blocks should be bought, PUBLISHED: this impact is complete
+	 */
+	KStatus progress;
 	
 	/**
 	 * Where does this impact calculation come from? a url
