@@ -134,59 +134,64 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 	 * @param args
 	 */
 	public void doMain(String[] args) {
-		Thread.currentThread().setName(getClass().getSimpleName()+".doMain");
-		// logfile before log config??! Is that right?
-		LogConfig logConfig = ConfigFactory.get().getConfig(LogConfig.class);
-		Log.setConfig(logConfig);
-		// Try to use the "logs" subdirectory - but use the app root if that's impossible.
-		File logDir = new File("logs");
-		boolean useSubDir = true;
-		if (!logDir.exists()) {
-			// Try to create it - use dir if successful
-			useSubDir = logDir.mkdir();
-		} else if (!logDir.isDirectory()) {
-			// Exists but isn't a directory - don't use dir
-			useSubDir = false;
-		}
-		File logLocation = new File((useSubDir ? "logs/" : "") + getAppNameLocal() + ".log"); 
-		// NB: this log setup will call ConfigFactory early (before the full init)
-		logFile = new LogFile(logLocation).setLogRotation(TUnit.DAY.dt, 14);
-		
-		// also add a never-rotates! audit log for important audit trail info only (ie stuff tagged "audit"		
-		File auditlogLocation = new File((useSubDir ? "logs/" : "") + getAppNameLocal() + ".audit");
-		auditlogFile = new LogFile(auditlogLocation).setFilter(r -> "audit".equals(r.tag));
-		
-		// don't log to sysout on prod (blockage seen there with contended threads dec 2021)
-		if (BuildHacks.getServerType() != KServerType.LOCAL) {
-			Log.d(appName, "Removing SystemOutLogListener");
-			List<ILogListener> ls = Log.getListeners();
-			for(ILogListener ll : ls) {
-				if (ll instanceof SystemOutLogListener) {
-					Log.removeListener(ll);
+		try {
+			Thread.currentThread().setName(getClass().getSimpleName()+".doMain");
+			// logfile before log config??! Is that right?
+			LogConfig logConfig = ConfigFactory.get().getConfig(LogConfig.class);
+			Log.setConfig(logConfig);
+			// Try to use the "logs" subdirectory - but use the app root if that's impossible.
+			File logDir = new File("logs");
+			boolean useSubDir = true;
+			if (!logDir.exists()) {
+				// Try to create it - use dir if successful
+				useSubDir = logDir.mkdir();
+			} else if (!logDir.isDirectory()) {
+				// Exists but isn't a directory - don't use dir
+				useSubDir = false;
+			}
+			File logLocation = new File((useSubDir ? "logs/" : "") + getAppNameLocal() + ".log"); 
+			// NB: this log setup will call ConfigFactory early (before the full init)
+			logFile = new LogFile(logLocation).setLogRotation(TUnit.DAY.dt, 14);
+			
+			// also add a never-rotates! audit log for important audit trail info only (ie stuff tagged "audit"		
+			File auditlogLocation = new File((useSubDir ? "logs/" : "") + getAppNameLocal() + ".audit");
+			auditlogFile = new LogFile(auditlogLocation).setFilter(r -> "audit".equals(r.tag));
+			
+			// don't log to sysout on prod (blockage seen there with contended threads dec 2021)
+			if (BuildHacks.getServerType() != KServerType.LOCAL) {
+				Log.d(appName, "Removing SystemOutLogListener");
+				List<ILogListener> ls = Log.getListeners();
+				for(ILogListener ll : ls) {
+					if (ll instanceof SystemOutLogListener) {
+						Log.removeListener(ll);
+					}
 				}
 			}
+			
+			try {
+				assert "foo".contains("bar");
+				Log.e("run", "Running Java WITHOUT assertions - please use the -ea flag!");
+			} catch(AssertionError e) {
+				// ok
+			}
+			Log.i(getAppNameLocal(), "doMain "+Printer.toString(args)+" ...Let's go :)");
+			init(args);
+			launchJetty();
+			// do Main once
+			doMain2();		
+			// loop? (does nothing but stay alive by default)
+			if (pleaseStop) {
+				stop();
+				return;
+			}
+			mainLoopThread = new MainLoopThread(this);
+			mainLoopThread.start();
+			// ready
+			readyFlag = true;
+		} catch(Throwable ex) {
+			Log.e(appName, ex); // make sure its logged
+			throw Utils.runtime(ex);
 		}
-		
-		try {
-			assert "foo".contains("bar");
-			Log.e("run", "Running Java WITHOUT assertions - please use the -ea flag!");
-		} catch(AssertionError e) {
-			// ok
-		}
-		Log.i(getAppNameLocal(), "doMain "+Printer.toString(args)+" ...Let's go :)");
-		init(args);
-		launchJetty();
-		// do Main once
-		doMain2();		
-		// loop? (does nothing but stay alive by default)
-		if (pleaseStop) {
-			stop();
-			return;
-		}
-		mainLoopThread = new MainLoopThread(this);
-		mainLoopThread.start();
-		// ready
-		readyFlag = true;
 	}
 	
 	/**
