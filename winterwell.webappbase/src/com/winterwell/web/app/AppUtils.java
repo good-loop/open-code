@@ -631,7 +631,7 @@ public class AppUtils {
 			// dont auto reindex test or live
 			String reindexMsg = "To reindex:\n"+
 					"curl -XPOST http://localhost:9200/_reindex -d '{\"source\":{\"index\":\""+path.index()+"\"},\"dest\":{\"index\":\""+index+"\"}}' -H 'Content-Type:application/json'\n";
-			Log.i("ES.init", reindexMsg);
+			Log.i("ES.init", reindexMsg);			
 			msg += "\n"+reindexMsg;
 		}
 		// and shout fail!

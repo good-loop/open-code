@@ -171,8 +171,8 @@ public class TestHttpServletRequest implements HttpServletRequest {
 
 	@Override
 	public Enumeration getHeaders(String name) {
-		Logd("TestHttpServletRequest", "method not implemented "+ReflectionUtils.stacktrace());
-		return null;
+		Enumeration<String> enu = Collections.enumeration(headers.keySet());
+		return enu;
 	}
 
 

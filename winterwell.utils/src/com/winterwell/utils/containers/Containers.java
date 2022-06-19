@@ -602,7 +602,7 @@ public final class Containers  {
 	}
 
 	
-	@Deprecated
+	@Deprecated // Arrays.asList() works, provided the argument has compile time type Object[] or String[]
 	public static List<Object> asList(final Object[] objects) {
 		return new AbstractList<Object>() {
 			@Override
@@ -2045,6 +2045,7 @@ public final class Containers  {
 		Comparator comp = (a,b) -> Containers.compare(getSortValue.apply((X)a), getSortValue.apply((X)b));
 		Collections.sort(list, comp);
 	}
+
 
 
 }

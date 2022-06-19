@@ -39,7 +39,7 @@ public class LogServlet implements IServlet {
 			YouAgainClient yac = Dep.get(YouAgainClient.class);
 			yac.getAuthTokens(state);
 		} catch(Throwable ex) {
-			Log.e(AJAX_TAG_PREFIX+"login", ex);
+			Log.d(AJAX_TAG_PREFIX+"login", "(skip log login) "+ex);
 		}
 		// Provide Ajax logging 
 		// NB: This opens us to a very subtle attack where you poke stuff into our logs
