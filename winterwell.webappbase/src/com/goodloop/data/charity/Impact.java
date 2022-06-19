@@ -34,12 +34,12 @@ public class Impact {
 	/**
 	 * How many units of this impact have been committed/bought?
 	 */
-	double n = 1.0;
+	Double n;
 	
 	/**
-	 * Multiplier for proportional impacts (eg "10 trees per 1000 impressions" = 0.1)
+	 * Multiplier for proportional impacts (eg "1 tree per 10,000 impressions" = 1/10000 = 0.0001)
 	 */
-	Double rate;
+	public Double rate;
 	
 	/**
 	 * Input for proportional impacts (eg "impressions", "clicks", "installs")
@@ -47,7 +47,8 @@ public class Impact {
 	String input;
 	
 	/**
-	 * DRAFT: this impact is still running and output blocks should be bought, PUBLISHED: this impact is complete
+	 * DRAFT: this impact is still running and output blocks should be bought, 
+	 * PUBLISHED: this impact is complete
 	 */
 	KStatus progress;
 	

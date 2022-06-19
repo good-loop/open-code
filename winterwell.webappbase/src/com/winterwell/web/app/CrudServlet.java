@@ -1355,7 +1355,7 @@ public abstract class CrudServlet<T> implements IServlet {
 
 		BoolQueryBuilder orESQ = ESQueryBuilders.boolQuery();
 		orESQ.minimumNumberShouldMatch(1);
-		// straight search -- not sure if this is needed
+		// straight search -- allows for match on ID
 		BoolQueryBuilder esSearch = AppUtils.makeESFilterFromSearchQuery(new SearchQuery(prefix), null, null);
 		orESQ.should(esSearch);
 		
