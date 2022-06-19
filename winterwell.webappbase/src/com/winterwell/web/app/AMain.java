@@ -189,6 +189,7 @@ public abstract class AMain<ConfigType extends ISiteConfig> {
 			// ready
 			readyFlag = true;
 		} catch(Throwable ex) {
+			ex.printStackTrace();
 			Log.e(appName, ex); // make sure its logged
 			throw Utils.runtime(ex);
 		}
