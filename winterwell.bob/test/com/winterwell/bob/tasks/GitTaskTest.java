@@ -6,6 +6,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.time.Time;
 
 public class GitTaskTest {
 
@@ -39,6 +40,8 @@ public class GitTaskTest {
 	public void testGetLastCommitInfo() {
 		Map<String, Object> info = GitTask.getLastCommitInfo(null);
 		System.out.println(info);	
+		Time time = (Time) info.get("time");
+		assert time.isAfter(new Time(2000,1,1));
 	}
 
 	

@@ -763,7 +763,7 @@ public class ReflectionUtils {
 	}
 
 	/**
-	 * @return e.g. 1.6
+	 * @return e.g. 17
 	 */
 	public static double getJavaVersion() {
 		String version = System.getProperty("java.version");
@@ -777,7 +777,10 @@ public class ReflectionUtils {
 				count++;
 		}
 		pos--;
-		return Double.parseDouble(version.substring(0, pos));
+		double v = Double.parseDouble(version.substring(0, pos));
+		// Handle the v1.5 = 15 historical oddity
+		if (v < 2) v = v * 10;
+		return v;
 	}
 
 	/**

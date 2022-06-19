@@ -39,7 +39,7 @@ public class BuildBob extends BuildWinterwellProject {
 		String v = BobConfig.VERSION_NUMBER;
 		setVersion(v);
 		
-		setScpToWW(true);
+		setScpToWW(isTopLocalBuild);
 	}
 
 	@Override

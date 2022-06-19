@@ -24,6 +24,25 @@ public class TimeTest {
 		System.out.println(new Time().minus(1, TUnit.MONTH).getTime());
 	}
 
+	/**
+	 * Seen June 2022
+	 */
+	@Test
+	public void testParse_git() {
+		{
+			Time t = new Time("19 Jun 2022 13:08:01 +0100");
+		}
+		if (false) {
+			Time t = new Time("Sun 19 Jun 2022 13:08:01");
+		}
+		if (false) {
+			Time t = new Time("Sun, 19 Jun 2022 13:08:01");
+		}
+		if (false) { // what gits putting out
+			Time t = new Time("Sun, 19 Jun 2022 13:08:01 +0100");
+		}
+	}
+	
 	@Test
 	public void testParse_nonUS_US() {
 		{

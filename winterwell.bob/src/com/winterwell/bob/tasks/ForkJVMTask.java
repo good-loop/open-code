@@ -7,6 +7,7 @@ import java.util.List;
 import com.winterwell.bob.Bob;
 import com.winterwell.bob.BobConfig;
 import com.winterwell.bob.BuildTask;
+import com.winterwell.utils.ReflectionUtils;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
@@ -67,6 +68,14 @@ public class ForkJVMTask extends BuildTask {
 		// TODO pass on Bob settings like -clean
 		// BUT we dont want to rebuild utils n times in one build -- so use cleanBefore
 		List<String> options = new ArrayList();
+		
+		// Java 17+ security
+		double jv = ReflectionUtils.getJavaVersion();
+		List<String> jvmOptions = new ArrayList();
+		if (jv >= 17) {
+			jvmOptions.add("--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.security=ALL-UNNAMED --add-opens java.base/sun.security.pkcs=ALL-UNNAMED");
+		}
+		
 		BobConfig config = Bob.getSingleton().getConfig();
 		if (config.cleanBefore != null) {
 			options.add("-cleanBefore "+config.cleanBefore.getTime());
@@ -83,7 +92,7 @@ public class ForkJVMTask extends BuildTask {
 		}
 		String soptions = StrUtils.join(options, " ")+" ";
 		
-		String command = "java -cp "+classpath+" com.winterwell.bob.Bob "
+		String command = "java -cp "+classpath+" "+StrUtils.join(jvmOptions, " ")+" com.winterwell.bob.Bob "
 				+soptions
 				+target;
 		Log.d(LOGTAG, "fork "+target+" Full command: "+command);

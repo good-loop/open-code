@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Map;
 
 import com.winterwell.utils.FailureException;
+import com.winterwell.utils.Printer;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.ShellScript;
 import com.winterwell.utils.StrUtils;
@@ -91,7 +92,8 @@ public class GitTask extends ProcessTask {
 	 */
 	public static Map<String,Object> getLastCommitInfo(File dir) throws IllegalArgumentException {
 		String SEP=">   <";
-		String command = "git log -1 --format=\"%H"+SEP+"%an"+SEP+"%aD"+SEP+"%s"+SEP+"%D\"";
+		// https://www.git-scm.com/docs/git-log
+		String command = "git log -1 --format=\"%H"+SEP+"%an"+SEP+"%aI"+SEP+"%s"+SEP+"%D\"";		
 		
 		Proc p;
 		if (dir==null) {
