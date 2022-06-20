@@ -160,6 +160,10 @@ public final class Period extends Pair<Time> {
 		return first.format(format1) + " to " + second.format(format2);
 	}
 
+	public String toISOString() {
+		return first.toISOString() + "/" + second.toISOString();
+	}
+
 	public Time getMiddle() {
 		return new Time((getStart().getTime() + getEnd().getTime()) / 2);
 	}
