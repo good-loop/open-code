@@ -43,6 +43,11 @@ import com.winterwell.web.app.AppUtils;
  */
 public class ESDataLogSearchBuilder {
 	
+	/**
+	 * magic marker for "bucket by the hour"
+	 */
+	public static final String TIMEOFDAY = "timeofday";
+	
 	private static final String no0_ = "no0_";
 	/**
 	 * maximum number of ops you can request in one breakdown.
@@ -151,6 +156,7 @@ public class ESDataLogSearchBuilder {
 	public static final String allCount = "allCount";
 
 	/**
+	 * Contains a special hack for "timeofday" which uses a synthetic field
 	 * 
 	 * @param bd Format: bucket-by-fields/ {"report-fields": "operation"} 
 	 * 	e.g. "evt" or "evt/time" or "tag/time {"mycount":"avg"}"
@@ -193,7 +199,7 @@ public class ESDataLogSearchBuilder {
 				Time prev2 = prev.minus(interval);
 				List<Time> times = Arrays.asList(start, prev2, prev, now);
 				leaf = Aggregations.dateRange("by_"+s_bucketBy, "time", times);
-			} else if (field.equals("timeofday")) {
+			} else if (field.equals(TIMEOFDAY)) {
 				// HACK turn time into hour of the day
 				// see https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html#date-histogram-aggregate-scripts
 				String runtimeField = "time.timeofday";
