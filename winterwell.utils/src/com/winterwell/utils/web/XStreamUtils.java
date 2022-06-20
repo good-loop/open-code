@@ -22,6 +22,7 @@ import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.xml.CompactWriter;
+import com.thoughtworks.xstream.security.AnyTypePermission;
 import com.winterwell.utils.IFn;
 import com.winterwell.utils.Key;
 import com.winterwell.utils.StrUtils;
@@ -98,7 +99,7 @@ final class TimestampConverter implements SingleValueConverter {
  * Separated out to isolate the XStream dependency.
  * 
  * @author daniel
- * @testedby  XStreamUtilsTest}
+ * @testedby  XStreamUtilsTest
  */
 public class XStreamUtils {
 
@@ -256,7 +257,9 @@ public class XStreamUtils {
 		try {
 			if (_xstream == null) _xstream = new XStream();
 			// Feb 2021 - This would block all but whitelisted classes. So no.
-//			XStream.setupDefaultSecurity(_xstream); 
+//			XStream.setupDefaultSecurity(_xstream);
+			// allow xstream to work! (bug seen June 2022 - probably depends on xstream version - see https://stackoverflow.com/questions/30812293/com-thoughtworks-xstream-security-forbiddenclassexception)
+			_xstream.addPermission(AnyTypePermission.ANY);
 			// be robust & keep on truckin
 			_xstream.ignoreUnknownElements();
 			// prettier shorter xml

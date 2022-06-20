@@ -17,7 +17,7 @@ public class BuildUtils extends BuildWinterwellProject {
 		super("winterwell.utils");		
 		incSrc = true;				
 		setCompile(true);
-		setVersion("1.2.7"); // June 2022
+		setVersion("1.2.8"); // June 2022
 	}
 	
 	@Override
