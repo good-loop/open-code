@@ -188,6 +188,7 @@ public class CrudClient<T> {
 		params.put("status", pubOrDraft.toString());
 	}
 
+	@Deprecated // searchHits is more convenient
 	public JSend search(SearchQuery sq) {
 		FakeBrowser fb = fb();
 		ArrayMap qparams = new ArrayMap(params);
@@ -198,6 +199,12 @@ public class CrudClient<T> {
 		return jsend;
 	}
 
+	public CrudSearchResults searchHits(SearchQuery sq) {
+		JSend res = search(sq);
+		CrudSearchResults<T> sr = (CrudSearchResults<T>) res.getData().setType(CrudSearchResults.class).java();
+		return sr;
+	}
+	
 	public Class<T> getType() {
 		return type;
 	}
