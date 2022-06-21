@@ -64,6 +64,9 @@ public class CurrencyConvertor {
 	 * @return
 	 */
 	double convert2_hardCoded(double cidDntn) {
+		if (from==to) { // no-op
+			return cidDntn;
+		}
 		String currencyConversion = from + "_" + to;
 		Double conversionVal = CURRENCY_CONVERSION.get(currencyConversion);
 		if (conversionVal==null) {
