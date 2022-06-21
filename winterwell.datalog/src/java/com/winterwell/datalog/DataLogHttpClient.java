@@ -378,6 +378,7 @@ public class DataLogHttpClient {
 	 */
 	protected JSend get2_httpCall(ArrayMap vars) {		
 		FakeBrowser fb = new FakeBrowser();
+		fb.setUserAgent(FakeBrowser.HONEST_USER_AGENT);
 		fb.setDebug(debug);		
 		// auth!
 		if (auth!=null) {

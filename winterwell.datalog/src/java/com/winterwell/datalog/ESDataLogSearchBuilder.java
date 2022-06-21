@@ -10,6 +10,7 @@ import org.eclipse.jetty.util.ajax.JSON;
 
 import com.winterwell.es.ESType;
 import com.winterwell.es.client.ESHttpClient;
+import com.winterwell.es.client.ESJC;
 import com.winterwell.es.client.SearchRequest;
 import com.winterwell.es.client.agg.Aggregation;
 import com.winterwell.es.client.agg.Aggregations;
@@ -20,6 +21,7 @@ import com.winterwell.utils.Printer;
 import com.winterwell.utils.ReflectionUtils;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.VersionString;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.containers.Containers;
 import com.winterwell.utils.log.Log;
@@ -66,6 +68,8 @@ public class ESDataLogSearchBuilder {
 	private boolean doneFlag;
 	private ESHttpClient esc;
 	private Map<String,Map> runtimeMappings;
+
+	private static VersionString _esVersion;
 	
 	/**
 	 * Were there missed documents?
@@ -108,6 +112,7 @@ public class ESDataLogSearchBuilder {
 		}
 		// runtime fields
 		if (runtimeMappings!=null) {
+			// NB: requires ES version 7.11 and above		
 			for(String rf : runtimeMappings.keySet()) {
 				search.addRuntimeMapping(rf, runtimeMappings.get(rf));
 			}
@@ -201,14 +206,19 @@ public class ESDataLogSearchBuilder {
 				leaf = Aggregations.dateRange("by_"+s_bucketBy, "time", times);
 			} else if (field.equals(TIMEOFDAY)) {
 				// HACK turn time into hour of the day
-				// see https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html#date-histogram-aggregate-scripts
-				String runtimeField = "time.timeofday";
-				if (runtimeMappings==null) runtimeMappings = new ArrayMap();
-				runtimeMappings.put(runtimeField, new ArrayMap(
-					"type", "long", // NB: integer isn't supported
-					"script", "emit(doc['time'].value.hour)"
-						));
-				leaf = Aggregations.terms("by_"+s_bucketBy, runtimeField);
+				// see https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html#date-histogram-aggregate-scripts				
+				// what ES vesrsion are we talking to??
+				if (esVersion().geq("7.11")) {
+					String runtimeField = "time.timeofday";
+					if (runtimeMappings==null) runtimeMappings = new ArrayMap();
+					runtimeMappings.put(runtimeField, new ArrayMap(
+						"type", "long", // NB: integer isn't supported
+						"script", "emit(doc['time'].value.hour)"
+							));
+					leaf = Aggregations.terms("by_"+s_bucketBy, runtimeField);
+				} else {
+					leaf = Aggregations.termsByScript("by_"+s_bucketBy, "doc['time'].value.hour");
+				}
 			} else {
 				leaf = Aggregations.terms("by_"+s_bucketBy, field);
 				if (numResults>0) leaf.setSize(numResults);
@@ -265,6 +275,14 @@ public class ESDataLogSearchBuilder {
 		return root;
 	}
 	
+
+	private VersionString esVersion() {
+		if (_esVersion == null) {
+			String esv = esc.getESVersion();
+			_esVersion = new VersionString(esv);
+		}
+		return _esVersion;
+	}
 
 	public ESDataLogSearchBuilder setStart(Time start) {
 		assert ! doneFlag;
