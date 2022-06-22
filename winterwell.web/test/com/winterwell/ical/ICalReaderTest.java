@@ -15,6 +15,50 @@ import com.winterwell.utils.time.Time;
 public class ICalReaderTest {
 
 	@Test
+	public void testDailyScrumUrl() throws ParseException {
+	String se = "BEGIN:VEVENT\n"
+			+ "DTSTART;TZID=Europe/London:20220530T171500\n"
+			+ "DTEND;TZID=Europe/London:20220530T173000\n"
+			+ "RRULE:FREQ=WEEKLY;WKST=MO;BYDAY=MO,TH,TU,WE\n"
+			+ "DTSTAMP:20220622T163124Z\n"
+			+ "ORGANIZER;CN=Good-Loop General:mailto:92v2m458khm50ic03rj3uu95f4@group.cale\n"
+			+ " ndar.google.com\n"
+			+ "UID:0bs2ref11u209k1elp839iiscv@google.com\n"
+			+ "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN=daniel\n"
+			+ " @good-loop.com;X-NUM-GUESTS=0:mailto:daniel@good-loop.com\n"
+			+ "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;CN=De\n"
+			+ " v Team;X-NUM-GUESTS=0:mailto:dev@good-loop.com\n"
+			+ "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;CN=b2\n"
+			+ " c;X-NUM-GUESTS=0:mailto:b2c@good-loop.com\n"
+			+ "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;CN=Da\n"
+			+ " ta Team;X-NUM-GUESTS=0:mailto:data@good-loop.com\n"
+			+ "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;CN=Te\n"
+			+ " ch Support;X-NUM-GUESTS=0:mailto:techsupport@good-loop.com\n"
+			+ "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN=edinbu\n"
+			+ " rghoffice@good-loop.com;X-NUM-GUESTS=0:mailto:edinburghoffice@good-loop.com\n"
+			+ "X-GOOGLE-CONFERENCE:https://meet.google.com/eja-ysuo-mjx\n"
+			+ "CREATED:20220527T125825Z\n"
+			+ "DESCRIPTION:This event has a video call.\\nJoin: https://meet.google.com/eja\n"
+			+ " -ysuo-mjx\\n(GB) +44 20 3956 7403 PIN: 973929498#\\nView more phone numbers: \n"
+			+ " https://tel.meet/eja-ysuo-mjx?pin=6070762095611&hs=7\n"
+			+ "LAST-MODIFIED:20220620T165029Z\n"
+			+ "LOCATION:\n"
+			+ "SEQUENCE:0\n"
+			+ "STATUS:CONFIRMED\n"
+			+ "SUMMARY:End of Day Scrum\n"
+			+ "TRANSP:OPAQUE\n"
+			+ "END:VEVENT";
+	ICalReader r = new ICalReader("");
+	ICalEvent e = r.parseEvent(se);
+	assert e.isRepeating();
+	Time weds1 = new Time(2022,6,22);
+	Time weds2 = new Time(2022,6,23);
+	List<ICalEvent> rs = e.getRepeats(weds1, weds2);
+	assert ! rs.isEmpty();
+}
+	
+	
+	@Test
 	public void testMeetUrl() throws ParseException {
 	String se = "BEGIN:VEVENT\n"
 			+ "DTSTART:20210526T094500Z\n"
@@ -220,7 +264,7 @@ public class ICalReaderTest {
 		assert ! repeats2.isEmpty();
 	}
 	
-	@Test
+//	@Test url is stale
 	public void testGetCalendarName() {
 		File icalf = TestUtils.getTestFile("ical", "https://www.google.com/calendar/ical/92v2m458khm50ic03rj3uu95f4%40group.calendar.google.com/private-6451230e4826d67dad83cafa959a738b/basic.ics");
 		String ical = FileUtils.read(icalf);
@@ -230,7 +274,7 @@ public class ICalReaderTest {
 		System.out.println(cn);
 	}
 
-	@Test
+//	@Test url is stale
 	public void testGetEvents() {
 		File icalf = TestUtils.getTestFile("ical", "https://www.google.com/calendar/ical/92v2m458khm50ic03rj3uu95f4%40group.calendar.google.com/private-6451230e4826d67dad83cafa959a738b/basic.ics");
 		String ical = FileUtils.read(icalf);

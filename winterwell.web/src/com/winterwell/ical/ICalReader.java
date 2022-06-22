@@ -203,7 +203,7 @@ public class ICalReader {
 			}
 			return key;
 		case "ATTENDEE":
-			Log.w(LOGTAG, "TODO "+value);
+//			Log.w(LOGTAG, "TODO "+value); TODO
 			return key;
 		}
 		return null;

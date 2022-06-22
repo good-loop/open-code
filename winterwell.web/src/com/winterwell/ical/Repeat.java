@@ -229,10 +229,28 @@ public class Repeat {
 			
 			// step forward
 			// done late, so we get the event itself included
-			mark = mark.plus(new Dt(interval, freq), timezone);
+			mark = getNext3_step(mark);
 		}
 		// no more
 		return null;
+	}
+
+	private Time getNext3_step(Time mark) {
+		// HACK e.g. FREQ=WEEKLY;WKST=MO;BYDAY=MO,TH,TU,WE
+		if (freq==TUnit.WEEK && ! Utils.isBlank(byday)) {
+			// NB: normaly interval=1 so this is a no-op
+			// but you can have e.g. FREQ=WEEKLY;INTERVAL=2;BYDAY=FR
+			Time m2 = mark.plus(interval-1, TUnit.WEEK);						
+			for(int i=0; i<7; i++) {
+				m2 = m2.plus(TUnit.DAY.dt, timezone);
+				String dayCode = m2.format("EEE").toUpperCase().substring(0, 2);
+				if (byday.contains(dayCode)) {
+					return m2;
+				}
+			}
+			assert false : this;
+		}		
+		return mark.plus(new Dt(interval, freq), timezone);
 	}
 
 	public String getRrule() {
