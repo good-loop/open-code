@@ -1103,7 +1103,7 @@ public class SqlUtils {
 	 * @return e.g. don't => 'don''t', 7 => 7
 	 */
 	public static String sqlEncode(Object v) {
-		if (v instanceof String) return SqlUtils.sqlEncode((String)v);
+		if (v instanceof CharSequence) return SqlUtils.sqlEncode(v.toString());
 		if (v==null) return "null";
 		if (v instanceof Number) return v.toString();
 		if (v.getClass().isEnum()) return SqlUtils.sqlEncode(v.toString());
