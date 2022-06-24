@@ -23,7 +23,7 @@ final class MainLoopThread extends Thread {
 				app.doMainLoop();
 			} catch(Throwable ex) {
 				Log.w(LOGTAG, "caught MainLoopThread exception");
-				Log.e(LOGTAG, ex);
+				Log.e(LOGTAG+".catch-and-carry-on", ex);
 				if (app.pleaseStop) return;
 				// pause a moment
 				Utils.sleep(100);
