@@ -38,6 +38,9 @@ public class BuildUtils extends BuildWinterwellProject {
 		mdt.addDependency("com.thoughtworks.xstream","xstream", "1.4.19");
 		mdt.addDependency("junit","junit","4.13.2");
 		mdt.addDependency("dnsjava","dnsjava","2.1.9"); // Note: not usually used, unless you need DnsUtils
+		
+		// TODO xpp3_min.jar may need to be added here -- it didn't download on Mac, but it is needed (June 2022)
+		
 		mdt.setIncSrc(true);
 		// DBs -- can we drop these?? If a project needs them they can add
 //		mdt.addDependency("org.postgresql", "postgresql", "42.2.13");
