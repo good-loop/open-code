@@ -41,7 +41,7 @@ public class BuildUtils extends BuildWinterwellProject {
 		mdt.addDependency("com.thoughtworks.xstream","xstream", "1.4.19");
 		mdt.addDependency("org.ogce", "xpp3", "1.1.6");
 		
-		mdt.addDependency("junit","junit","4.12");
+		mdt.addDependency("junit","junit","4.13.2");
 		mdt.addDependency("dnsjava","dnsjava","2.1.9"); // Note: not usually used, unless you need DnsUtils
 		mdt.setIncSrc(true);
 		// DBs -- can we drop these?? If a project needs them they can add
