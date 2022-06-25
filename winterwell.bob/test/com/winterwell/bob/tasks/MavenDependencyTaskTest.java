@@ -11,4 +11,11 @@ public class MavenDependencyTaskTest {
 		mdt.run();
 	}
 
+	
+	@Test
+	public void testMavenDependencyTaskXStream() {
+		MavenDependencyTask mdt = new MavenDependencyTask();
+		mdt.addDependency("org.ogce", "xpp3", "1.1.6");
+		mdt.run();
+	}
 }

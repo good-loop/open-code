@@ -17,7 +17,7 @@ public class BuildUtils extends BuildWinterwellProject {
 		super("winterwell.utils");		
 		incSrc = true;				
 		setCompile(true);
-		setVersion("1.2.8"); // June 2022
+		setVersion("1.2.9"); // June 2022
 	}
 	
 	@Override
@@ -36,6 +36,9 @@ public class BuildUtils extends BuildWinterwellProject {
 		}
 		// https://mvnrepository.com/artifact/com.thoughtworks.xstream/xstream
 		mdt.addDependency("com.thoughtworks.xstream","xstream", "1.4.19");
+		mdt.addDependency("org.ogce", "xpp3", "1.1.6");
+//		implementation 'xpp3:xpp3_min:1.1.4c'
+		
 		mdt.addDependency("junit","junit","4.13.2");
 		mdt.addDependency("dnsjava","dnsjava","2.1.9"); // Note: not usually used, unless you need DnsUtils
 		

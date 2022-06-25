@@ -13,6 +13,6 @@
 	<classpathentry kind="lib" path="dependencies/dnsjava.jar"/>
 	<classpathentry kind="lib" path="dependencies/hamcrest-core.jar"/>
 	<classpathentry exported="true" kind="lib" path="dependencies/xstream.jar"/>
-	<classpathentry kind="lib" path="dependencies/xpp3_min.jar"/>
+	<classpathentry kind="lib" path="dependencies/xpp3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

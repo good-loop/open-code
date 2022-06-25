@@ -36,7 +36,7 @@ import com.winterwell.utils.time.TUnit;
  * 
  * See https://stackoverflow.com/questions/1895492/how-can-i-download-a-specific-maven-artifact-in-one-command-line
  * @author daniel
- *
+ * @testedby {@link MavenDependencyTaskTest}
  */
 public class MavenDependencyTask extends BuildTask {
 
