@@ -50,6 +50,9 @@ public class WinterwellProjectFinder implements IFn<String, File> {
 		if ("portal".equals(_projectName)) {
 			_projectName = "adserver";
 		}
+		if ("taskeroo".equals(_projectName)) {
+			_projectName = "mondaybot";
+		}
 		List<File> possDirs = new ArrayList();
 		// are we in the project dir?
 		if (FileUtils.getWorkingDirectory().getName().equals(_projectName)) {
