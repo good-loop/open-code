@@ -21,7 +21,7 @@ public class BuildUtils extends BuildWinterwellProject {
 		super("winterwell.utils");		
 		incSrc = true;				
 		setCompile(true);
-		setVersion("1.2.9"); // June 2022
+		setVersion("1.3.0"); // June 2022
 	}
 	
 	@Override
@@ -38,11 +38,13 @@ public class BuildUtils extends BuildWinterwellProject {
 		if (outDir!=null) {
 			mdt.setOutputDirectory(outDir);
 		}
+		// https://mvnrepository.com/artifact/com.thoughtworks.xstream/xstream
 		mdt.addDependency("com.thoughtworks.xstream","xstream", "1.4.19");
-		mdt.addDependency("org.ogce", "xpp3", "1.1.6");
+		mdt.addDependency("org.ogce", "xpp3", "1.1.6"); // seems to be needed by XStream but not provided
 		
 		mdt.addDependency("junit","junit","4.13.2");
 		mdt.addDependency("dnsjava","dnsjava","2.1.9"); // Note: not usually used, unless you need DnsUtils
+		
 		mdt.setIncSrc(true);
 		// DBs -- can we drop these?? If a project needs them they can add
 //		mdt.addDependency("org.postgresql", "postgresql", "42.2.13");
