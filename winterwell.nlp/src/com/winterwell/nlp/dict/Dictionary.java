@@ -205,6 +205,7 @@ public class Dictionary implements IDictionary {
 
 	@Override
 	public boolean contains(String word) {
+		if (word==null) return false;
 		word = toCanonical(word);
 		return dict.containsKey(word);
 	}

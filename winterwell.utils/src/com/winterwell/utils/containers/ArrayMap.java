@@ -204,6 +204,10 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> implements
 		return values.get(i);
 	}
 
+	/**
+	 * ??why? apart from nostalgia for Lisp. Use case?
+	 * @return
+	 */
 	public List<Pair2<K, V>> getPList() {
 		List<Pair2<K, V>> pList = new ArrayList<Pair2<K, V>>(size());
 		for (int i = 0, n = size(); i < n; i++) {
