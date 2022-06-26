@@ -185,7 +185,7 @@ public class Dictionary implements IDictionary {
 	
 	public Dictionary(Collection<String> words) {
 		for(String k : words) {
-			add(k, "");
+			add(k, ""); // would add (k,k) be better??
 		}
 	}
 	
