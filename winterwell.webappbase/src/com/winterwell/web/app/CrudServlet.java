@@ -1544,13 +1544,20 @@ public abstract class CrudServlet<T> implements IServlet {
 		// If there is a diff, apply it
 		// We *also* save the diff as an update script
 		String diff = state.get("diff");		
+		boolean savedByDiff = false;
 		if (diff != null) {
 			Object jdiff = WebUtils2.parseJSON(diff);
 			diffs = Containers.asList(jdiff);
 			JThing<T> oldThing = getThingFromDB(state);
-			applyDiff(oldThing);
-			jthing = oldThing; // NB: getThing(state) below will now return the diff-modified oldThing
-		} else {
+			if (oldThing==null || oldThing.map()==null) {
+				Log.w(LOGTAG(), "(handled as a non-diff save) cant applyDiff to null old object "+state);
+			} else {
+				applyDiff(oldThing);
+				savedByDiff = true;
+				jthing = oldThing; // NB: getThing(state) below will now return the diff-modified oldThing
+			}
+		}
+		if ( ! savedByDiff) {
 			T thing = getThing(state); 
 			assert thing != null : "null thing?! "+state;
 		}
@@ -1590,7 +1597,9 @@ public abstract class CrudServlet<T> implements IServlet {
 			return;
 		}
 		JsonPatch jp = JsonPatch.fromJson(diffs);
-		Map<String, Object> thingMap = new HashMap(room.map());
+		assert room != null;		
+		Map<String, Object> thingMap = room.map();
+		thingMap = thingMap==null? new HashMap() : new HashMap(thingMap); // a new blank, or a defensive copy
 		jp.apply(thingMap);
 		room.setMap(thingMap);
 		// modify diffs?

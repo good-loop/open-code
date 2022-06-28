@@ -102,7 +102,7 @@ implements INotSerializable, IHasJson // serialize the json not this wrapper
 	}
 
 	/**
-	 * @return An unmodifiable map view.
+	 * @return An unmodifiable map view. Can be null if the value is null
 	 * This is unmodifiable for protection against careless edits. If you do want to edit this, do a new HashMap() copy.
 	 * @see #put(String, Object)
 	 */
