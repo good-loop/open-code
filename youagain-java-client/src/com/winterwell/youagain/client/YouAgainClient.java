@@ -504,6 +504,7 @@ public final class YouAgainClient {
 		FakeBrowser fb = new FakeBrowser();
 		List<String> ats = Containers.apply(at, AuthToken::getToken);
 		fb.setAuthenticationByJWTs(ats);
+		fb.setDebug(debug);
 		return fb;
 	}
 

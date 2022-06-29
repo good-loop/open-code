@@ -103,7 +103,7 @@ public final class ShareClient {
 	 * @param auths */
 	public List<ShareToken> getShareList(CharSequence share, List<AuthToken> auths) {
 		// share-list needs a login, and temp ids won't work 
-		auths = Containers.filter(auths, a -> a.isTemp());
+		auths = Containers.filter(auths, a -> ! a.isTemp());
 		if (auths.isEmpty()) {
 			Log.d(LOGTAG, "getShareList() aborted - No (non-temp) auths. "+share);
 			return Collections.EMPTY_LIST;
