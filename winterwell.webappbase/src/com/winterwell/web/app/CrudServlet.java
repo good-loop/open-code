@@ -1020,8 +1020,8 @@ public abstract class CrudServlet<T> implements IServlet {
 		List<ESHit<T>> myHits = Containers.filter(hits2, hit -> {
 			T gtag = hit.getJThing().java();
 			// Yours?
-			String oxid = ((AThing)gtag).oxid;
-			if (uxid != null && uxid.toString().equals(oxid)) {
+			XId oxid = ((AThing)gtag).oxid;
+			if (uxid != null && uxid.equals(oxid)) {
 				return true;
 			}
 			for(Class k : shareBy_field4type.keySet()) {

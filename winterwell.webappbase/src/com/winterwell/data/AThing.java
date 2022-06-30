@@ -37,8 +37,7 @@ public class AThing implements IInit {
 	 * 
 	 * ??replace with shares ShareToken?? Or keep as a simpler alternative to ShareToken for many uses??
 	 * */
-	@ESKeyword
-	public String oxid;
+	public XId oxid;
 	
 	/**
 	 * 
