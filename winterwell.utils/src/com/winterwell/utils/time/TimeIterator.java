@@ -31,9 +31,10 @@ public final class TimeIterator implements Iterable<Time> {
 	 */
 	public TimeIterator(Time start, Time end, Dt step) {
 		assert !start.isAfter(end) : start + " is after " + end;
+		assert step.getMillisecs() != 0 : "zero dt!";
 		cal = start.getCalendar();
 		this.end = end;
-		this.step = step;
+		this.step = step;		
 	}
 
 	/**
