@@ -1,5 +1,6 @@
 package com.winterwell.youagain.client;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -48,11 +49,18 @@ public final class ShareClient {
 	 * @return
 	 */
 	public List<String> getSharedWithItemIds(String app, List<AuthToken> tokens, String type) {
-		assert ! type.isEmpty() && ! type.contains(":") : type;
-		String prefix = type+":";
-		List<String> sharedWith = getSharedWith(tokens, prefix, app);
-		List<String> sharedCampaigns = Containers.apply(sharedWith, sw -> sw.substring(prefix.length()));
-		return sharedCampaigns;
+		List<String> sharedWith = null;
+		try {
+			assert ! type.isEmpty() && ! type.contains(":") : type;
+			String prefix = type+":";
+			sharedWith = getSharedWith(tokens, prefix, app);
+			int n = prefix.length();
+			List<String> sharedCampaigns = Containers.apply(sharedWith, sw -> sw.substring(n));
+			return sharedCampaigns;
+		} catch(Throwable ex) { // FIXME bug July 2022 - delete when fixed
+			Log.e(sharedWith+" "+ex);
+			return new ArrayList();
+		}
 	}
 	
 	/**
