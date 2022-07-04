@@ -13,12 +13,11 @@ public class ChatRoundaboutConfig implements ISiteConfig {
 		return 8713;
 	}
 
-	// TODO 10am is 11am? Check TimeZone Bug
 	@Option
-	TimeOfDay crossTeamTime = new TimeOfDay("10:30am");
+	TimeOfDay crossTeamTime = new TimeOfDay("11:15am");
 
 	@Option
-	TimeOfDay inTeamTime = new TimeOfDay("10:00am");
+	TimeOfDay inTeamTime = new TimeOfDay("11:00am");
 
 	@Option
 	Dt duration = new Dt(10, TUnit.MINUTE);
@@ -27,7 +26,7 @@ public class ChatRoundaboutConfig implements ISiteConfig {
 	String emailProperties = "logins/google.good-loop.com/email.properties";
 
 	@Option(description = "If set, do not make any events - just report on what you would do, and who's blocked this week")
-	boolean reportOnly;
+	boolean reportOnly = true;
 	
 	@Option
 	boolean testMode;
