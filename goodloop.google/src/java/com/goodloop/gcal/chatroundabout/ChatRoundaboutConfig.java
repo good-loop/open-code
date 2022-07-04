@@ -26,7 +26,7 @@ public class ChatRoundaboutConfig implements ISiteConfig {
 	String emailProperties = "logins/google.good-loop.com/email.properties";
 
 	@Option(description = "If set, do not make any events - just report on what you would do, and who's blocked this week")
-	boolean reportOnly = true;
+	boolean reportOnly;
 	
 	@Option
 	boolean testMode;
