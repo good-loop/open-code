@@ -3,9 +3,13 @@ package com.goodloop.gcal;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.junit.Test;
 
@@ -18,8 +22,11 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
 import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.time.Dt;
+import com.winterwell.utils.time.Period;
 import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
+import com.winterwell.utils.time.TimeOfDay;
 import com.winterwell.utils.time.TimeUtils;
 
 public class GCalClientTest {
@@ -92,4 +99,39 @@ public class GCalClientTest {
 			
 			Printer.out(event2.toPrettyString());
 		}
+	
+	@Test
+	public void getEvents() {
+		GCalClient gcc = new GCalClient();
+		Calendar ww = gcc.getCalendar("wing@good-loop.com");
+		System.out.println(ww.getId());
+		
+		LocalDate _nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
+		Time nextFriday = new Time(_nextFriday.toString());
+		Time s = new TimeOfDay("11:00am").set(nextFriday);
+		Time e = s.plus(new Dt(10, TUnit.MINUTE));
+		Period slot = new Period(s, e);
+		
+		Time start = TimeUtils.getStartOfDay(slot.first.minus(TUnit.DAY));
+		Time end = TimeUtils.getStartOfDay(slot.first.plus(TUnit.DAY));
+		
+		List<Event> events = gcc.getEvents(ww.getId(), start, end);
+		for (Event event : events) {
+			System.out.println(event + "\n");
+		}
+	}
+	
+	@Test
+	public void testTimeZonePeroid() {
+		LocalDate _nextFriday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY));
+		Time nextFriday = new Time(_nextFriday.toString());
+		Time s = new TimeOfDay("11:00am").set(nextFriday);
+		Time e = s.plus(new Dt(10, TUnit.MINUTE));
+		
+		TimeZone tz = TimeZone.getDefault();
+		System.out.println(tz.getDSTSavings());
+		
+		Period slot = new Period(s.minus(tz.getDSTSavings(), TUnit.MILLISECOND), e.minus(tz.getDSTSavings(), TUnit.MILLISECOND));
+		System.out.println(slot);
+	}
 }
