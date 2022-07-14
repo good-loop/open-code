@@ -441,7 +441,7 @@ public class ChatRoundabout {
 		StringBuilder body = new StringBuilder();
 		body.append("Hello " + firstNameCap);
 		body.append("\r\n\r\nThis is an automated message to let you know that you have a Chat Roundabout meeting with "
-				+ personNameCap + " from " + readableDate + ".");
+				+ personNameCap + " from " + readableDate + " (GMT) .");
 		body.append("\r\n\r\nPlease accept the event on your calender here: " + htmlLink);
 		body.append(
 				"\r\n\r\nIf you're unable to make it, please contact your Chat Roundabout partner to let them know and arrange a new time slot for your 121.");
