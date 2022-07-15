@@ -1,5 +1,6 @@
 package com.winterwell.youagain.client;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.jetty.util.ajax.JSON;
 
+import com.winterwell.utils.Printer;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.Warning;
 import com.winterwell.utils.containers.ArrayMap;
@@ -48,11 +50,18 @@ public final class ShareClient {
 	 * @return
 	 */
 	public List<String> getSharedWithItemIds(String app, List<AuthToken> tokens, String type) {
-		assert ! type.isEmpty() && ! type.contains(":") : type;
+		List<String> sharedWith = null;
 		String prefix = type+":";
-		List<String> sharedWith = getSharedWith(tokens, prefix, app);
-		List<String> sharedCampaigns = Containers.apply(sharedWith, sw -> sw.substring(prefix.length()));
-		return sharedCampaigns;
+		try {
+			assert ! type.isEmpty() && ! type.contains(":") : type;			
+			sharedWith = getSharedWith(tokens, prefix, app);
+			int n = prefix.length();
+			List<String> sharedCampaigns = Containers.apply(sharedWith, sw -> sw.substring(n));
+			return sharedCampaigns;
+		} catch(Throwable ex) { // FIXME bug July 2022 - delete when fixed
+			Log.e(prefix+" -> "+sharedWith+" "+Printer.toString(ex, true));
+			return new ArrayList();
+		}
 	}
 	
 	/**
@@ -88,13 +97,16 @@ public final class ShareClient {
 					"prefix", prefix));
 			
 			Map jobj = WebUtils2.parseJSON(response);
-			Object shares = SimpleJson.get(jobj, "cargo");
-			if (shares instanceof Object[]) {
-				return Arrays.stream((Object[]) shares).map(share -> (String) SimpleJson.get(share, "item")).collect(Collectors.toList());
+			List<Map> shares = SimpleJson.getList(jobj, "cargo");			
+			List<String> items = Containers.apply(shares, share -> SimpleJson.get(share, "item"));
+			// apply prefix (bug seen 1st July 2022)
+			List<String> items2 = Containers.filter(items, item -> item.startsWith(prefix));
+			if (items2.size() != items.size()) {
+				Log.w(LOGTAG, "Bad prefix handling: "+prefix+" "+app+" "+items);
 			}
+			return items2;			
 		} catch (WebEx.E401 e401) {
-			Log.i("ShareClient.getSharedWith", new Warning(e401.toString()));
-			return Collections.emptyList();	
+			Log.i("ShareClient.getSharedWith", new Warning(e401.toString()));	
 		}
 		return Collections.emptyList();
 	}
