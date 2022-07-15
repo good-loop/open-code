@@ -271,7 +271,7 @@ public class LgServlet {
 						params.put("locn_sub1", location.subdiv1);
 					}
 					if (!Utils.isBlank(location.subdiv2)) {
-						params.put("locn_sub2", location.subdiv1);
+						params.put("locn_sub2", location.subdiv2);
 					}
 					if (!Utils.isBlank(location.city)) {
 						params.put("city", location.city);
