@@ -47,14 +47,15 @@ public class GeoLiteUpdateTask extends TimerTask {
 	
 	GeoLiteLocator geoLiteLocator;
 	
-	static final String BASE_URL = "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country-CSV&license_key=$LICENSE_KEY"; 
+	/** Replace $DATABASE and $LICENSE_KEY to use */
+	static final String BASE_URL = "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City-CSV&license_key=$LICENSE_KEY";
 	
 	static final String CSV_URL = BASE_URL + "&suffix=zip"; 
 	static final String CHECKSUM_URL = BASE_URL + "&suffix=zip.sha256";
 	
 	// We retain the downloaded CSV zip here
 	static final String ZIP_NAME = "geolite2_csv.zip";
-	static final File ZIP_FILE = new File(GeoLiteLocator.GEOIP_FILES_PATH, ZIP_NAME);
+	
 	
 	// For extracting the path to the block and location files from the downloaded zip's directory listing
 	static final Pattern BLOCKS_FILENAME_PATTERN = Pattern.compile("^.+" + GeoLiteLocator.BLOCKS_CSV_NAME + "$", Pattern.MULTILINE);
@@ -79,6 +80,8 @@ public class GeoLiteUpdateTask extends TimerTask {
 		}
 		String csvUrl = CSV_URL.replace("$LICENSE_KEY", ld.apiSecret);
 		
+		File zipFile = new File(GeoLiteLocator.GEOIP_FILES_PATH, ZIP_NAME);
+		
 		try {
 			// Check the new CSV bundle's Last-Modified header...
 			HttpURLConnection conn = (HttpURLConnection) (new URL(csvUrl).openConnection());
@@ -87,7 +90,7 @@ public class GeoLiteUpdateTask extends TimerTask {
 			Long newVersionTimestamp = conn.getHeaderFieldDate("Last-Modified", 0);
 			conn.disconnect();
 			// ...and compare it to the timestamp of the current version.
-			if (ZIP_FILE.exists() && ZIP_FILE.lastModified() >= newVersionTimestamp) {
+			if (zipFile.exists() && zipFile.lastModified() >= newVersionTimestamp) {
 				Log.d(LOGTAG, "Current GeoLite2 is up to date.");
 				return;
 			}
@@ -104,10 +107,12 @@ public class GeoLiteUpdateTask extends TimerTask {
 		
 		// Now let's download the new zip file.
 		FakeBrowser fb = new FakeBrowser();
+		fb.setMaxDownload(-1); // File is ~45MB, default 10MB limit throws exception
 		File tmpFile = fb.getFile(csvUrl);
 		
 		// Compare reference SHA256 to that of downloaded file
-		String referenceHash = fb.getPage(CHECKSUM_URL.replace("$LICENSE_KEY", ld.apiSecret));
+		String checksumUrl = CHECKSUM_URL.replace("$LICENSE_KEY", ld.apiSecret);
+		String referenceHash = fb.getPage(checksumUrl);
 		String downloadedHash = Proc.run("sha256sum " + tmpFile.getPath());
 		Matcher refHashMatcher = HASH_PATTERN.matcher(referenceHash);
 		refHashMatcher.find();
@@ -142,6 +147,7 @@ public class GeoLiteUpdateTask extends TimerTask {
 
 		// Unzip the needed files only to a temp directory
 		File newCsvDir = new File(GeoLiteLocator.GEOIP_FILES_PATH, "newcsv");
+		FileUtils.deleteDir(newCsvDir); // Ensure no previous dir lying around from a failed run
 		newCsvDir.mkdir();
 		// -j flag = ignore zip directory structure and extract to specified dir
 		Proc.run("unzip -j \"" + tmpFile.getPath()  + "\" \"" + blocksPath + "\" -d \"" + newCsvDir.getPath() + "\"");
@@ -162,7 +168,7 @@ public class GeoLiteUpdateTask extends TimerTask {
 			File locnsDest = new File(GeoLiteLocator.GEOIP_FILES_PATH, GeoLiteLocator.LOCATIONS_CSV_NAME);
 			FileUtils.move(blocksTemp, blocksDest);
 			FileUtils.move(locnsTemp, locnsDest);
-			FileUtils.move(tmpFile, ZIP_FILE);
+			FileUtils.move(tmpFile, zipFile);
 			Log.d("Success! GeoLiteLocator has been updated.");
 		} catch (FileNotFoundException e) {
 			Log.e(LOGTAG, "Downloaded new GeoLite2 ZIP but missing expected file: " + e);
@@ -172,6 +178,5 @@ public class GeoLiteUpdateTask extends TimerTask {
 			// Clean up any files still left
 			FileUtils.deleteDir(newCsvDir);
 		}
-		
 	}
 }

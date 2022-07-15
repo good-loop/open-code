@@ -86,11 +86,11 @@ public class GeoLiteQueryBatch {
 				Map src = (Map) hit.get("_source");
 				String ips = (String) src.get("ip");
 				for (String ip : ips.split(", ")) {
-					String countryCode = gll.getCountryCode(ip);
-					if (countryCode == null) continue;
-					Integer count = countryCounts.get(countryCode);
+					GeoLiteLocator.GeoIPBlock block = gll.getLocation(ip);
+					if (block == null) continue;
+					Integer count = countryCounts.get(block.country);
 					if (count == null) count = 0;
-					countryCounts.put(countryCode, count + 1);
+					countryCounts.put(block.country, count + 1);
 					allCount++;
 					break;
 				}

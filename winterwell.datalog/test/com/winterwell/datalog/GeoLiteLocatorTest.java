@@ -14,18 +14,13 @@ public class GeoLiteLocatorTest {
 		new GeoLiteUpdateTask(gll).run();
 		
 		// Simple smoke test - Google public DNS should be in the US. 
-		String googleDNSCountry = gll.getCountryCode("8.8.8.8");
-		assert "US".equals(googleDNSCountry);
-		System.out.println("GeoLite2 thinks Google DNS (8.8.8.8) is in country code \"" + googleDNSCountry + "\"");
+		GeoLiteLocator.GeoIPBlock googleDNSLocation = gll.getLocation("8.8.8.8");
+		assert "US".equals(googleDNSLocation.country);
+		System.out.println("GeoLite2 thinks Google DNS (8.8.8.8) is in country code \"" + googleDNSLocation.country + "\"");
 		
-		// An IP that isn't a string of dot separated decimals will throw a NumberFormatException
-		try {
-			String emptyIPCountry = gll.getCountryCode("");
-			// This shouldn't print.
-			System.out.println("Empty IP gives country code \"" + emptyIPCountry + "\"");
-		} catch (NumberFormatException e) {
-			System.out.println("GeoLite2 correctly threw a NumberFormatException for a degenerate IP.");
-		}
-		
+		// An IP that isn't a string of dot separated decimals will return null
+		GeoLiteLocator.GeoIPBlock emptyIPLocation = gll.getLocation("");
+		assert emptyIPLocation == null : "Empty IP gives country code \"" + emptyIPLocation.country + "\"";
+		System.out.println("GeoLiteLocator was given a degenerate IP, returned: " + emptyIPLocation);
 	}
 }

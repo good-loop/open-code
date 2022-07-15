@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import com.winterwell.utils.io.CSVReader;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.StopWatch;
 
 /**
  * Consumes MaxMind's free GeoLite2 IPv4 CIDR-to-country CSVs and gives basic IP-to-country geolocation
@@ -25,8 +26,8 @@ public class GeoLiteLocator {
 	static Node prefixes;
 	
 	public static final String GEOIP_FILES_PATH = "./geoip/";
-	public static final String LOCATIONS_CSV_NAME = "GeoLite2-Country-Locations-en.csv";
-	public static final String BLOCKS_CSV_NAME = "GeoLite2-Country-Blocks-IPv4.csv";
+	public static final String LOCATIONS_CSV_NAME = "GeoLite2-City-Locations-en.csv";
+	public static final String BLOCKS_CSV_NAME = "GeoLite2-City-Blocks-IPv4.csv";
 	
 	// So we can reject malformed IPs
     Pattern IP_REGEX = Pattern.compile("\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b");
@@ -81,9 +82,15 @@ public class GeoLiteLocator {
 			throw new ParseException("Cannot init GeoLiteLocator: locations file " + locnsFile.getAbsolutePath() + " missing at least one header of [geoname_id, country_iso_code]", 0);
 		}
 				
-		Map<String,String> locnToISOCode = new HashMap<String, String>();
+		Map<String, GeoIPBlock> locNumToLocation = new HashMap<String, GeoIPBlock>();
 		for (Map<String, String> row : locnsReader.asListOfMaps()) {
-			locnToISOCode.put(row.get("geoname_id"), row.get("country_iso_code"));
+			GeoIPBlock lb = new GeoIPBlock(
+				row.get("country_iso_code"),
+				row.get("subdivision_1_iso_code"),
+				row.get("subdivision_2_iso_code"),
+				row.get("city_name")
+			);
+			locNumToLocation.put(row.get("geoname_id"), lb);
 		}
 		locnsReader.close();
 		
@@ -102,6 +109,12 @@ public class GeoLiteLocator {
 		
 		
 		try {
+			GeoIPBlock proxy = new GeoIPBlock("PROXY", null, null, null);
+			GeoIPBlock satellite = new GeoIPBlock("SAT", null, null, null);
+			
+			StopWatch sw = new StopWatch();
+			int i = 0;
+			
 			for (Map<String, String> row : blocksReader.asListOfMaps()) {
 				// Split "128.64.32.16/28" into network and prefix-length parts
 				String[] cidr = row.get("network").split("/");
@@ -113,18 +126,18 @@ public class GeoLiteLocator {
 				// Find corresponding ISO country code
 				String countryCode;
 				
-				// Some networks correspond to known proxies or satellite ISPs, so country code isn't useful
+				// Some networks correspond to known proxies or satellite ISPs, so "location" is meaningless
 				if (!"0".equals(row.get("is_anonymous_proxy"))) {
-					countryCode = "PROXY";
+					newPrefixes.put(networkBinary, proxy);
 				} else if (!"0".equals(row.get("is_satellite_provider"))) {
-					countryCode = "SAT";
+					newPrefixes.put(networkBinary, satellite);
 				} else {
-					// Looks like a real country!
-					countryCode = locnToISOCode.get(row.get("geoname_id"));
+					// Looks like a real place!
+					newPrefixes.put(networkBinary, locNumToLocation.get(row.get("geoname_id")));
 				}
-				// Put this country code in the tree under the specified network prefix
-				newPrefixes.put(networkBinary, countryCode);
+				i++;
 			}
+			Log.d(LOGTAG, "GeoLiteLocator init took " + sw.getTime() / 1000.0 + " seconds to ingest " + i + " rows");
 		} catch (IllegalArgumentException e) {
 			Log.e(LOGTAG, "Bad data in GeoLite2 CSV: Encountered overlapping CIDR blocks");
 			return; // leave prefixes as an empty node - will return "" for everything.
@@ -159,24 +172,47 @@ public class GeoLiteLocator {
 	 * @return eg "GB". Never null, empty string for failure.
 	 * @throws NumberFormatException in the case of a malformed IP
 	 */
-	public String getCountryCode(String ip) throws NumberFormatException {
+	public GeoIPBlock getLocation(String ip) throws NumberFormatException {
 		Matcher m = IP_REGEX.matcher(ip);
 		if (!m.find()) {
-			Log.w(LOGTAG, "Couldn't validate IP for geolocation: \"" + ip + "\"");	
+			Log.w(LOGTAG, "Couldn't validate IP for geolocation: \"" + ip + "\"");
 		} else {
 			try {
 				Object maybeCC = prefixes.get(ipToBinary(m.group()));
-				if (maybeCC != null && maybeCC instanceof String) return (String) maybeCC;
+				if (maybeCC != null && maybeCC instanceof GeoIPBlock) return (GeoIPBlock) maybeCC;
 			} catch (IndexOutOfBoundsException e) {
-				Log.w(LOGTAG, "IP address ended before finding country code: " + ip);
+				Log.w(LOGTAG, "IP address ended before finding location: " + ip);
 			}
 		}
-		return "";
+		return null;
+	}
+	
+	/**
+	 * Structure for storing locations as specified in MaxMind GeoIP2/GeoLite2 city-level IP location database
+	 * Doesn't cover all fields! Just the ones we care about.
+	 * @author roscoe
+	 */
+	public class GeoIPBlock {
+		/** ISO 3166 country code */
+		public String country;
+		/** ISO 3166-2 first-level subdivision - eg UK countries, US states */
+		public String subdiv1;
+		/** ISO 3166-2 second-level subdivision - eg UK counties etc */
+		public String subdiv2;
+		/** Name of city */
+		public String city;
+		
+		public GeoIPBlock(String _country, String _subdiv1, String _subdiv2, String _city) {
+			this.country = _country;
+			this.subdiv1 = _subdiv1;
+			this.subdiv2 = _subdiv2;
+			this.city = _city;
+		}
 	}
 }
 
 /**
- * Binary tree for matching network prefixes (as strings of '0'/'1') to country codes.
+ * Binary tree for matching network prefixes (as strings of '0'/'1') to locations.
  * I mean, it can probably be used for a lot of other things. But that's what it does here.
  * @author roscoe
  *
@@ -258,3 +294,5 @@ class Node {
 		((Node)nextNode).put(address, obj, index + 1);
 	}
 }
+
+

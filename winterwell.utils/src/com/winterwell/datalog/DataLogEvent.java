@@ -81,7 +81,10 @@ public final class DataLogEvent implements Serializable, IHasJson
 			"url", String.class,
 			"domain", String.class,
 			"host", String.class,
-			"country", String.class,
+			"country", String.class, /** ISO 3166 country code */
+			"locn_sub1", String.class, /** ISO 3166-2 first-level subdivision - eg UK countries, US states */
+			"locn_sub2", String.class, /** ISO 3166-2 second-level subdivision - eg UK counties etc */
+			"city", String.class, /** Name of city */
 			// ad tracking
 			"adid", String.class,
 			"idfa", String.class,

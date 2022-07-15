@@ -262,9 +262,20 @@ public class LgServlet {
 		for (Object ip2 : ips) {
 			if (!(ip2 instanceof String)) continue;
 			try {
-				String countryCode = Dep.get(GeoLiteLocator.class).getCountryCode((String) ip2);
-				if (!Utils.isBlank(countryCode)) {
-					params.put("country", countryCode);
+				GeoLiteLocator.GeoIPBlock location = Dep.get(GeoLiteLocator.class).getLocation((String) ip2);
+				if (location != null) {
+					if (!Utils.isBlank(location.country)) {
+						params.put("country", location.country);
+					}
+					if (!Utils.isBlank(location.subdiv1)) {
+						params.put("locn_sub1", location.subdiv1);
+					}
+					if (!Utils.isBlank(location.subdiv2)) {
+						params.put("locn_sub2", location.subdiv1);
+					}
+					if (!Utils.isBlank(location.city)) {
+						params.put("city", location.city);
+					}
 					break;
 				}
 			} catch (NumberFormatException e) {
