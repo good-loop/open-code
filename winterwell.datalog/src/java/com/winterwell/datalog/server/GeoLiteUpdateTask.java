@@ -147,7 +147,9 @@ public class GeoLiteUpdateTask extends TimerTask {
 
 		// Unzip the needed files only to a temp directory
 		File newCsvDir = new File(GeoLiteLocator.GEOIP_FILES_PATH, "newcsv");
-		FileUtils.deleteDir(newCsvDir); // Ensure no previous dir lying around from a failed run
+		if (newCsvDir.exists()) {
+			FileUtils.deleteDir(newCsvDir); // Ensure no previous dir lying around from a failed run
+		}
 		newCsvDir.mkdir();
 		// -j flag = ignore zip directory structure and extract to specified dir
 		Proc.run("unzip -j \"" + tmpFile.getPath()  + "\" \"" + blocksPath + "\" -d \"" + newCsvDir.getPath() + "\"");
